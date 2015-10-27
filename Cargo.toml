@@ -1,0 +1,14 @@
+[package]
+name = "grokdb"
+version = "0.1.0"
+authors = ["Alberto Leal <mail4alberto@gmail.com>"]
+
+license = "MIT"
+
+
+[dependencies.iron]
+version = "0.2.3"
+
+[dependencies.rusqlite]
+git = "https://github.com/Dashed/rusqlite"
+rev = "3f6a28d15bbd4af137313d72c6bb0444d1da4a88"
