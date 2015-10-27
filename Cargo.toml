@@ -5,6 +5,8 @@ authors = ["Alberto Leal <mail4alberto@gmail.com>"]
 
 license = "MIT"
 
+[dependencies.chrono]
+version = "0.2.16"
 
 [dependencies.iron]
 version = "0.2.3"
