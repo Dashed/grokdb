@@ -43,10 +43,25 @@ fn main() {
         .author("Alberto Leal <mailforalberto@gmail.com> (github.com/dashed)")
         .about("flashcard app to help you grok better")
         .arg(
+            Arg::with_name("app_path")
+            .short("a")
+            .long("app")
+            .help("Sets directory path to serve web app from")
+            .takes_value(true)
+            .validator(|app_path| {
+                let app_path = app_path.trim();
+                if app_path.len() <= 0 {
+                    return Err(String::from("invalid directory app path"));
+                } else {
+                    return Ok(());
+                }
+            })
+        )
+        .arg(
             Arg::with_name("database_name")
+            .help("Flashcard database name")
             .required(true)
             .index(1)
-            .help("Flashcard database name")
             .validator(|database_name| {
                 let database_name = database_name.trim();
                 if database_name.len() <= 0 {
@@ -71,7 +86,15 @@ fn main() {
     /* iron router */
 
     let mut router = Router::new();
-    router.get("/", Static::new(Path::new("./assets")));
+
+    if cmd_matches.is_present("app_path") {
+        let app_path = cmd_matches.value_of("app_path")
+                                    .unwrap()
+                                    .trim();
+
+        router.get("/", Static::new(Path::new(app_path)));
+    }
+
     router.get("/:query", handler);
 
     fn handler(req: &mut Request) -> IronResult<Response> {
