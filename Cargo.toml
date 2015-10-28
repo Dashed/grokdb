@@ -5,11 +5,14 @@ authors = ["Alberto Leal <mail4alberto@gmail.com>"]
 
 license = "MIT"
 
+[dependencies.clap]
+version = "1.4"
+
 [dependencies.chrono]
-version = "0.2.16"
+version = "0.2"
 
 [dependencies.iron]
-version = "0.2.3"
+version = "0.2"
 
 [dependencies.rusqlite]
 git = "https://github.com/Dashed/rusqlite"
