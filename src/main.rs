@@ -3,11 +3,19 @@
 
 // crates
 extern crate clap;
+extern crate iron;
+// [begin] iron framework plugins
+extern crate router;
+extern crate logger;
+// [end] iron framework plugins
 // extern crate chrono;
 // extern crate rusqlite;
 
-
 use clap::{Arg, App};
+use iron::{Iron, Request, Response, IronResult, Chain};
+use iron::status;
+use router::{Router};
+use logger::Logger;
 // use chrono::*;
 // use rusqlite::SqliteConnection;
 
@@ -51,8 +59,32 @@ fn main() {
 
     let database_name = database_name;
 
-    println!("Using input file: '{}'", database_name);
+    /* iron router */
 
+    let mut router = Router::new();
+    router.get("/", handler);        // let router = router!(get "/" => handler,
+    router.get("/:query", handler);  //
+
+    fn handler(req: &mut Request) -> IronResult<Response> {
+        let ref query = req.extensions.get::<Router>().unwrap().find("query").unwrap_or("/");
+        Ok(Response::with((status::Ok, *query)))
+    }
+
+    let router_chain = Chain::new(router);
+
+    /* iron logging */
+
+    let mut log_chain = Chain::new(router_chain);
+
+    let (logger_before, logger_after) = Logger::new(None);
+
+    log_chain.link_before(logger_before);
+    log_chain.link_after(logger_after);
+
+    match Iron::new(log_chain).http("localhost:3030") {
+        Err(why) => panic!("{:?}", why),
+        Ok(_) => println!("Listening on port 3030"),
+    }
 
 
     // TODO: should be from command line
