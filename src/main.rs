@@ -46,7 +46,7 @@ fn main() {
     let mut database_name: String = cmd_matches.value_of("database_name").unwrap().trim().to_string();
 
     if !database_name.to_lowercase().ends_with(".db") {
-        database_name = database_name.to_string() + ".db";
+        database_name = format!("{}.db", database_name)
     }
 
     let database_name = database_name;
