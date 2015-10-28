@@ -7,17 +7,23 @@ extern crate iron;
 // [begin] iron framework plugins
 extern crate router;
 extern crate logger;
+extern crate staticfile;
 // [end] iron framework plugins
 // extern crate chrono;
 // extern crate rusqlite;
 
 use clap::{Arg, App};
+// [begin] iron framework
 use iron::{Iron, Request, Response, IronResult, Chain};
 use iron::status;
 use router::{Router};
 use logger::Logger;
+use staticfile::Static;
+// [end] iron framework
 // use chrono::*;
 // use rusqlite::SqliteConnection;
+
+use std::path::Path;
 
 // #[derive(Debug)]
 // struct Person {
@@ -51,7 +57,10 @@ fn main() {
             })
         ).get_matches();
 
-    let mut database_name: String = cmd_matches.value_of("database_name").unwrap().trim().to_string();
+    let mut database_name: String = cmd_matches.value_of("database_name")
+                                                .unwrap()
+                                                .trim()
+                                                .to_string();
 
     if !database_name.to_lowercase().ends_with(".db") {
         database_name = format!("{}.db", database_name)
@@ -62,24 +71,24 @@ fn main() {
     /* iron router */
 
     let mut router = Router::new();
-    router.get("/", handler);        // let router = router!(get "/" => handler,
-    router.get("/:query", handler);  //
+    router.get("/", Static::new(Path::new("./assets")));
+    router.get("/:query", handler);
 
     fn handler(req: &mut Request) -> IronResult<Response> {
         let ref query = req.extensions.get::<Router>().unwrap().find("query").unwrap_or("/");
         Ok(Response::with((status::Ok, *query)))
     }
 
-    let router_chain = Chain::new(router);
-
     /* iron logging */
 
-    let mut log_chain = Chain::new(router_chain);
+    let mut log_chain = Chain::new(router);
 
     let (logger_before, logger_after) = Logger::new(None);
 
     log_chain.link_before(logger_before);
     log_chain.link_after(logger_after);
+
+    /* start the server */
 
     match Iron::new(log_chain).http("localhost:3030") {
         Err(why) => panic!("{:?}", why),
