@@ -11,9 +11,19 @@ version = "1.4"
 [dependencies.chrono]
 version = "0.2"
 
-[dependencies.iron]
-version = "0.2"
-
 [dependencies.rusqlite]
 git = "https://github.com/Dashed/rusqlite"
 rev = "3f6a28d15bbd4af137313d72c6bb0444d1da4a88"
+
+[dependencies.iron]
+version = "0.2"
+
+# iron plugins
+[dependencies.staticfile]
+version = "0"
+
+[dependencies.logger]
+version = "0"
+
+[dependencies.router]
+version = "0"
