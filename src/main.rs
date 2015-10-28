@@ -1,6 +1,3 @@
-
-// mod greetings;
-
 // crates
 extern crate clap;
 extern crate iron;
@@ -10,8 +7,14 @@ extern crate logger;
 extern crate staticfile;
 // [end] iron framework plugins
 // extern crate chrono;
-// extern crate rusqlite;
+extern crate rusqlite;
 
+// local modules
+mod database;
+mod api;
+
+// scoped names
+use database::DBPortal;
 use clap::{Arg, App};
 // [begin] iron framework
 use iron::{Iron, Request, Response, IronResult, Chain};
@@ -21,9 +24,10 @@ use logger::Logger;
 use staticfile::Static;
 // [end] iron framework
 // use chrono::*;
-// use rusqlite::SqliteConnection;
 
 use std::path::Path;
+
+
 
 // #[derive(Debug)]
 // struct Person {
@@ -32,7 +36,6 @@ use std::path::Path;
 //     time_created: Timespec,
 //     data: Option<Vec<u8>>
 // }
-
 
 fn main() {
 
@@ -83,6 +86,9 @@ fn main() {
 
     let database_name = database_name;
 
+    // set up api
+    let grokdb = api::new(database_name);
+
     /* iron router */
 
     let mut router = Router::new();
@@ -95,12 +101,35 @@ fn main() {
         router.get("/", Static::new(Path::new(app_path)));
     }
 
-    router.get("/:query", handler);
+    /* REST API */
 
-    fn handler(req: &mut Request) -> IronResult<Response> {
-        let ref query = req.extensions.get::<Router>().unwrap().find("query").unwrap_or("/");
-        Ok(Response::with((status::Ok, *query)))
-    }
+    // decks
+
+    router.get("/decks/:deck_id", move |req: &mut Request| -> IronResult<Response> {
+
+        let deck_id = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap_or("/");
+
+        let deck_id = deck_id.parse::<i64>().unwrap_or(1);
+
+        let deck = grokdb.decks.get(deck_id);
+
+        // let msg = database::Message::Write(deck_id.to_string());
+
+        // let response = db_portal.write(msg);
+
+        Ok(Response::with((status::Ok, deck)))
+    });
+
+    // router.get("/decks", handler);
+
+    // fn handler(req: &mut Request) -> IronResult<Response> {
+    //     // let ref query = req.extensions.get::<Router>().unwrap().find("query").unwrap_or("/");
+    //     // Ok(Response::with((status::Ok, *query)))
+    //     // let deck = grokdb.decks.get(1);
+    //     foo;
+
+    //     Ok(Response::with((status::Ok, "lol")))
+    // }
 
     /* iron logging */
 
@@ -121,8 +150,6 @@ fn main() {
 
     // TODO: should be from command line
     // let path_str = "test.db";
-
-    // let conn = SqliteConnection::open(&path_str).unwrap();
 
     // let utc: DateTime<UTC> = UTC::now();
 
