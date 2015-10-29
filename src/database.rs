@@ -73,6 +73,7 @@ fn create_tables(db: &DB) -> Result<(), SqliteError> {
 
         match db_conn.execute(final_query, &[]) {
             Err(why) => {
+                // TODO: amend error with query
                 return Err(why);
             },
             _ => {/* query sucessfully executed */},
