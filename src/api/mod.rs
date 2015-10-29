@@ -13,10 +13,9 @@ pub fn new(database_name: String) -> GrokDB {
     // open db connection
     let db_portal: Arc<DBPortal> = Arc::new(super::database::bootstrap(database_name));
 
-
     return GrokDB {
         decks: Decks {
-            db_portal: db_portal
+            db_portal: db_portal.clone()
         }
     };
 
