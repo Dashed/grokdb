@@ -1,10 +1,11 @@
 extern crate rusqlite;
 
-use rusqlite::SqliteConnection;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+
+use ::database::DB;
 
 pub struct Decks {
-    pub db_conn: Arc<RwLock<SqliteConnection>>,
+    pub db: Arc<DB>,
 }
 
 impl Decks {

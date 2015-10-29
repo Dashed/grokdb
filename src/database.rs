@@ -3,12 +3,31 @@ extern crate rusqlite;
 use std::ops::Deref;
 use rusqlite::SqliteConnection;
 use rusqlite::SqliteError;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, LockResult, RwLockWriteGuard};
 
 use queries::tables;
 
+pub struct DB {
+    pub db_conn: Arc<RwLock<SqliteConnection>>
+}
 
-pub fn bootstrap(database_name: String) -> Result<Arc<RwLock<SqliteConnection>>, SqliteError> {
+impl DB {
+    fn write_lock(&self) -> LockResult<RwLockWriteGuard<SqliteConnection>> {
+        let lock = self.db_conn.deref();
+        return lock.write();
+    }
+
+    fn finalize_query(sql: &str) -> String {
+
+        // src: https://www.sqlite.org/pragma.html#pragma_foreign_keys
+        // As of SQLite version 3.6.19, the default setting for foreign key enforcement is OFF.
+
+        return format!("PRAGMA foreign_keys=ON; {}", sql);
+    }
+}
+
+
+pub fn bootstrap(database_name: String) -> Result<DB, SqliteError> {
 
     // open db connection
     let db_conn = SqliteConnection::open(database_name);
@@ -21,30 +40,38 @@ pub fn bootstrap(database_name: String) -> Result<Arc<RwLock<SqliteConnection>>,
             let lock = RwLock::new(db_conn);
             let arc = Arc::new(lock).clone();
 
-            {   // write lock region
-                let arc = &arc;
-                let lock = arc.deref();
-                let db_conn_guard = lock.write().unwrap();
-                let ref db_conn = *db_conn_guard;
+            let db_wrap = DB {
+                db_conn: arc
+            };
 
-                match create_tables(db_conn) {
+            {
+
+                let db = &db_wrap;
+
+                match create_tables(db) {
                     Err(why) => {
                         return Err(why);
                     },
-                    _ => {/* don't expect anything */},
+                    _ => {/* queries sucessfully executed */},
                 }
             }
 
-            return Ok(arc);
+            return Ok(db_wrap);
         }
     };
 }
 
-fn create_tables(db_conn: &SqliteConnection) -> Result<(), SqliteError> {
+fn create_tables(db: &DB) -> Result<(), SqliteError> {
+
+    let db_conn_guard = db.write_lock().unwrap();
+    let ref db_conn = *db_conn_guard;
 
     // execute every table setup query
-    for table in tables::SETUP.into_iter() {
-        match db_conn.execute(table, &[]) {
+    for query in tables::SETUP.into_iter() {
+
+        let ref final_query = DB::finalize_query(query);
+
+        match db_conn.execute(final_query, &[]) {
             Err(why) => {
                 return Err(why);
             },
