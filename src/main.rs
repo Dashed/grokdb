@@ -11,6 +11,7 @@ extern crate rusqlite;
 
 // local modules
 mod database;
+mod queries;
 mod api;
 
 // local scoped names
