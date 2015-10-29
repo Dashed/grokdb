@@ -21,13 +21,18 @@ pub fn bootstrap(database_name: String) -> Result<Arc<RwLock<SqliteConnection>>,
             let lock = RwLock::new(db_conn);
             let arc = Arc::new(lock).clone();
 
-            {
+            {   // write lock region
                 let arc = &arc;
                 let lock = arc.deref();
                 let db_conn_guard = lock.write().unwrap();
                 let ref db_conn = *db_conn_guard;
 
-                create_tables(db_conn);
+                match create_tables(db_conn) {
+                    Err(why) => {
+                        return Err(why);
+                    },
+                    _ => {/* don't expect anything */},
+                }
             }
 
             return Ok(arc);
@@ -35,6 +40,16 @@ pub fn bootstrap(database_name: String) -> Result<Arc<RwLock<SqliteConnection>>,
     };
 }
 
-fn create_tables(db_conn: &SqliteConnection) {
+fn create_tables(db_conn: &SqliteConnection) -> Result<(), SqliteError> {
+
+    match db_conn.execute(tables::DECKS, &[]) {
+        Err(why) => {
+            return Err(why);
+        },
+        _ => {/* don't care */},
+    }
+
     println!("{}", tables::DECKS);
+
+    return Ok(());
 }
