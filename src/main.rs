@@ -13,8 +13,8 @@ extern crate rusqlite;
 mod database;
 mod api;
 
-// scoped names
-use database::DBPortal;
+// local scoped names
+use api::GrokDB;
 use clap::{Arg, App};
 // [begin] iron framework
 use iron::{Iron, Request, Response, IronResult, Chain};
@@ -89,6 +89,16 @@ fn main() {
     // set up api
     let grokdb = api::new(database_name);
 
+    if let Err(why) = grokdb {
+        println!("{}", why);
+        std::process::exit(1);
+    }
+
+    let grokdb: GrokDB = match grokdb {
+        Ok(grokdb) => grokdb,
+        _ => unreachable!(),
+    };
+
     /* iron router */
 
     let mut router = Router::new();
@@ -111,13 +121,13 @@ fn main() {
 
         let deck_id = deck_id.parse::<i64>().unwrap_or(1);
 
-        let deck = grokdb.decks.get(deck_id);
+        // let deck = grokdb.decks.get(deck_id);
 
         // let msg = database::Message::Write(deck_id.to_string());
 
         // let response = db_portal.write(msg);
 
-        Ok(Response::with((status::Ok, deck)))
+        Ok(Response::with((status::Ok, "lol")))
     });
 
     // router.get("/decks", handler);
