@@ -1,13 +1,22 @@
-pub const SETUP: [&'static str; 2] = [
+pub const SETUP: [&'static str; 3] = [
 
     // decks
+
     DECKS,
-    DECKSCLOSURE
+    DECKSCLOSURE,
+
+    // decks/indices
+
+    DECKSCLOSURE_DEPTH_INDEX,
 ];
+
+/**
+ * All SQL comply with syntax supported with SQLite v3.9.1
+ */
 
 // decks
 
-pub const DECKS: &'static str = "
+const DECKS: &'static str = "
 CREATE TABLE IF NOT EXISTS Decks (
     deck_id INTEGER PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
@@ -16,7 +25,13 @@ CREATE TABLE IF NOT EXISTS Decks (
 );
 ";
 
-pub const DECKSCLOSURE: &'static str = "
+// description of the closure table from:
+// - https://pragprog.com/titles/bksqla/sql-antipatterns
+// - http://dirtsimple.org/2010/11/simplest-way-to-do-tree-based-queries.html
+//
+// allows nested decks
+
+const DECKSCLOSURE: &'static str = "
 CREATE TABLE IF NOT EXISTS DecksClosure (
     ancestor INTEGER NOT NULL,
     descendent INTEGER NOT NULL,
@@ -25,6 +40,10 @@ CREATE TABLE IF NOT EXISTS DecksClosure (
     FOREIGN KEY (ancestor) REFERENCES Decks(deck_id) ON DELETE CASCADE,
     FOREIGN KEY (descendent) REFERENCES Decks(deck_id) ON DELETE CASCADE
 );
+";
+
+const DECKSCLOSURE_DEPTH_INDEX: &'static str = "
+CREATE INDEX IF NOT EXISTS DECKSCLOSURE_DEPTH_INDEX ON DecksClosure (depth DESC);
 ";
 
 // cards
