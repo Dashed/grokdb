@@ -18,8 +18,7 @@ mod api;
 use api::GrokDB;
 use clap::{Arg, App};
 // [begin] iron framework
-use iron::{Iron, Request, Response, IronResult, Chain};
-use iron::status;
+use iron::{Iron, Chain};
 use router::{Router};
 use logger::Logger;
 use staticfile::Static;
@@ -114,22 +113,7 @@ fn main() {
 
     /* REST API */
 
-    // decks
-
-    router.get("/decks/:deck_id", move |req: &mut Request| -> IronResult<Response> {
-
-        let deck_id = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap_or("/");
-
-        let deck_id = deck_id.parse::<i64>().unwrap_or(1);
-
-        // let deck = grokdb.decks.get(deck_id);
-
-        // let msg = database::Message::Write(deck_id.to_string());
-
-        // let response = db_portal.write(msg);
-
-        Ok(Response::with((status::Ok, "lol")))
-    });
+    api::setup_rest(&mut router, grokdb);
 
     // router.get("/decks", handler);
 
