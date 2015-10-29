@@ -42,14 +42,15 @@ pub fn bootstrap(database_name: String) -> Result<Arc<RwLock<SqliteConnection>>,
 
 fn create_tables(db_conn: &SqliteConnection) -> Result<(), SqliteError> {
 
-    match db_conn.execute(tables::DECKS, &[]) {
-        Err(why) => {
-            return Err(why);
-        },
-        _ => {/* don't care */},
+    // execute every table setup query
+    for table in tables::SETUP.into_iter() {
+        match db_conn.execute(table, &[]) {
+            Err(why) => {
+                return Err(why);
+            },
+            _ => {/* query sucessfully executed */},
+        }
     }
-
-    println!("{}", tables::DECKS);
 
     return Ok(());
 }
