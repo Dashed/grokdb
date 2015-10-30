@@ -113,7 +113,7 @@ fn main() {
 
     /* REST API */
 
-    api::setup_rest(&mut router, grokdb);
+    api::restify(&mut router, grokdb);
 
     // router.get("/decks", handler);
 
