@@ -71,7 +71,7 @@ fn create_tables(db: &DB) -> Result<(), SqliteError> {
 
         let ref final_query = DB::finalize_query(query);
 
-        match db_conn.execute(final_query, &[]) {
+        match db_conn.execute_batch(final_query) {
             Err(why) => {
                 // TODO: amend error with query; will need custom error type
                 return Err(why);
