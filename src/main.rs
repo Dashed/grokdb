@@ -91,7 +91,7 @@ fn main() {
     let grokdb = api::new(database_name);
 
     if let Err(why) = grokdb {
-        println!("{}", why);
+        println!("FATAL ERROR:\n{}", why);
         std::process::exit(1);
     }
 

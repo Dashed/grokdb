@@ -1,9 +1,12 @@
 extern crate rusqlite;
 
+use std::error;
+use std::fmt;
 use std::ops::Deref;
+use std::sync::{Arc, RwLock, LockResult, RwLockWriteGuard};
+
 use rusqlite::SqliteConnection;
 use rusqlite::SqliteError;
-use std::sync::{Arc, RwLock, LockResult, RwLockWriteGuard};
 
 use queries::tables;
 
@@ -12,6 +15,7 @@ pub struct DB {
 }
 
 impl DB {
+
     fn write_lock(&self) -> LockResult<RwLockWriteGuard<SqliteConnection>> {
         let lock = self.db_conn.deref();
         return lock.write();
@@ -27,14 +31,68 @@ impl DB {
 }
 
 
-pub fn bootstrap(database_name: String) -> Result<DB, SqliteError> {
+#[derive(Debug)]
+pub struct QueryError {
+    pub sqlite_error: SqliteError,
+    pub query: String,
+}
+
+impl fmt::Display for QueryError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} \nFor query:\n{}", self.sqlite_error, self.query)
+    }
+}
+
+impl error::Error for QueryError {
+    fn description(&self) -> &str {
+        return self.sqlite_error.description();
+    }
+}
+
+#[derive(Debug)]
+pub enum BootstrapError {
+    Query(QueryError),
+    Sqlite(SqliteError),
+}
+
+impl fmt::Display for BootstrapError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        return match *self {
+            BootstrapError::Query(ref err) => write!(f, "{}", err),
+            BootstrapError::Sqlite(ref err) => write!(f, "{}", err),
+        };
+    }
+}
+
+impl error::Error for BootstrapError {
+    fn description(&self) -> &str {
+        return match *self {
+            BootstrapError::Query(ref err) => err.description(),
+            BootstrapError::Sqlite(ref err) => err.description(),
+        };
+    }
+}
+
+impl From<QueryError> for BootstrapError {
+    fn from(err: QueryError) -> BootstrapError {
+        return BootstrapError::Query(err);
+    }
+}
+
+impl From<SqliteError> for BootstrapError {
+    fn from(err: SqliteError) -> BootstrapError {
+        return BootstrapError::Sqlite(err);
+    }
+}
+
+pub fn bootstrap(database_name: String) -> Result<DB, BootstrapError> {
 
     // open db connection
     let db_conn = SqliteConnection::open(database_name);
 
     return match db_conn {
         Err(why) => {
-            return Err(why);
+            return Err(BootstrapError::Sqlite(why));
         },
         Ok(db_conn) => {
             let lock = RwLock::new(db_conn);
@@ -45,12 +103,12 @@ pub fn bootstrap(database_name: String) -> Result<DB, SqliteError> {
             };
 
             {
-
                 let db = &db_wrap;
 
                 match create_tables(db) {
                     Err(why) => {
-                        return Err(why);
+                        // why: QueryError
+                        return Err(BootstrapError::Query(why));
                     },
                     _ => {/* queries sucessfully executed */},
                 }
@@ -61,7 +119,7 @@ pub fn bootstrap(database_name: String) -> Result<DB, SqliteError> {
     };
 }
 
-fn create_tables(db: &DB) -> Result<(), SqliteError> {
+fn create_tables(db: &DB) -> Result<(), QueryError> {
 
     let db_conn_guard = db.write_lock().unwrap();
     let ref db_conn = *db_conn_guard;
@@ -73,8 +131,11 @@ fn create_tables(db: &DB) -> Result<(), SqliteError> {
 
         match db_conn.execute_batch(final_query) {
             Err(why) => {
-                // TODO: amend error with query; will need custom error type
-                return Err(why);
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: final_query.clone(),
+                };
+                return Err(err);
             },
             _ => {/* query sucessfully executed */},
         }
