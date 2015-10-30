@@ -60,9 +60,10 @@ fn main() {
                 }
             })
         )
+        // TODO: port
         .arg(
             Arg::with_name("database_name")
-            .help("Flashcard database name")
+            .help("Database name to store your flashcards")
             .required(true)
             .index(1)
             .validator(|database_name| {
