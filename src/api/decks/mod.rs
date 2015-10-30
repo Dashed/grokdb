@@ -1,8 +1,15 @@
+extern crate iron;
 extern crate rusqlite;
+extern crate router;
+
+mod restify;
 
 use std::sync::Arc;
 
 use ::database::DB;
+
+pub use self::restify::restify;
+
 
 pub struct Decks {
     pub db: Arc<DB>,
@@ -15,3 +22,4 @@ impl Decks {
         return "lol".to_string();
     }
 }
+
