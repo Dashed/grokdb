@@ -23,23 +23,15 @@ pub fn new(database_name: String) -> Result<GrokDB, SqliteError> {
     // open db connection and bootstrap
     let db_conn: Result<DB, SqliteError> = super::database::bootstrap(database_name);
 
-    return match db_conn {
-        Err(why) => {
-            return Err(why);
-        },
-        Ok(_db) => {
+    let db: Arc<DB> = Arc::new(try!(db_conn));
 
-            let db = Arc::new(_db);
-
-            let api = GrokDB {
-                decks: Decks {
-                    db: db.clone()
-                }
-            };
-
-            return Ok(api);
+    let api = GrokDB {
+        decks: Decks {
+            db: db.clone()
         }
     };
+
+    return Ok(api);
 }
 
 pub fn setup_rest(router: &mut Router, grokdb: GrokDB) {
