@@ -149,17 +149,6 @@ fn create_tables(db: &DB) -> Result<(), QueryError> {
 
     try!(DB::prepare_query(db_conn));
 
-    // match DB::prepare_query(db_conn) {
-    //     Err(why) => {
-    //         let err = QueryError {
-    //             sqlite_error: why,
-    //             query: final_query.clone(),
-    //         };
-    //         return Err(err);
-    //     },
-    //     _ => {/* query sucessfully executed */},
-    // }
-
     // execute every table setup query
     for query in tables::SETUP.into_iter() {
 

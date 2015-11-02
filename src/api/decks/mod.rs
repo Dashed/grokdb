@@ -6,8 +6,9 @@ mod restify;
 
 use std::sync::Arc;
 
-use ::database::{DB, QueryError};
+use rusqlite::types::ToSql;
 
+use ::database::{DB, QueryError};
 pub use self::restify::restify;
 
 
@@ -43,7 +44,7 @@ impl Decks {
         try!(DB::prepare_query(db_conn));
 
         let ref query = format!("INSERT INTO Decks(name, description) VALUES ($1, $2);");
-        let params: &[&rusqlite::types::ToSql] = &[
+        let params: &[&ToSql] = &[
             &create_deck_request.name,
             &create_deck_request.description.unwrap_or("".to_string())
         ];
