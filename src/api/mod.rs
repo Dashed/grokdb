@@ -52,6 +52,7 @@ pub struct __ErrorResponse  {
 // see:
 // - https://internals.rust-lang.org/t/named-trait-instances/2823
 // - https://doc.rust-lang.org/error-index.html#E0117
+// - https://gist.github.com/DanielKeep/f0c0d882241af4e69a19
 //
 // pub trait Encodable {
 //     fn encode<S: rustc_serialize::Encoder>(&self, s: &mut S) -> Result<(), S::Error>;
