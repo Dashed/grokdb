@@ -5,9 +5,11 @@ extern crate iron;
 extern crate router;
 extern crate logger;
 extern crate staticfile;
+extern crate bodyparser;
 // [end] iron framework plugins
 // extern crate chrono;
 extern crate rusqlite;
+extern crate rustc_serialize;
 
 // local modules
 mod database;
@@ -126,6 +128,7 @@ fn main() {
 
     //     Ok(Response::with((status::Ok, "lol")))
     // }
+
 
     /* iron logging */
 

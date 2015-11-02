@@ -27,3 +27,9 @@ version = "0"
 
 [dependencies.router]
 version = "0"
+
+[dependencies.bodyparser]
+version = "0"
+
+[dependencies.rustc-serialize]
+version = "0.3"
