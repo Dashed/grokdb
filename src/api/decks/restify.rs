@@ -3,13 +3,24 @@ extern crate router;
 extern crate bodyparser;
 extern crate rustc_serialize;
 
-use iron::{Request, Response, IronResult};
+// use iron::{Request, Response, IronResult};
 use iron::status;
+use iron::prelude::*;
 use router::Router;
 use rustc_serialize::json;
 
 use ::api::{GrokDB, ErrorResponse, __ErrorResponse};
 
+#[derive(Debug, Clone, RustcDecodable)]
+struct CreateDeck {
+    name: String,
+    description: Option<String>,
+}
+
+struct Deck {
+    name: String,
+    description: String,
+}
 
 pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
@@ -41,15 +52,49 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
         // parse json
 
+        let create_deck_request = req.get::<bodyparser::Struct<CreateDeck>>();
+        let new_deck = match create_deck_request {
+
+            Ok(Some(create_deck_request)) => {
+
+                let create_deck_request: CreateDeck = create_deck_request;
+
+                // TODO: create
+            },
+
+            Ok(None) => {
+
+                let reason = "no JSON given";
+
+                let err_response = ErrorResponse {
+                    status: status::BadRequest,
+                    developerMessage: reason,
+                    userMessage: reason,
+                }.to_json();
+
+                return Ok(Response::with((status::BadRequest, err_response)));
+            },
+
+            Err(err) => {
+
+                let ref reason = format!("{:?}", err);
+
+                let err_response = ErrorResponse {
+                    status: status::BadRequest,
+                    developerMessage: reason,
+                    userMessage: reason,
+                }.to_json();
+
+                return Ok(Response::with((status::BadRequest, err_response)));
+            }
+        };
+
+
         // let json_input = req.get::<bodyparser::Json>();
 
-        let err_response = ErrorResponse {
-            status: status::Ok,
-            developerMessage: "homura",
-            userMessage: "homura",
-        }.to_json();
 
-        return Ok(Response::with((status::Ok, err_response)));
+
+        return Ok(Response::with((status::Ok, "")));
 
     });
 
