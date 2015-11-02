@@ -5,6 +5,7 @@ authors = ["Alberto Leal <mail4alberto@gmail.com>"]
 
 license = "MIT"
 
+
 [dependencies.clap]
 version = "1.4"
 
@@ -33,3 +34,4 @@ version = "0"
 
 [dependencies.rustc-serialize]
 version = "0.3"
+
