@@ -1,4 +1,8 @@
-pub const SETUP: [&'static str; 3] = [
+pub const SETUP: [&'static str; 5] = [
+
+    // configs
+
+    CONFIGS,
 
     // decks
 
@@ -8,13 +12,29 @@ pub const SETUP: [&'static str; 3] = [
     // decks/indices
 
     DECKSCLOSURE_DEPTH_INDEX,
+
+    // decks/triggers
+
+    DECKSCLOSURE_NEW_DECK_TRIGGER,
 ];
 
 /**
  * All SQL comply with syntax supported with SQLite v3.9.1
  */
 
-// decks
+// configs
+
+const CONFIGS: &'static str = "
+CREATE TABLE IF NOT EXISTS Config (
+    setting TEXT PRIMARY KEY NOT NULL,
+    value TEXT,
+    CHECK (setting <> '') /* ensure not empty */
+);
+";
+
+
+
+/* decks */
 
 const DECKS: &'static str = "
 CREATE TABLE IF NOT EXISTS Decks (
@@ -44,6 +64,15 @@ CREATE TABLE IF NOT EXISTS DecksClosure (
 
 const DECKSCLOSURE_DEPTH_INDEX: &'static str = "
 CREATE INDEX IF NOT EXISTS DECKSCLOSURE_DEPTH_INDEX ON DecksClosure (depth DESC);
+";
+
+// any and all node Decks are an/a ancestor/descendent of itself.
+const DECKSCLOSURE_NEW_DECK_TRIGGER: &'static str = "
+CREATE TRIGGER IF NOT EXISTS DECKSCLOSURE_NEW_DECK_TRIGGER AFTER INSERT
+ON Decks
+BEGIN
+    INSERT OR IGNORE INTO DecksClosure(ancestor, descendent, depth) VALUES (NEW.deck_id, NEW.deck_id, 0);
+END;
 ";
 
 // cards
