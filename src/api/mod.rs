@@ -22,10 +22,25 @@ pub struct ErrorResponse<'a>  {
     userMessage: &'a str,
 }
 
+// Pattern from: https://github.com/WhiteHouse/api-standards#error-handling
+impl<'a> ErrorResponse<'a> {
+    pub fn get_raw(&self) -> __ErrorResponse {
+
+        let response = __ErrorResponse {
+            status: self.status.to_u16(),
+            developerMessage: format!("{}", self.developerMessage),
+            userMessage: format!("{}", self.userMessage),
+        };
+
+        return response;
+    }
+}
+
 // less-hacky alternative to https://doc.rust-lang.org/error-index.html#E0117
 //
 // this struct is essentially the same as above; but is "encodable"-friendly for
-// rustc_serialize
+// rustc_serialize.
+//
 #[derive(RustcEncodable)]
 pub struct __ErrorResponse  {
     status: u16,
@@ -47,19 +62,6 @@ pub struct __ErrorResponse  {
 //         return s.emit_u16(foo.to_u16());
 //     }
 // }
-
-impl<'a> ErrorResponse<'a> {
-    pub fn get_raw(&self) -> __ErrorResponse {
-
-        let response = __ErrorResponse {
-            status: self.status.to_u16(),
-            developerMessage: format!("{}", self.developerMessage),
-            userMessage: format!("{}", self.userMessage),
-        };
-
-        return response;
-    }
-}
 
 pub struct GrokDB {
     pub decks: Decks,
