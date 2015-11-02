@@ -10,6 +10,7 @@ use rustc_serialize::json;
 
 use std::sync::{Arc, Mutex};
 use std::ops::Deref;
+use std::error::Error;
 
 use ::api::{GrokDB, ErrorResponse};
 use ::api::decks::{CreateDeck, Deck};
@@ -28,16 +29,16 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
             let deck_id = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
 
-            let deck_id: i64 = match deck_id.parse::<i64>() {
-                Ok(deck_id) => deck_id,
-                Err(_) => {
+            let deck_id: i64 = match deck_id.parse::<u64>() {
+                Ok(deck_id) => deck_id as i64,
+                Err(why) => {
 
-                    let reason = "no JSON given";
+                    let ref reason = format!("{:?}", why);
 
                     let err_response = ErrorResponse {
                         status: status::BadRequest,
                         developerMessage: reason,
-                        userMessage: reason,
+                        userMessage: why.description(),
                     }.to_json();
 
                     return Ok(Response::with((status::BadRequest, err_response)));
@@ -85,7 +86,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                     let err_response = ErrorResponse {
                         status: status::BadRequest,
                         developerMessage: reason,
-                        userMessage: reason,
+                        userMessage: err.description(),
                     }.to_json();
 
                     return Ok(Response::with((status::BadRequest, err_response)));
@@ -100,7 +101,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                     let err_response = ErrorResponse {
                         status: status::BadRequest,
                         developerMessage: reason,
-                        userMessage: reason,
+                        userMessage: why.description(),
                     }.to_json();
 
                     return Ok(Response::with((status::InternalServerError, err_response)));
@@ -132,7 +133,7 @@ fn get_deck_by_id(grokdb: Arc<GrokDB>, deck_id: i64) -> IronResult<Response> {
             let err_response = ErrorResponse {
                 status: status::NotFound,
                 developerMessage: reason,
-                userMessage: reason,
+                userMessage: why.description(),
             }.to_json();
 
             return Ok(Response::with((status::NotFound, err_response)));

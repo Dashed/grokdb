@@ -18,6 +18,7 @@ pub use self::restify::restify;
 pub struct CreateDeck {
     name: String,
     description: Option<String>,
+    parent: Option<i64>,
 }
 
 #[derive(RustcEncodable)]
@@ -39,6 +40,35 @@ pub struct Decks {
 }
 
 impl Decks {
+
+    pub fn get(&self, deck_id: i64) -> Result<Deck, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("SELECT deck_id, name, description FROM Decks WHERE deck_id = $1 LIMIT 1;");
+
+        let results = db_conn.query_row(query, &[&deck_id], |row| -> Deck {
+            return Deck {
+                id: row.get(0),
+                name: row.get(1),
+                description: row.get(2),
+            };
+        });
+
+        match results {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(deck) => {
+                return Ok(deck);
+            }
+        };
+    }
 
     pub fn create(&self, create_deck_request: CreateDeck) -> Result<i64, QueryError> {
 
@@ -73,33 +103,8 @@ impl Decks {
         return Ok(rowid);
     }
 
-    pub fn get(&self, deck_id: i64) -> Result<Deck, QueryError> {
-
-        let db_conn_guard = self.db.lock().unwrap();
-        let ref db_conn = *db_conn_guard;
-
-        let ref query = format!("SELECT deck_id, name, description FROM Decks WHERE deck_id = $1;");
-
-        let results = db_conn.query_row(query, &[&deck_id], |row| -> Deck {
-            return Deck {
-                id: row.get(0),
-                name: row.get(1),
-                description: row.get(2),
-            };
-        });
-
-        match results {
-            Err(why) => {
-                let err = QueryError {
-                    sqlite_error: why,
-                    query: query.clone(),
-                };
-                return Err(err);
-            },
-            Ok(deck) => {
-                return Ok(deck);
-            }
-        };
+    pub fn connect_decks(&self, parent: i64, child: i64) {
+        // TODO: complete
     }
 }
 
