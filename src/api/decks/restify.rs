@@ -12,9 +12,8 @@ use std::sync::{Arc, Mutex};
 use std::ops::Deref;
 
 use ::api::{GrokDB, ErrorResponse};
-use ::api::decks::CreateDeck;
-
-
+use ::api::decks::{CreateDeck, Deck};
+use ::database::QueryError;
 
 
 pub fn restify(router: &mut Router, grokdb: GrokDB) {
@@ -61,13 +60,14 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             // parse json
 
             let create_deck_request = req.get::<bodyparser::Struct<CreateDeck>>();
-            let new_deck = match create_deck_request {
+
+            let maybe_created = match create_deck_request {
 
                 Ok(Some(create_deck_request)) => {
 
                     let create_deck_request: CreateDeck = create_deck_request;
 
-                    let deck = grokdb.decks.create(create_deck_request);
+                    grokdb.decks.create(create_deck_request)
                 },
 
                 Ok(None) => {
@@ -98,9 +98,47 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             };
 
 
-            // let json_input = req.get::<bodyparser::Json>();
+            let maybe_new_deck: Result<Deck, QueryError> = match maybe_created {
+                Err(why) => {
+                    // why: QueryError
+                    let ref reason = format!("{:?}", why);
 
-            return Ok(Response::with((status::Ok, "")));
+                    let err_response = ErrorResponse {
+                        status: status::BadRequest,
+                        developerMessage: reason,
+                        userMessage: reason,
+                    }.to_json();
+
+                    return Ok(Response::with((status::BadRequest, err_response)));
+                },
+                Ok(rowid) => {
+                    // rowid: i64
+                    /* deck sucessfully created */
+
+                    grokdb.decks.get(rowid)
+                },
+            };
+
+            let new_deck: Deck = match maybe_new_deck {
+                Err(why) => {
+                    // why: QueryError
+                    let ref reason = format!("{:?}", why);
+
+                    let err_response = ErrorResponse {
+                        status: status::BadRequest,
+                        developerMessage: reason,
+                        userMessage: reason,
+                    }.to_json();
+
+                    return Ok(Response::with((status::BadRequest, err_response)));
+                },
+                Ok(deck) => deck,
+            };
+
+
+            let response = new_deck.to_json();
+
+            return Ok(Response::with((status::Ok, response)));
         }
     });
 
