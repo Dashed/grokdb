@@ -12,23 +12,45 @@ use queries::tables;
 
 
 pub struct DB {
+    // TODO: possible to do RwLock??
     pub db_conn: Arc<Mutex<SqliteConnection>>
 }
 
 impl DB {
 
-    fn lock(&self) -> LockResult<MutexGuard<SqliteConnection>> {
+    pub fn lock(&self) -> LockResult<MutexGuard<SqliteConnection>> {
         let mutex = self.db_conn.deref();
         return mutex.lock();
     }
 
-    fn finalize_query(sql: &str) -> String {
+    pub fn prepare_query(db_conn: &SqliteConnection) -> Result<(), QueryError> {
 
         // src: https://www.sqlite.org/pragma.html#pragma_foreign_keys
         // As of SQLite version 3.6.19, the default setting for foreign key enforcement is OFF.
 
-        return format!("PRAGMA foreign_keys=ON; {}", sql);
+        let ref final_query = format!("PRAGMA foreign_keys=ON;");
+
+        match db_conn.execute_batch(final_query) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: final_query.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
     }
+
+    // pub fn finalize_query(sql: &str) -> String {
+
+    //     // src: https://www.sqlite.org/pragma.html#pragma_foreign_keys
+    //     // As of SQLite version 3.6.19, the default setting for foreign key enforcement is OFF.
+
+    //     return format!("PRAGMA foreign_keys=ON; {}", sql);
+    // }
 }
 
 
@@ -125,16 +147,29 @@ fn create_tables(db: &DB) -> Result<(), QueryError> {
     let db_conn_guard = db.lock().unwrap();
     let ref db_conn = *db_conn_guard;
 
+    try!(DB::prepare_query(db_conn));
+
+    // match DB::prepare_query(db_conn) {
+    //     Err(why) => {
+    //         let err = QueryError {
+    //             sqlite_error: why,
+    //             query: final_query.clone(),
+    //         };
+    //         return Err(err);
+    //     },
+    //     _ => {/* query sucessfully executed */},
+    // }
+
     // execute every table setup query
     for query in tables::SETUP.into_iter() {
 
-        let ref final_query = DB::finalize_query(query);
+        let ref query = query.to_string();
 
-        match db_conn.execute_batch(final_query) {
+        match db_conn.execute_batch(query) {
             Err(why) => {
                 let err = QueryError {
                     sqlite_error: why,
-                    query: final_query.clone(),
+                    query: query.clone(),
                 };
                 return Err(err);
             },
