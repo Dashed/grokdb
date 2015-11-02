@@ -3,22 +3,23 @@ extern crate rusqlite;
 use std::error;
 use std::fmt;
 use std::ops::Deref;
-use std::sync::{Arc, RwLock, LockResult, RwLockWriteGuard};
+use std::sync::{Arc, Mutex, LockResult, MutexGuard};
 
 use rusqlite::SqliteConnection;
 use rusqlite::SqliteError;
 
 use queries::tables;
 
+
 pub struct DB {
-    pub db_conn: Arc<RwLock<SqliteConnection>>
+    pub db_conn: Arc<Mutex<SqliteConnection>>
 }
 
 impl DB {
 
-    fn write_lock(&self) -> LockResult<RwLockWriteGuard<SqliteConnection>> {
-        let lock = self.db_conn.deref();
-        return lock.write();
+    fn lock(&self) -> LockResult<MutexGuard<SqliteConnection>> {
+        let mutex = self.db_conn.deref();
+        return mutex.lock();
     }
 
     fn finalize_query(sql: &str) -> String {
@@ -95,7 +96,7 @@ pub fn bootstrap(database_name: String) -> Result<DB, BootstrapError> {
             return Err(BootstrapError::Sqlite(why));
         },
         Ok(db_conn) => {
-            let lock = RwLock::new(db_conn);
+            let lock = Mutex::new(db_conn);
             let arc = Arc::new(lock).clone();
 
             let db_wrap = DB {
@@ -121,7 +122,7 @@ pub fn bootstrap(database_name: String) -> Result<DB, BootstrapError> {
 
 fn create_tables(db: &DB) -> Result<(), QueryError> {
 
-    let db_conn_guard = db.write_lock().unwrap();
+    let db_conn_guard = db.lock().unwrap();
     let ref db_conn = *db_conn_guard;
 
     // execute every table setup query
