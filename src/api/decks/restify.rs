@@ -18,38 +18,33 @@ use ::database::QueryError;
 
 pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
-     let grokdb = Arc::new(grokdb);
-    // let grokdb = Arc::new(grokdb);
+    let grokdb = Arc::new(grokdb);
 
     router.get("/decks/:deck_id", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
-            let ref grokdb = grokdb;
-            // let grokdb = grokdb.clone().lock().unwrap();
 
-        //     let ref grokdb = grokdb;
-
-        //     // let grokdb = grokdb.clone().lock().unwrap();
+            // fetch and parse requested deck id
 
             let deck_id = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
 
-            let deck_id = match deck_id.parse::<i64>() {
+            let deck_id: i64 = match deck_id.parse::<i64>() {
                 Ok(deck_id) => deck_id,
                 Err(_) => {
-                    return Ok(Response::with((status::BadRequest, "invalid deck id")));
+
+                    let reason = "no JSON given";
+
+                    let err_response = ErrorResponse {
+                        status: status::BadRequest,
+                        developerMessage: reason,
+                        userMessage: reason,
+                    }.to_json();
+
+                    return Ok(Response::with((status::BadRequest, err_response)));
                 }
             };
 
-        //     // let json_input = req.get::<bodyparser::Json>();
-
-            let deck = grokdb.decks.get(deck_id);
-
-        //     // let msg = database::Message::Write(deck_id.to_string());
-
-        //     // let response = db_portal.write(msg);
-
-        //     // let output = format!("{}", deck_id);
-            return Ok(Response::with((status::Ok)));
+            return get_deck_by_id(grokdb.clone(), deck_id);
         }
     });
 
@@ -97,8 +92,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
-
-            let maybe_new_deck: Result<Deck, QueryError> = match maybe_created {
+            match maybe_created {
                 Err(why) => {
                     // why: QueryError
                     let ref reason = format!("{:?}", why);
@@ -109,37 +103,44 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         userMessage: reason,
                     }.to_json();
 
-                    return Ok(Response::with((status::BadRequest, err_response)));
+                    return Ok(Response::with((status::InternalServerError, err_response)));
                 },
                 Ok(rowid) => {
                     // rowid: i64
                     /* deck sucessfully created */
 
-                    grokdb.decks.get(rowid)
+                    return get_deck_by_id(grokdb.clone(), rowid);
                 },
             };
-
-            let new_deck: Deck = match maybe_new_deck {
-                Err(why) => {
-                    // why: QueryError
-                    let ref reason = format!("{:?}", why);
-
-                    let err_response = ErrorResponse {
-                        status: status::BadRequest,
-                        developerMessage: reason,
-                        userMessage: reason,
-                    }.to_json();
-
-                    return Ok(Response::with((status::BadRequest, err_response)));
-                },
-                Ok(deck) => deck,
-            };
-
-
-            let response = new_deck.to_json();
-
-            return Ok(Response::with((status::Ok, response)));
         }
     });
 
+}
+
+/* helpers */
+
+fn get_deck_by_id(grokdb: Arc<GrokDB>, deck_id: i64) -> IronResult<Response> {
+
+    let maybe_deck: Result<Deck, QueryError> = grokdb.decks.get(deck_id);
+
+    let deck: Deck = match maybe_deck {
+        Err(why) => {
+            // why: QueryError
+
+            let ref reason = format!("{:?}", why);
+
+            let err_response = ErrorResponse {
+                status: status::NotFound,
+                developerMessage: reason,
+                userMessage: reason,
+            }.to_json();
+
+            return Ok(Response::with((status::NotFound, err_response)));
+        },
+        Ok(deck) => deck,
+    };
+
+    let response = deck.to_json();
+
+    return Ok(Response::with((status::Ok, response)));
 }
