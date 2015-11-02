@@ -39,17 +39,17 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
     router.post("/decks", move |req: &mut Request| -> IronResult<Response> {
 
+        // parse json
+
         // let json_input = req.get::<bodyparser::Json>();
 
-        let ref err_response = ErrorResponse {
+        let err_response = ErrorResponse {
             status: status::Ok,
             developerMessage: "homura",
             userMessage: "homura",
-        }.get_raw();
+        }.to_json();
 
-        let encoded = json::encode(err_response).unwrap();
-
-        return Ok(Response::with((status::Ok, encoded)));
+        return Ok(Response::with((status::Ok, err_response)));
 
     });
 

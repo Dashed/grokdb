@@ -9,6 +9,7 @@ use rusqlite::SqliteError;
 use iron::{Request, Response, IronResult};
 use iron::status;
 use router::Router;
+use rustc_serialize::json;
 
 use std::sync::Arc;
 
@@ -24,6 +25,7 @@ pub struct ErrorResponse<'a>  {
 
 // Pattern from: https://github.com/WhiteHouse/api-standards#error-handling
 impl<'a> ErrorResponse<'a> {
+
     pub fn get_raw(&self) -> __ErrorResponse {
 
         let response = __ErrorResponse {
@@ -33,6 +35,11 @@ impl<'a> ErrorResponse<'a> {
         };
 
         return response;
+    }
+
+    pub fn to_json(&self) -> String {
+        let ref raw_err = self.get_raw();
+        return json::encode(raw_err).unwrap();
     }
 }
 
