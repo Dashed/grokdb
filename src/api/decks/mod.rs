@@ -70,7 +70,34 @@ impl Decks {
         };
     }
 
-    pub fn create(&self, create_deck_request: CreateDeck) -> Result<i64, QueryError> {
+    pub fn exists(&self, deck_id: i64) -> Result<bool, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("SELECT COUNT(1) FROM Decks WHERE deck_id = $1 LIMIT 1;");
+
+        let deck_exists = db_conn.query_row(query, &[&deck_id], |row| -> bool {
+            let count: i64 = row.get(0);
+            return count == 1;
+        });
+
+        match deck_exists {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(deck_exists) => {
+                return Ok(deck_exists);
+            }
+        };
+    }
+
+    pub fn create(&self, create_deck_request: &CreateDeck) -> Result<i64, QueryError> {
+
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
@@ -78,13 +105,19 @@ impl Decks {
         try!(DB::prepare_query(db_conn));
 
         let ref query = format!("INSERT INTO Decks(name, description) VALUES ($1, $2);");
+
+        let description = match create_deck_request.description {
+            Some(ref description) => description.clone(),
+            None => "".to_string()
+        };
+
         let params: &[&ToSql] = &[
 
             // required
-            &create_deck_request.name,
+            &create_deck_request.name, // $1
 
             // optional
-            &create_deck_request.description.unwrap_or("".to_string())
+            &description // $2
         ];
 
         match db_conn.execute(query, params) {
@@ -103,8 +136,75 @@ impl Decks {
         return Ok(rowid);
     }
 
-    pub fn connect_decks(&self, parent: i64, child: i64) {
-        // TODO: complete
+    pub fn connect_decks(&self, child: i64, parent: i64) -> Result<(), QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        // moving a child deck subtree consists of two procedures:
+        // 1. delete the subtree connections
+        let ref query_delete = format!("
+            DELETE FROM DecksClosure
+
+            /* select all descendents of child */
+            WHERE descendent IN (
+                SELECT descendent
+                FROM DecksClosure
+                WHERE ancestor = $1
+            )
+            AND
+
+            /* select all ancestors of child but not child itself */
+            ancestor IN (
+                SELECT ancestor
+                FROM DecksClosure
+                WHERE descendent = $1
+                AND ancestor != descendent
+            );
+        ");
+
+        let params: &[&ToSql] = &[
+            &child, // $1
+        ];
+
+        match db_conn.execute(query_delete, params) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query_delete.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        // 2. make parent (and its ancestors) be ancestors of child deck (and its descendants)
+        let ref query_insert = format!("
+            INSERT OR IGNORE INTO DecksClosure(ancestor, descendent, depth)
+            SELECT p.ancestor, c.descendent, p.depth+c.depth+1
+                FROM DecksClosure AS p, DecksClosure AS c
+            WHERE
+                p.descendent = $2
+                AND c.ancestor = $1;
+        ");
+
+        let params: &[&ToSql] = &[
+            &child, // $1
+            &parent, // $2
+        ];
+
+        match db_conn.execute(query_insert, params) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query_insert.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
     }
 }
 

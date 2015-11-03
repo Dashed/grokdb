@@ -98,7 +98,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 Err(err) => {
 
                     let ref reason = format!("{:?}", err);
-                    let res_code = status::InternalServerError;
+                    let res_code = status::BadRequest;
 
                     let err_response = ErrorResponse {
                         status: res_code,
@@ -112,7 +112,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
             // create deck
 
-            let deck_id: i64 = match grokdb.decks.create(create_deck_request) {
+            let deck_id: i64 = match grokdb.decks.create(&create_deck_request) {
                 Err(why) => {
                     // why: QueryError
                     let ref reason = format!("{:?}", why);
@@ -137,6 +137,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             // invariant: parent deck exists
             match create_deck_request.parent {
                 Some(parent_deck_id) => {
+
                     let parent_deck_id: i64 = parent_deck_id;
 
                     match grokdb.decks.connect_decks(deck_id, parent_deck_id) {
