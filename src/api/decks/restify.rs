@@ -8,7 +8,7 @@ use iron::prelude::*;
 use router::Router;
 use rustc_serialize::json;
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::ops::Deref;
 use std::error::Error;
 
@@ -48,6 +48,55 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             };
 
             return get_deck_by_id(grokdb, deck_id);
+        }
+    });
+
+    router.delete("/decks/:deck_id", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested deck id
+
+            let deck_id = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
+
+            let deck_id: i64 = match deck_id.parse::<u64>() {
+                Ok(deck_id) => deck_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // delete deck
+
+            match grokdb.decks.delete(deck_id) {
+                Err(why) => {
+                    // why: QueryError
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+                _ => {/* deck sucessfully deleted */},
+            };
+
+            return Ok(Response::with((status::Ok)));
         }
     });
 

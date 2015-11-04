@@ -8,6 +8,7 @@ mod restify;
 use std::sync::Arc;
 
 use rusqlite::types::ToSql;
+use rusqlite::{SqliteStatement, SqliteRow, SqliteError};
 use rustc_serialize::json;
 
 use ::database::{DB, QueryError};
@@ -136,13 +137,51 @@ impl Decks {
         return Ok(rowid);
     }
 
+    pub fn delete(&self, deck_id: i64) -> Result<(), QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        try!(DB::prepare_query(db_conn));
+
+        // depth-first delete on deck's children
+
+        let ref query_delete = format!("
+            DELETE FROM Decks
+            WHERE deck_id IN (
+                SELECT descendent
+                    FROM DecksClosure
+                WHERE
+                    ancestor = $1
+            );
+        ");
+
+        let params: &[&ToSql] = &[
+            &deck_id, // $1
+        ];
+
+        match db_conn.execute(query_delete, params) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query_delete.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
+    }
+
     pub fn connect_decks(&self, child: i64, parent: i64) -> Result<(), QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
 
         // moving a child deck subtree consists of two procedures:
-        // 1. delete the subtree connections
+        // 1. delete any and all subtree connections between child (and its descendants)
+        //    and the child's ancestors
         let ref query_delete = format!("
             DELETE FROM DecksClosure
 
@@ -184,8 +223,8 @@ impl Decks {
             SELECT p.ancestor, c.descendent, p.depth+c.depth+1
                 FROM DecksClosure AS p, DecksClosure AS c
             WHERE
-                p.descendent = $2
-                AND c.ancestor = $1;
+                c.ancestor = $1
+                AND p.descendent = $2;
         ");
 
         let params: &[&ToSql] = &[
