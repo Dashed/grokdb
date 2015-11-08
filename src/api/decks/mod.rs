@@ -22,13 +22,33 @@ pub struct CreateDeck {
     parent: Option<i64>,
 }
 
-#[derive(RustcEncodable)]
+#[derive(Debug, Clone, RustcDecodable)]
+pub struct UpdateDeck {
+    name: Option<String>,
+    description: Option<String>,
+    parent: Option<i64>,
+}
+
+impl UpdateDeck {
+
+    pub fn should_update(&self) -> bool {
+
+        if (self.name.is_some() ||
+            self.description.is_some() ||
+            self.parent.is_some()) {
+            return true;
+        }
+
+        return false;
+    }
+}
+
+#[derive(Debug, RustcEncodable)]
 struct Deck {
     id: i64,
     name: String,
     description: String,
 }
-
 
 impl Deck {
     pub fn to_json(&self) -> String {

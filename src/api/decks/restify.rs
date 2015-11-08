@@ -13,7 +13,7 @@ use std::ops::Deref;
 use std::error::Error;
 
 use ::api::{GrokDB, ErrorResponse};
-use ::api::decks::{CreateDeck, Deck};
+use ::api::decks::{CreateDeck, UpdateDeck, Deck};
 use ::database::QueryError;
 
 // attach decks REST endpoints to given router
