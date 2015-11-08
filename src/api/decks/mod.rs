@@ -194,6 +194,37 @@ impl Decks {
         return Ok(());
     }
 
+    pub fn get_parent(&self, deck_id: i64) -> Result<i64, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT ancestor
+            FROM DecksClosure
+            WHERE
+            descendent = $1
+            AND depth = 1;
+        ");
+
+        let results = db_conn.query_row(query, &[&deck_id], |row| -> i64 {
+            return row.get(0);
+        });
+
+        match results {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(ancestor) => {
+                return Ok(ancestor);
+            }
+        };
+    }
+
     pub fn connect_decks(&self, child: i64, parent: i64) -> Result<(), QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
@@ -266,5 +297,3 @@ impl Decks {
         return Ok(());
     }
 }
-
-
