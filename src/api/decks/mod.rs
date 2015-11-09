@@ -96,11 +96,11 @@ impl DeckResponse {
     }
 }
 
-pub struct Decks {
+pub struct DecksAPI {
     pub db: Arc<DB>,
 }
 
-impl Decks {
+impl DecksAPI {
 
     pub fn get_response(&self, deck_id: i64) -> Result<DeckResponse, QueryError> {
 

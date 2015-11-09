@@ -15,7 +15,7 @@ use rustc_serialize::json;
 
 use std::sync::Arc;
 
-use self::decks::Decks;
+use self::decks::DecksAPI;
 use super::database::{DB, BootstrapError};
 
 
@@ -74,7 +74,7 @@ pub struct __ErrorResponse  {
 // }
 
 pub struct GrokDB {
-    pub decks: Decks,
+    pub decks: DecksAPI,
 }
 
 pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
@@ -85,7 +85,7 @@ pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
     let db: Arc<DB> = Arc::new(try!(db_conn));
 
     let api = GrokDB {
-        decks: Decks {
+        decks: DecksAPI {
             db: db.clone()
         }
     };
