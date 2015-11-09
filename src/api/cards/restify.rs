@@ -106,6 +106,25 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
+            // ensure card title is non-empty string
+            let mut create_card_request = create_card_request;
+            create_card_request.title = create_card_request.title.trim().to_string();
+
+            if create_card_request.title.len() <= 0 {
+                let ref reason = format!("card title should be non-empty string");
+                let res_code = status::BadRequest;
+
+                let err_response = ErrorResponse {
+                    status: res_code,
+                    developerMessage: reason,
+                    userMessage: reason,
+                }.to_json();
+
+                return Ok(Response::with((res_code, err_response)));
+            }
+
+            let create_card_request = create_card_request;
+
             // create card
 
             let card_id: i64 = match grokdb.cards.create(&create_card_request) {

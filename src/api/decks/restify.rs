@@ -159,6 +159,25 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
+            // ensure deck title is non-empty string
+            let mut create_deck_request = create_deck_request;
+            create_deck_request.name = create_deck_request.name.trim().to_string();
+
+            if create_deck_request.name.len() <= 0 {
+                let ref reason = format!("deck name should be non-empty string");
+                let res_code = status::BadRequest;
+
+                let err_response = ErrorResponse {
+                    status: res_code,
+                    developerMessage: reason,
+                    userMessage: reason,
+                }.to_json();
+
+                return Ok(Response::with((res_code, err_response)));
+            }
+
+            let create_deck_request = create_deck_request;
+
             // create deck
 
             let deck_id: i64 = match grokdb.decks.create(&create_deck_request) {
