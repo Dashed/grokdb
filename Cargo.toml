@@ -15,6 +15,7 @@ version = "0.2"
 [dependencies.rusqlite]
 git = "https://github.com/Dashed/rusqlite"
 rev = "babbb29757bcf512b90385dcce8397585650cae8"
+features = ["named_params"]
 
 [dependencies.iron]
 version = "0.2"
