@@ -24,6 +24,69 @@ pub struct CreateCard {
     deck: i64,
 }
 
+#[derive(Debug, Clone, RustcDecodable)]
+pub struct UpdateCard {
+    title: Option<String>,
+    description: Option<String>,
+    front: Option<String>,
+    back: Option<String>,
+    deck: Option<i64>,
+}
+
+impl UpdateCard {
+
+    pub fn should_update(&self) -> bool {
+
+        return (
+            self.title.is_some() ||
+            self.description.is_some() ||
+            self.front.is_some() ||
+            self.back.is_some() ||
+            self.deck.is_some()
+        );
+    }
+
+    // get fields to update.
+    // this is a helper to construct the sql update query
+    pub fn sqlize(&self) -> (String, Vec<(&str, &ToSql)>) {
+
+        let mut fields: Vec<String> = vec![];
+        let mut values: Vec<(&str, &ToSql)> = vec![];
+
+        if self.title.is_some() {
+            fields.push(format!("title = :title"));
+            let tuple: (&str, &ToSql) = (":title", self.title.as_ref().unwrap());
+            values.push(tuple);
+        }
+
+        if self.description.is_some() {
+            fields.push(format!("description = :description"));
+            let tuple: (&str, &ToSql) = (":description", self.description.as_ref().unwrap());
+            values.push(tuple);
+        }
+
+        if self.front.is_some() {
+            fields.push(format!("front = :front"));
+            let tuple: (&str, &ToSql) = (":front", self.front.as_ref().unwrap());
+            values.push(tuple);
+        }
+
+        if self.back.is_some() {
+            fields.push(format!("back = :back"));
+            let tuple: (&str, &ToSql) = (":back", self.back.as_ref().unwrap());
+            values.push(tuple);
+        }
+
+        if self.deck.is_some() {
+            fields.push(format!("deck = :deck"));
+            let tuple: (&str, &ToSql) = (":deck", self.deck.as_ref().unwrap());
+            values.push(tuple);
+        }
+
+        return (fields.join(", "), values);
+    }
+}
+
 #[derive(Debug, RustcEncodable)]
 struct Card {
     id: i64,
@@ -129,6 +192,32 @@ impl CardsAPI {
         };
     }
 
+    pub fn exists(&self, card_id: i64) -> Result<bool, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("SELECT COUNT(1) FROM Cards WHERE card_id = $1 LIMIT 1;");
+
+        let card_exists = db_conn.query_row(query, &[&card_id], |row| -> bool {
+            let count: i64 = row.get(0);
+            return count >= 1;
+        });
+
+        match card_exists {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(card_exists) => {
+                return Ok(card_exists);
+            }
+        };
+    }
+
     pub fn create(&self, create_card_request: &CreateCard) -> Result<i64, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
@@ -175,5 +264,39 @@ impl CardsAPI {
         let rowid = db_conn.last_insert_rowid();
 
         return Ok(rowid);
+    }
+
+    pub fn update(&self, card_id: i64, update_card_request: &UpdateCard) -> Result<(), QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        try!(DB::prepare_query(db_conn));
+
+        let (fields, values): (String, Vec<(&str, &ToSql)>) = update_card_request.sqlize();
+
+        let mut values = values;
+        values.push((":card_id", &card_id));
+        let values = values;
+
+        let ref query_update = format!("
+            UPDATE Cards
+            SET
+            {fields}
+            WHERE card_id = :card_id;
+        ", fields = fields);
+
+        match db_conn.execute_named(query_update, &values[..]) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query_update.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
     }
 }
