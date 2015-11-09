@@ -22,6 +22,36 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
     let grokdb = Arc::new(grokdb);
 
+    router.get("/cards/:card_id", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested card id
+
+            let card_id = req.extensions.get::<Router>().unwrap().find("card_id").unwrap();
+
+            let card_id: i64 = match card_id.parse::<u64>() {
+                Ok(card_id) => card_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            return get_card_by_id(grokdb.clone(), card_id);
+        }
+    });
+
     router.post("/cards", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
