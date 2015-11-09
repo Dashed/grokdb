@@ -256,6 +256,39 @@ impl Decks {
         return Ok(());
     }
 
+    pub fn has_parent(&self, deck_id: i64) -> Result<bool, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT COUNT(1)
+            FROM DecksClosure
+            WHERE
+            descendent = $1
+            AND depth = 1
+            LIMIT 1;
+        ");
+
+        let has_parent = db_conn.query_row(query, &[&deck_id], |row| -> bool {
+            let count: i64 = row.get(0);
+            return count >= 1;
+        });
+
+        match has_parent {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(has_parent) => {
+                return Ok(has_parent);
+            }
+        };
+    }
+
     pub fn get_parent(&self, deck_id: i64) -> Result<i64, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
