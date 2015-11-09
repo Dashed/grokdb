@@ -65,9 +65,7 @@ impl UpdateDeck {
             values.push(tuple);
         }
 
-
         return (fields.join(", "), values);
-
     }
 }
 
