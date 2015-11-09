@@ -80,7 +80,17 @@ struct Deck {
     description: String,
 }
 
-impl Deck {
+#[derive(Debug, RustcEncodable)]
+struct DeckResponse {
+    id: i64,
+    name: String,
+    description: String,
+    has_parent: bool,
+    parent: i64
+}
+
+impl DeckResponse {
+
     pub fn to_json(&self) -> String {
         return json::encode(self).unwrap();
     }
@@ -91,6 +101,52 @@ pub struct Decks {
 }
 
 impl Decks {
+
+    pub fn get_response(&self, deck_id: i64) -> Result<DeckResponse, QueryError> {
+
+        // get props
+
+        let maybe_deck: Result<Deck, QueryError> = self.get(deck_id);
+        let deck: Deck = match maybe_deck {
+            Err(why) => {
+                // why: QueryError
+                return Err(why);
+            },
+            Ok(deck) => deck,
+        };
+
+        let maybe_has_parent: Result<bool, QueryError> = self.has_parent(deck_id);
+        let has_parent: bool = match maybe_has_parent {
+            Err(why) => {
+                // why: QueryError
+                return Err(why);
+            },
+            Ok(has_parent) => has_parent,
+        };
+
+        let parent: i64 = match has_parent {
+            false => 0,
+            true => {
+                match self.get_parent(deck_id) {
+                    Err(why) => {
+                        // why: QueryError
+                        return Err(why);
+                    },
+                    Ok(parent_id) => parent_id
+                }
+            }
+        };
+
+        let response = DeckResponse {
+            id: deck.id,
+            name: deck.name,
+            description: deck.description,
+            has_parent: has_parent,
+            parent: parent
+        };
+
+        return Ok(response);
+    }
 
     pub fn get(&self, deck_id: i64) -> Result<Deck, QueryError> {
 
@@ -299,7 +355,8 @@ impl Decks {
             FROM DecksClosure
             WHERE
             descendent = $1
-            AND depth = 1;
+            AND depth = 1
+            LIMIT 1;
         ");
 
         let results = db_conn.query_row(query, &[&deck_id], |row| -> i64 {

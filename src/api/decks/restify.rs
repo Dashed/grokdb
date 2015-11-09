@@ -13,7 +13,7 @@ use std::ops::Deref;
 use std::error::Error;
 
 use ::api::{GrokDB, ErrorResponse};
-use ::api::decks::{CreateDeck, UpdateDeck, Deck};
+use ::api::decks::{CreateDeck, UpdateDeck, Deck, DeckResponse};
 use ::database::QueryError;
 
 // attach decks REST endpoints to given router
@@ -385,9 +385,12 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
 fn get_deck_by_id(grokdb: &GrokDB, deck_id: i64) -> IronResult<Response> {
 
-    let maybe_deck: Result<Deck, QueryError> = grokdb.decks.get(deck_id);
+    let maybe_deck: Result<DeckResponse, QueryError> = grokdb.decks.get_response(deck_id);
 
-    let deck: Deck = match maybe_deck {
+    // TODO: check if deck exists
+    // TODO: add param option to skip the deck check
+
+    let deck: DeckResponse = match maybe_deck {
 
         Err(why) => {
             // why: QueryError
