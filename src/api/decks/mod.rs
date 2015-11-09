@@ -86,7 +86,8 @@ struct DeckResponse {
     name: String,
     description: String,
     has_parent: bool,
-    parent: i64
+    parent: i64,
+    children: Vec<i64>
 }
 
 impl DeckResponse {
@@ -137,12 +138,23 @@ impl DecksAPI {
             }
         };
 
+        let maybe_children: Result<Vec<i64>, QueryError> = self.children(deck_id);
+
+        let children: Vec<i64> = match maybe_children {
+            Err(why) => {
+                // why: QueryError
+                return Err(why);
+            },
+            Ok(children) => children,
+        };
+
         let response = DeckResponse {
             id: deck.id,
             name: deck.name,
             description: deck.description,
             has_parent: has_parent,
-            parent: parent
+            parent: parent,
+            children: children
         };
 
         return Ok(response);
@@ -310,6 +322,78 @@ impl DecksAPI {
         }
 
         return Ok(());
+    }
+
+    pub fn children<'a>(&self, deck_id: i64) -> Result<Vec<i64>, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT descendent
+                FROM DecksClosure
+            WHERE
+                ancestor = $1
+            AND
+                depth = 1;
+        ");
+
+        let params: &[&ToSql] = &[
+            &deck_id, // $1
+        ];
+
+        let maybe_stmt = db_conn.prepare(query);
+
+        if maybe_stmt.is_err() {
+
+            let why = maybe_stmt.unwrap_err();
+
+            let err = QueryError {
+                sqlite_error: why,
+                query: query.clone(),
+            };
+            return Err(err);
+        }
+
+        let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+
+
+        let maybe_iter = stmt.query_map(params, |row: SqliteRow| -> i64 {
+            return row.get(0);
+        });
+
+        match maybe_iter {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(iter) => {
+
+                let mut vec_of_deck_id: Vec<i64> = Vec::new();
+
+                for maybe_deck_id in iter {
+
+                    let deck_id: i64 = match maybe_deck_id {
+                        Err(why) => {
+                            let err = QueryError {
+                                sqlite_error: why,
+                                query: query.clone(),
+                            };
+                            return Err(err);
+                        },
+                        Ok(deck_id) => deck_id
+                    };
+
+                    vec_of_deck_id.push(deck_id);
+                }
+
+                // let sink: Vec<Result<i64, SqliteError>> = iter.collect();
+                return Ok(vec_of_deck_id);
+            }
+        };
     }
 
     pub fn has_parent(&self, deck_id: i64) -> Result<bool, QueryError> {
