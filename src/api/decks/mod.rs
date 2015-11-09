@@ -130,7 +130,7 @@ impl Decks {
 
         let deck_exists = db_conn.query_row(query, &[&deck_id], |row| -> bool {
             let count: i64 = row.get(0);
-            return count == 1;
+            return count >= 1;
         });
 
         match deck_exists {
