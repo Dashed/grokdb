@@ -415,7 +415,7 @@ fn get_deck_by_id(grokdb: &GrokDB, deck_id: i64) -> IronResult<Response> {
     return Ok(Response::with((status::Ok, response)));
 }
 
-fn deck_exists(grokdb: &GrokDB, deck_id: i64) -> Result<(), IronResult<Response>> {
+pub fn deck_exists(grokdb: &GrokDB, deck_id: i64) -> Result<(), IronResult<Response>> {
 
     match grokdb.decks.exists(deck_id) {
 

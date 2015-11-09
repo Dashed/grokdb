@@ -10,9 +10,8 @@ use rusqlite::SqliteError;
 
 use queries::tables;
 
-
+#[derive(Debug)]
 pub struct DB {
-    // TODO: possible to do RwLock??
     pub db_conn: Arc<Mutex<SqliteConnection>>
 }
 

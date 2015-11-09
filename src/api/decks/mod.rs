@@ -3,7 +3,7 @@ extern crate rusqlite;
 extern crate router;
 extern crate rustc_serialize;
 
-mod restify;
+pub mod restify;
 
 use std::sync::Arc;
 
@@ -97,6 +97,7 @@ impl DeckResponse {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct DecksAPI {
     pub db: Arc<DB>,
 }
@@ -222,12 +223,12 @@ impl DecksAPI {
 
         try!(DB::prepare_query(db_conn));
 
-        let ref query = format!("INSERT INTO Decks(name, description) VALUES ($1, $2);");
-
         let description = match create_deck_request.description {
             Some(ref description) => description.clone(),
             None => "".to_string()
         };
+
+        let ref query = format!("INSERT INTO Decks(name, description) VALUES ($1, $2);");
 
         let params: &[&ToSql] = &[
 

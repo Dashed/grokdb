@@ -6,6 +6,7 @@ extern crate router;
 extern crate rustc_serialize;
 
 pub mod decks;
+pub mod cards;
 
 use rusqlite::SqliteError;
 use iron::{Request, Response, IronResult};
@@ -14,8 +15,10 @@ use router::Router;
 use rustc_serialize::json;
 
 use std::sync::Arc;
+use std::ops::Deref;
 
 use self::decks::DecksAPI;
+use self::cards::CardsAPI;
 use super::database::{DB, BootstrapError};
 
 #[allow(non_snake_case)]
@@ -74,8 +77,10 @@ pub struct __ErrorResponse  {
 //     }
 // }
 
+#[derive(Debug, Clone)]
 pub struct GrokDB {
     pub decks: DecksAPI,
+    pub cards: CardsAPI,
 }
 
 pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
@@ -88,7 +93,10 @@ pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
     let api = GrokDB {
         decks: DecksAPI {
             db: db.clone()
-        }
+        },
+        cards: CardsAPI {
+            db: db.clone()
+        },
     };
 
     return Ok(api);
@@ -98,6 +106,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
     // TODO: db backup
 
-    decks::restify(router, grokdb);
+    decks::restify(router, grokdb.clone());
+    cards::restify(router, grokdb.clone());
 }
 
