@@ -1,4 +1,4 @@
-pub const SETUP: [&'static str; 10] = [
+pub const SETUP: [&'static str; 12] = [
 
     // configs
 
@@ -22,6 +22,7 @@ pub const SETUP: [&'static str; 10] = [
     CARDS,
 
     // cards/indices
+
     CARD_ID_INDEX,
 
     // cards/triggers
@@ -29,11 +30,17 @@ pub const SETUP: [&'static str; 10] = [
     UPDATED_CARD_TRIGGER,
 
     // cards score
+
     CARDS_SCORE,
 
     // cards score/triggers
 
     CARDS_SCORE_ON_NEW_CARD_TRIGGER,
+    CARDS_SCORE_ON_UPDATED_TRIGGER,
+
+    // cards score/indices
+
+    CARDS_SCORE_INDEX
 ];
 
 /**
@@ -158,4 +165,20 @@ ON Cards
 BEGIN
     INSERT OR IGNORE INTO CardsScore(card) VALUES (NEW.card_id);
 END;
+";
+
+const CARDS_SCORE_ON_UPDATED_TRIGGER: &'static str = "
+CREATE TRIGGER IF NOT EXISTS CARDS_SCORE_ON_UPDATED_TRIGGER
+AFTER UPDATE OF
+    success, fail, score
+ON CardsScore
+BEGIN
+    UPDATE CardsScore SET updated_at = strftime('%s', 'now') WHERE card = NEW.card;
+END;
+";
+
+/* enforce 1-1 relationship */
+
+const CARDS_SCORE_INDEX: &'static str = "
+CREATE UNIQUE INDEX IF NOT EXISTS CARDS_SCORE_INDEX ON CardsScore (card);
 ";
