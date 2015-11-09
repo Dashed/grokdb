@@ -33,13 +33,11 @@ impl UpdateDeck {
 
     pub fn should_update(&self) -> bool {
 
-        if (self.name.is_some() ||
+        return (
+            self.name.is_some() ||
             self.description.is_some() ||
-            self.parent.is_some()) {
-            return true;
-        }
-
-        return false;
+            self.parent.is_some()
+        );
     }
 
     // get fields to update.

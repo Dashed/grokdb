@@ -397,7 +397,6 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
-
 }
 
 /* helpers */
