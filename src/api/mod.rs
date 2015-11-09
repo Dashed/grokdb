@@ -1,4 +1,4 @@
-#![allow(non_snake_case)]
+
 
 extern crate iron;
 extern crate rusqlite;
@@ -18,7 +18,7 @@ use std::sync::Arc;
 use self::decks::DecksAPI;
 use super::database::{DB, BootstrapError};
 
-
+#[allow(non_snake_case)]
 pub struct ErrorResponse<'a>  {
     status: status::Status,
     developerMessage: &'a str,
@@ -50,6 +50,7 @@ impl<'a> ErrorResponse<'a> {
 // this struct is essentially the same as above; but is "encodable"-friendly for
 // rustc_serialize.
 //
+#[allow(non_snake_case)]
 #[derive(RustcEncodable)]
 pub struct __ErrorResponse  {
     status: u16,
