@@ -217,7 +217,6 @@ impl DecksAPI {
 
     pub fn create(&self, create_deck_request: &CreateDeck) -> Result<i64, QueryError> {
 
-
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
 
@@ -259,6 +258,8 @@ impl DecksAPI {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
+
+        try!(DB::prepare_query(db_conn));
 
         let (fields, values): (String, Vec<(&str, &ToSql)>) = update_deck_request.sqlize();
 
@@ -465,6 +466,8 @@ impl DecksAPI {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
+
+        try!(DB::prepare_query(db_conn));
 
         // moving a child deck subtree consists of two procedures:
         // 1. delete any and all subtree connections between child (and its descendants)
