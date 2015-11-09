@@ -213,6 +213,172 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
+    router.patch("/decks/:deck_id", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            let update_deck_request = req.get::<bodyparser::Struct<UpdateDeck>>();
+
+            // fetch and parse requested deck id
+
+            let deck_id: &str = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
+
+            let deck_id: i64 = match deck_id.parse::<u64>() {
+                Ok(deck_id) => deck_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // parse deck patch request
+
+            let ref update_deck_request: UpdateDeck = match update_deck_request {
+
+                Ok(Some(update_deck_request)) => {
+                    let update_deck_request: UpdateDeck = update_deck_request;
+                    update_deck_request
+                },
+
+                Ok(None) => {
+
+                    let reason = "no JSON given";
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: reason,
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Err(err) => {
+
+                    let ref reason = format!("{:?}", err);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: err.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // ensure there is at least one attribute to update
+            if !update_deck_request.should_update() {
+
+                let ref reason = format!("Invalid deck update request.");
+                let res_code = status::BadRequest;
+
+                let err_response = ErrorResponse {
+                    status: res_code,
+                    developerMessage: reason,
+                    userMessage: reason,
+                }.to_json();
+
+                return Ok(Response::with((res_code, err_response)));
+            }
+
+            // ensure deck to be updated exists
+            match deck_exists(grokdb, deck_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* updating deck exists; continue */}
+            }
+
+            // if deck is to be moved to a new parent, check if parent exists
+            match update_deck_request.parent {
+                Some(parent_deck_id) => {
+
+                    match deck_exists(grokdb, parent_deck_id) {
+                        Err(response) => {
+                            return response;
+                        },
+                        _ => {/* noop */}
+                    }
+
+                    let deck_parent: i64 = match grokdb.decks.get_parent(deck_id) {
+                        Err(why) => {
+                            // why: QueryError
+
+                            let ref reason = format!("{:?}", why);
+                            let res_code = status::InternalServerError;
+
+                            let err_response = ErrorResponse {
+                                status: res_code,
+                                developerMessage: reason,
+                                userMessage: why.description(),
+                            }.to_json();
+
+                            return Ok(Response::with((res_code, err_response)));
+                        },
+                        Ok(parent) => parent
+                    };
+
+                    if deck_parent != parent_deck_id {
+
+                        // parent deck different, move deck to new parent
+                        match grokdb.decks.connect_decks(deck_id, parent_deck_id) {
+                            Err(why) => {
+                                // why: QueryError
+                                let ref reason = format!("{:?}", why);
+                                let res_code = status::InternalServerError;
+
+                                let err_response = ErrorResponse {
+                                    status: res_code,
+                                    developerMessage: reason,
+                                    userMessage: why.description(),
+                                }.to_json();
+
+                                return Ok(Response::with((res_code, err_response)));
+                            },
+                            _ => {/* connected new deck with parent; continue */}
+                        }
+                    }
+                },
+                _ => {/* noop; continue */}
+            }
+
+            // update deck
+            match grokdb.decks.update(deck_id, update_deck_request) {
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+                _ => {/* deck updated */}
+            }
+
+            return get_deck_by_id(grokdb.clone(), deck_id);
+        }
+    });
+
+
 }
 
 /* helpers */

@@ -41,6 +41,36 @@ impl UpdateDeck {
 
         return false;
     }
+
+    // get fields to update.
+    // this is a helper to construct the sql update query
+    pub fn sqlize(&self) -> (String, Vec<(&str, &ToSql)>) {
+
+        let mut fields: Vec<String> = vec![];
+        let mut values: Vec<(&str, &ToSql)> = vec![];
+
+        if self.name.is_some() {
+            fields.push(format!("name = :name"));
+            let tuple: (&str, &ToSql) = (":name", self.name.as_ref().unwrap());
+            values.push(tuple);
+        }
+
+        if self.description.is_some() {
+            fields.push(format!("description = :description"));
+            let tuple: (&str, &ToSql) = (":description", self.description.as_ref().unwrap());
+            values.push(tuple);
+        }
+
+        if self.parent.is_some() {
+            fields.push(format!("parent = :parent"));
+            let tuple: (&str, &ToSql) = (":parent", self.parent.as_ref().unwrap());
+            values.push(tuple);
+        }
+
+
+        return (fields.join(", "), values);
+
+    }
 }
 
 #[derive(Debug, RustcEncodable)]
@@ -155,6 +185,38 @@ impl Decks {
         let rowid = db_conn.last_insert_rowid();
 
         return Ok(rowid);
+    }
+
+    pub fn update(&self, deck_id: i64, update_deck_request: &UpdateDeck) -> Result<(), QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let (fields, values): (String, Vec<(&str, &ToSql)>) = update_deck_request.sqlize();
+
+        let mut values = values;
+        values.push((":deck_id", &deck_id));
+        let values = values;
+
+        let ref query_update = format!("
+            UPDATE Decks
+            SET
+            {fields}
+            WHERE deck_id = :deck_id;
+        ", fields = fields);
+
+        match db_conn.execute_named(query_update, &values[..]) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query_update.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
     }
 
     pub fn delete(&self, deck_id: i64) -> Result<(), QueryError> {
