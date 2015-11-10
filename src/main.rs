@@ -6,6 +6,7 @@ extern crate router;
 extern crate logger;
 extern crate staticfile;
 extern crate bodyparser;
+extern crate urlencoded;
 // [end] iron framework plugins
 // extern crate chrono;
 extern crate rusqlite;

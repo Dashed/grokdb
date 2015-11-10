@@ -388,7 +388,6 @@ impl DecksAPI {
                     vec_of_deck_id.push(deck_id);
                 }
 
-                // let sink: Vec<Result<i64, SqliteError>> = iter.collect();
                 return Ok(vec_of_deck_id);
             }
         };
