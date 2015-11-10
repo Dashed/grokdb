@@ -1,4 +1,4 @@
-pub const SETUP: [&'static str; 12] = [
+pub const SETUP: [&'static str; 16] = [
 
     // configs
 
@@ -40,7 +40,19 @@ pub const SETUP: [&'static str; 12] = [
 
     // cards score/indices
 
-    CARDS_SCORE_INDEX
+    CARDS_SCORE_INDEX,
+
+    // cards score history
+
+    CARDS_SCORE_HISTORY,
+
+    // cards score history/triggers
+
+    SNAPSHOT_CARDS_SCORE_ON_UPDATED_TRIGGER,
+
+    // cards score history/indices
+    CARDS_SCORE_HISTORY_CARD_INDEX,
+    CARDS_SCORE_HISTORY_OCCURED_AT_INDEX
 ];
 
 /**
@@ -170,15 +182,50 @@ END;
 const CARDS_SCORE_ON_UPDATED_TRIGGER: &'static str = "
 CREATE TRIGGER IF NOT EXISTS CARDS_SCORE_ON_UPDATED_TRIGGER
 AFTER UPDATE OF
-    success, fail, score
+    success, fail
 ON CardsScore
 BEGIN
     UPDATE CardsScore SET updated_at = strftime('%s', 'now') WHERE card = NEW.card;
 END;
 ";
 
-/* enforce 1-1 relationship */
-
+// enforce 1-1 relationship
 const CARDS_SCORE_INDEX: &'static str = "
 CREATE UNIQUE INDEX IF NOT EXISTS CARDS_SCORE_INDEX ON CardsScore (card);
+";
+
+/* cards score history */
+
+const CARDS_SCORE_HISTORY: &'static str = "
+CREATE TABLE IF NOT EXISTS CardsScoreHistory (
+
+    occured_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+    success INTEGER NOT NULL DEFAULT 0,
+    fail INTEGER NOT NULL DEFAULT 0,
+    changelog TEXT NOT NULL DEFAULT '', /* internal for CardsScoreHistory to take snapshot of */
+    card INTEGER NOT NULL,
+
+    FOREIGN KEY (card) REFERENCES Cards(card_id) ON DELETE CASCADE
+);
+";
+
+const SNAPSHOT_CARDS_SCORE_ON_UPDATED_TRIGGER: &'static str = "
+CREATE TRIGGER IF NOT EXISTS SNAPSHOT_CARDS_SCORE_ON_UPDATED_TRIGGER
+AFTER UPDATE
+OF success, fail, changelog
+ON CardsScore
+BEGIN
+   INSERT INTO CardsScoreHistory(occured_at, success, fail, changelog, card)
+   VALUES (strftime('%s', 'now'), NEW.success, NEW.fail, NEW.changelog, NEW.card);
+END;
+";
+
+const CARDS_SCORE_HISTORY_CARD_INDEX: &'static str = "
+CREATE INDEX IF NOT EXISTS CARDS_SCORE_HISTORY_CARD_INDEX
+ON CardsScoreHistory (card);
+";
+
+const CARDS_SCORE_HISTORY_OCCURED_AT_INDEX: &'static str = "
+CREATE INDEX IF NOT EXISTS CARDS_SCORE_HISTORY_OCCURED_AT_INDEX
+ON CardsScoreHistory (occured_at DESC);
 ";
