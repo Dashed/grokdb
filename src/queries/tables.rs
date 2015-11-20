@@ -1,4 +1,4 @@
-pub const SETUP: [&'static str; 16] = [
+pub const SETUP: [&'static str; 19] = [
 
     // configs
 
@@ -52,7 +52,16 @@ pub const SETUP: [&'static str; 16] = [
 
     // cards score history/indices
     CARDS_SCORE_HISTORY_CARD_INDEX,
-    CARDS_SCORE_HISTORY_OCCURED_AT_INDEX
+    CARDS_SCORE_HISTORY_OCCURED_AT_INDEX,
+
+    // stashes
+    STASHES,
+    STASHES_CARDS,
+
+    // stashes/triggers
+    STASHES_ON_UPDATE_TRIGGER,
+
+    // review
 ];
 
 /**
@@ -229,3 +238,49 @@ const CARDS_SCORE_HISTORY_OCCURED_AT_INDEX: &'static str = "
 CREATE INDEX IF NOT EXISTS CARDS_SCORE_HISTORY_OCCURED_AT_INDEX
 ON CardsScoreHistory (occured_at DESC);
 ";
+
+/* stashes */
+
+const STASHES: &'static str = "
+CREATE TABLE IF NOT EXISTS Stashes (
+    stash_id INTEGER PRIMARY KEY NOT NULL,
+
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+
+    created_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')), /* note: time when the stash was modified. not when it was reviewed. */
+
+    CHECK (name <> '') /* ensure not empty */
+);
+";
+
+// cards that belong to a stash
+const STASHES_CARDS: &'static str = "
+CREATE TABLE IF NOT EXISTS StashCards (
+
+    stash INTEGER NOT NULL,
+    card INTEGER NOT NULL,
+
+    added_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+
+    PRIMARY KEY(stash, card),
+
+    FOREIGN KEY (stash) REFERENCES Stashes(stash_id) ON DELETE CASCADE,
+    FOREIGN KEY (card) REFERENCES Cards(card_id) ON DELETE CASCADE
+);
+";
+
+const STASHES_ON_UPDATE_TRIGGER: &'static str = "
+CREATE TRIGGER IF NOT EXISTS STASHES_ON_UPDATE_TRIGGER
+AFTER UPDATE OF
+    name, description
+ON Stashes
+BEGIN
+    UPDATE Stashes SET updated_at = strftime('%s', 'now') WHERE stash_id = NEW.stash_id;
+END;
+";
+
+
+/* review */
+
