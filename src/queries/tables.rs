@@ -1,4 +1,4 @@
-pub const SETUP: [&'static str; 19] = [
+pub const SETUP: [&'static str; 22] = [
 
     // configs
 
@@ -15,6 +15,7 @@ pub const SETUP: [&'static str; 19] = [
 
     // decks/triggers
 
+    DECK_ON_UPDATE_TRIGGER,
     DECKSCLOSURE_NEW_DECK_TRIGGER,
 
     // cards
@@ -62,6 +63,8 @@ pub const SETUP: [&'static str; 19] = [
     STASHES_ON_UPDATE_TRIGGER,
 
     // review
+    CACHED_DECK_REVIEW,
+    CACHED_STASH_REVIEW
 ];
 
 /**
@@ -298,3 +301,28 @@ END;
 
 /* review */
 
+const CACHED_DECK_REVIEW: &'static str = "
+CREATE TABLE IF NOT EXISTS CachedDeckReview (
+    deck INTEGER NOT NULL,
+    card INTEGER NOT NULL,
+    created_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+
+    PRIMARY KEY(deck),
+
+    FOREIGN KEY (deck) REFERENCES Decks(deck_id) ON DELETE CASCADE,
+    FOREIGN KEY (card) REFERENCES Cards(card_id) ON DELETE CASCADE
+);
+";
+
+const CACHED_STASH_REVIEW: &'static str = "
+CREATE TABLE IF NOT EXISTS CachedStashReview (
+    stash INTEGER NOT NULL,
+    card INTEGER NOT NULL,
+    created_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+
+    PRIMARY KEY(stash),
+
+    FOREIGN KEY (stash) REFERENCES Stashes(stash_id) ON DELETE CASCADE,
+    FOREIGN KEY (card) REFERENCES Cards(card_id) ON DELETE CASCADE
+);
+";
