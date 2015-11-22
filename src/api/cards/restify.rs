@@ -18,6 +18,7 @@ use ::api::cards::{CreateCard, Card, UpdateCard, CardResponse, CardsPageRequest,
 use ::api::decks::restify::deck_exists;
 use ::database::QueryError;
 
+
 // attach cards REST endpoints to given router
 pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
@@ -198,7 +199,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 },
             };
 
-            return get_card_by_id(&grokdb, card_id);
+            return get_card_by_id(grokdb.clone(), card_id);
         }
     });
 
@@ -324,7 +325,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 _ => {/* card updated */}
             }
 
-            return get_card_by_id(&grokdb, card_id);
+            return get_card_by_id(grokdb.clone(), card_id);
         }
     });
 
@@ -643,7 +644,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
 /* helpers */
 
-fn get_card_by_id(grokdb: &GrokDB, card_id: i64) -> IronResult<Response> {
+pub fn get_card_by_id(grokdb: &GrokDB, card_id: i64) -> IronResult<Response> {
 
     let maybe_card: Result<CardResponse, QueryError> = grokdb.cards.get_response(card_id);
 
