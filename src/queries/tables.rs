@@ -263,7 +263,7 @@ CREATE TABLE IF NOT EXISTS Stashes (
     description TEXT NOT NULL DEFAULT '',
 
     created_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
-    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')), /* note: time when the stash was modified. not when it was reviewed. */
+    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')), /* note: time when the stash was modified, not when it was reviewed. */
 
     CHECK (name <> '') /* ensure not empty */
 );

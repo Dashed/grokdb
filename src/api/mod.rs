@@ -1,5 +1,3 @@
-
-
 extern crate iron;
 extern crate rusqlite;
 extern crate router;
@@ -7,6 +5,7 @@ extern crate rustc_serialize;
 
 pub mod decks;
 pub mod cards;
+pub mod stashes;
 
 use rusqlite::SqliteError;
 use iron::{Request, Response, IronResult};
@@ -19,6 +18,7 @@ use std::ops::Deref;
 
 use self::decks::DecksAPI;
 use self::cards::CardsAPI;
+use self::stashes::StashesAPI;
 use super::database::{DB, BootstrapError};
 
 #[allow(non_snake_case)]
@@ -81,6 +81,7 @@ pub struct __ErrorResponse  {
 pub struct GrokDB {
     pub decks: DecksAPI,
     pub cards: CardsAPI,
+    pub stashes: StashesAPI
 }
 
 pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
@@ -97,6 +98,9 @@ pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
         cards: CardsAPI {
             db: db.clone()
         },
+        stashes: StashesAPI {
+            db: db.clone()
+        }
     };
 
     return Ok(api);
@@ -108,5 +112,6 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
     decks::restify(router, grokdb.clone());
     cards::restify(router, grokdb.clone());
+    stashes::restify(router, grokdb.clone());
 }
 
