@@ -74,6 +74,8 @@ struct Deck {
     id: i64,
     name: String,
     description: String,
+    created_at: i64, // unix timestamp
+    updated_at: i64  // unix timestamp
 }
 
 #[derive(Debug, RustcEncodable)]
@@ -83,7 +85,9 @@ struct DeckResponse {
     description: String,
     has_parent: bool,
     parent: i64,
-    children: Vec<i64>
+    children: Vec<i64>,
+    created_at: i64, // unix timestamp
+    updated_at: i64  // unix timestamp
 }
 
 impl DeckResponse {
@@ -151,7 +155,9 @@ impl DecksAPI {
             description: deck.description,
             has_parent: has_parent,
             parent: parent,
-            children: children
+            children: children,
+            created_at: deck.created_at, // unix timestamp
+            updated_at: deck.updated_at  // unix timestamp
         };
 
         return Ok(response);
@@ -162,13 +168,20 @@ impl DecksAPI {
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
 
-        let ref query = format!("SELECT deck_id, name, description FROM Decks WHERE deck_id = $1 LIMIT 1;");
+        let ref query = format!("
+            SELECT
+                deck_id, name, description, created_at, updated_at
+            FROM Decks
+            WHERE deck_id = $1 LIMIT 1;
+        ");
 
         let results = db_conn.query_row(query, &[&deck_id], |row| -> Deck {
             return Deck {
                 id: row.get(0),
                 name: row.get(1),
                 description: row.get(2),
+                created_at: row.get(3),
+                updated_at: row.get(4)
             };
         });
 

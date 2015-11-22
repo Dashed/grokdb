@@ -87,8 +87,22 @@ CREATE TABLE IF NOT EXISTS Decks (
     deck_id INTEGER PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
+
+    created_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')), /* note: time when the deck was modified, not when it was reviewed. */
+
     CHECK (name <> '') /* ensure not empty */
 );
+";
+
+const DECK_ON_UPDATE_TRIGGER: &'static str = "
+CREATE TRIGGER IF NOT EXISTS DECK_ON_UPDATE_TRIGGER
+AFTER UPDATE OF
+    name, description
+ON Decks
+BEGIN
+    UPDATE Decks SET updated_at = strftime('%s', 'now') WHERE deck_id = NEW.deck_id;
+END;
 ";
 
 // description of the closure table from:
