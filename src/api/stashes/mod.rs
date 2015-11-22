@@ -19,6 +19,46 @@ pub struct CreateStash {
     description: Option<String>
 }
 
+#[derive(Debug, Clone, RustcDecodable)]
+pub struct UpdateStash {
+    name: Option<String>,
+    description: Option<String>
+}
+
+impl UpdateStash {
+
+    pub fn should_update(&self) -> bool {
+
+        return (
+            self.name.is_some() ||
+            self.description.is_some()
+        );
+    }
+
+    // get fields to update.
+    // this is a helper to construct the sql update query
+    pub fn sqlize(&self) -> (String, Vec<(&str, &ToSql)>) {
+
+        let mut fields: Vec<String> = vec![];
+        let mut values: Vec<(&str, &ToSql)> = vec![];
+
+        if self.name.is_some() {
+            fields.push(format!("name = :name"));
+            let tuple: (&str, &ToSql) = (":name", self.name.as_ref().unwrap());
+            values.push(tuple);
+        }
+
+        if self.description.is_some() {
+            fields.push(format!("description = :description"));
+            let tuple: (&str, &ToSql) = (":description", self.description.as_ref().unwrap());
+            values.push(tuple);
+        }
+
+        return (fields.join(", "), values);
+    }
+}
+
+
 #[derive(Debug, RustcEncodable)]
 struct Stash {
     id: i64,
@@ -111,6 +151,37 @@ impl StashesAPI {
         };
     }
 
+    pub fn exists(&self, stash_id: i64) -> Result<bool, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                COUNT(1)
+            FROM Stashes
+            WHERE stash_id = $1 LIMIT 1;
+        ");
+
+        let stash_exists = db_conn.query_row(query, &[&stash_id], |row| -> bool {
+            let count: i64 = row.get(0);
+            return count >= 1;
+        });
+
+        match stash_exists {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(stash_exists) => {
+                return Ok(stash_exists);
+            }
+        };
+    }
+
     pub fn create(&self, create_stash_request: &CreateStash) -> Result<i64, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
@@ -148,6 +219,40 @@ impl StashesAPI {
         let rowid = db_conn.last_insert_rowid();
 
         return Ok(rowid);
+    }
+
+    pub fn update(&self, stash_id: i64, update_stash_request: &UpdateStash) -> Result<(), QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        try!(DB::prepare_query(db_conn));
+
+        let (fields, values): (String, Vec<(&str, &ToSql)>) = update_stash_request.sqlize();
+
+        let mut values = values;
+        values.push((":stash_id", &stash_id));
+        let values = values;
+
+        let ref query_update = format!("
+            UPDATE Stashes
+            SET
+            {fields}
+            WHERE stash_id = :stash_id;
+        ", fields = fields);
+
+        match db_conn.execute_named(query_update, &values[..]) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query_update.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
     }
 
     pub fn delete(&self, stash_id: i64) -> Result<(), QueryError> {
