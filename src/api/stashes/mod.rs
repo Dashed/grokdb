@@ -283,4 +283,34 @@ impl StashesAPI {
 
         return Ok(());
     }
+
+    pub fn add_card_to_stash(&self, stash_id: i64, card_id: i64) -> Result<(), QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        try!(DB::prepare_query(db_conn));
+
+        let ref query_insert = format!("
+            INSERT OR IGNORE INTO StashCards(stash, card) VALUES (:stash_id, :card_id);
+        ");
+
+        let params: &[(&str, &ToSql)] = &[
+            (":stash_id", &stash_id),
+            (":card_id", &card_id)
+        ];
+
+        match db_conn.execute_named(query_insert, params) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query_insert.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
+    }
 }
