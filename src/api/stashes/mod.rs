@@ -348,4 +348,36 @@ impl StashesAPI {
 
         return Ok(());
     }
+
+    pub fn remove_card_from_all_stashes(&self, card_id: i64) -> Result<(), QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        try!(DB::prepare_query(db_conn));
+
+        let ref query_delete = format!("
+            DELETE
+            FROM StashCards
+            WHERE
+                card = :card_id;
+        ");
+
+        let params: &[(&str, &ToSql)] = &[
+            (":card_id", &card_id)
+        ];
+
+        match db_conn.execute_named(query_delete, params) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query_delete.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
+    }
 }
