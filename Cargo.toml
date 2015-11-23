@@ -14,9 +14,6 @@ version = "0.2"
 [dependencies.clap]
 version = "1.4"
 
-[dependencies.chrono]
-version = "0.2"
-
 [dependencies.rusqlite]
 git = "https://github.com/Dashed/rusqlite"
 rev = "babbb29757bcf512b90385dcce8397585650cae8"

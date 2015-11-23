@@ -441,9 +441,12 @@ impl ReviewableSelection for ReviewableDeck {
                 rank_score(cs.success, cs.fail, strftime('%s','now') - cs.updated_at, cs.times_reviewed) >= :min_score;
         ");
 
+        let age_in_seconds: i64 = age_in_hours * 3600;
+
         let params: &[(&str, &ToSql)] = &[
-            (":age_of_consent", &age_in_hours),
+            (":age_of_consent", &age_in_seconds),
             (":min_score", &min_score),
+            (":deck_id", &(self.deck_id))
         ];
 
         let maybe_count = db_conn.query_named_row(query, params, |row| -> i64 {
@@ -495,10 +498,13 @@ impl ReviewableSelection for ReviewableDeck {
             OFFSET :index;
         ");
 
+        let age_in_seconds: i64 = age_in_hours * 3600;
+
         let params: &[(&str, &ToSql)] = &[
-            (":age_of_consent", &age_in_hours),
+            (":age_of_consent", &age_in_seconds),
             (":min_score", &min_score),
             (":index", &index),
+            (":deck_id", &(self.deck_id))
         ];
 
         let maybe_card_id = db_conn.query_named_row(query, params, |row| -> i64 {
@@ -574,7 +580,8 @@ impl ReviewableSelection for ReviewableDeck {
 
         let params: &[(&str, &ToSql)] = &[
             (":purgatory_size", &purgatory_size),
-            (":min_score", &min_score)
+            (":min_score", &min_score),
+            (":deck_id", &(self.deck_id))
         ];
 
         let maybe_count = db_conn.query_named_row(query, params, |row| -> i64 {
@@ -640,7 +647,8 @@ impl ReviewableSelection for ReviewableDeck {
         let params: &[(&str, &ToSql)] = &[
             (":purgatory_size", &purgatory_size),
             (":min_score", &min_score),
-            (":index", &index)
+            (":index", &index),
+            (":deck_id", &(self.deck_id))
         ];
 
         let maybe_card_id = db_conn.query_named_row(query, params, |row| -> i64 {

@@ -127,7 +127,26 @@ pub fn bootstrap(database_name: String) -> Result<DB, BootstrapError> {
                 Err(why) => {
                     return Err(BootstrapError::Sqlite(why));
                 },
-                _ => {}
+                _ => {
+
+                    let ref query = format!("
+                        SELECT rank_score(0, 0, 0, 0);
+                    ");
+
+                    let maybe_result = db_conn.query_row(query, &[], |row| -> f64 {
+                        return row.get(0);
+                    });
+
+                    match maybe_result {
+                        Err(why) => {
+                            return Err(BootstrapError::Sqlite(why));
+                        },
+                        Ok(result) => {
+                            // TODO: assert result is 0.5, otherwise panic
+                            // println!("result: {}", result);
+                        }
+                    };
+                }
             }
 
             let lock = Mutex::new(db_conn);
@@ -238,7 +257,7 @@ extern "C" fn rank_score(ctx: *mut sqlite3_context, _: c_int, argv: *mut *mut sq
         let bias_factor: c_double = (1.0f64 + fail) / ((total + 1.0f64) + success + times_reviewed / 3.0f64);
         let base: c_double = lidstone + 1.0f64;
 
-        let rank_score: c_double = lidstone * (age * bias_factor + base).ln() / base.ln();
-        rank_score.set_result(ctx);
+        let _rank_score: c_double = lidstone * (age * bias_factor + base).ln() / base.ln();
+        _rank_score.set_result(ctx);
     }
 }

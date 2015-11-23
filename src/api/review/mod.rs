@@ -255,7 +255,7 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
 
                 _ => { // 70% probability
                     // Random card from top 50% of highest rank score
-                    let min_idx: i64 = ((num_cards as f64) / 2f64).floor() as i64;
+                    let min_idx: i64 = ((num_cards as f64) / 2f64).ceil() as i64;
                     rng.gen_range(0, min_idx)
                 }
             };
@@ -302,7 +302,7 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
                 }
             };
 
-            let card_idx: i64 = match rng.gen_range(0f64, 1f64) {
+            let (card_idx, sort_by_score): (i64, bool) = match rng.gen_range(0f64, 1f64) {
 
                 pin if pin < 0.2 => {
                     // random card (20% prob)
@@ -314,7 +314,7 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
                         Ok(num_cards) => num_cards
                     };
 
-                    rng.gen_range(0, num_cards)
+                    (rng.gen_range(0, num_cards), true)
                 },
 
                 pin if pin < (0.2 + 0.75) => {
@@ -327,16 +327,17 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
                         Ok(num_cards) => num_cards
                     };
 
-                    let min_idx: i64 = ((num_cards as f64) / 2f64).floor() as i64;
-                    rng.gen_range(0, min_idx)
+                    let min_idx: i64 = ((num_cards as f64) / 2f64).ceil() as i64;
+
+                    (rng.gen_range(0, min_idx), true)
                 },
 
                 _ => { // Oldest card
-                    0
+                    (0, false)
                 }
             };
 
-            match selection.get_old_card(purgatory_size, min_score, card_idx, true) {
+            match selection.get_old_card(purgatory_size, min_score, card_idx, sort_by_score) {
                 Err(why) => {
                     return Err(why);
                 },

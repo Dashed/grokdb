@@ -10,7 +10,6 @@ extern crate staticfile;
 extern crate bodyparser;
 extern crate urlencoded;
 // [end] iron framework plugins
-// extern crate chrono;
 extern crate rusqlite;
 extern crate rustc_serialize;
 
@@ -21,6 +20,7 @@ mod api;
 
 // local scoped names
 use api::GrokDB;
+
 use clap::{Arg, App};
 // [begin] iron framework
 use iron::{Iron, Chain};
@@ -28,7 +28,6 @@ use router::{Router};
 use logger::Logger;
 use staticfile::Static;
 // [end] iron framework
-// use chrono::*;
 
 use std::path::Path;
 
