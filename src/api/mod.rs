@@ -6,6 +6,7 @@ extern crate rustc_serialize;
 pub mod decks;
 pub mod cards;
 pub mod stashes;
+pub mod review;
 
 use rusqlite::SqliteError;
 use iron::{Request, Response, IronResult};
@@ -19,6 +20,7 @@ use std::ops::Deref;
 use self::decks::DecksAPI;
 use self::cards::CardsAPI;
 use self::stashes::StashesAPI;
+use self::review::ReviewAPI;
 use super::database::{DB, BootstrapError};
 
 #[allow(non_snake_case)]
@@ -113,5 +115,6 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
     decks::restify(router, grokdb.clone());
     cards::restify(router, grokdb.clone());
     stashes::restify(router, grokdb.clone());
+    review::restify(router, grokdb.clone());
 }
 

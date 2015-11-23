@@ -59,7 +59,7 @@ pub trait ReviewableSelection {
     // top P highest scoring cards
 
     // returns card id
-    fn get_old_card(&self, purgatory_size: i64, score_limit: f64, index: i64, sort_by_score: bool) -> Result<i64, QueryError>;
+    fn get_old_card(&self, purgatory_size: i64, min_score: f64, index: i64, sort_by_score: bool) -> Result<i64, QueryError>;
 }
 
 pub enum Action {
@@ -257,15 +257,18 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
 
         Method::LeastRecentlyReviewed => {
 
-            let num_cards: i64 = match selection.number_of_cards() {
-                Err(why) => {
-                    return Err(why);
-                },
-                Ok(num_cards) => num_cards
-            };
-
             // calculate the purgatory size
-            let purgatory_size = (0.2 * (num_cards as f64)).ceil() as i64;
+            let purgatory_size = {
+
+                let num_cards: i64 = match selection.number_of_cards() {
+                    Err(why) => {
+                        return Err(why);
+                    },
+                    Ok(num_cards) => num_cards
+                };
+
+                (0.2 * (num_cards as f64)).ceil() as i64
+            };
 
             // randomly decide to discard low scoring cards
             let min_score: f64 = {

@@ -1,4 +1,6 @@
 // crates
+extern crate libc;
+extern crate rand;
 extern crate clap;
 extern crate iron;
 // [begin] iron framework plugins
@@ -31,15 +33,6 @@ use staticfile::Static;
 use std::path::Path;
 
 
-
-// #[derive(Debug)]
-// struct Person {
-//     id: i32,
-//     name: String,
-//     time_created: Timespec,
-//     data: Option<Vec<u8>>
-// }
-
 fn main() {
 
     // parse command line args
@@ -64,6 +57,7 @@ fn main() {
             })
         )
         // TODO: port
+        // TODO: multiple static directories to serve
         .arg(
             Arg::with_name("database_name")
             .help("Database name to store your flashcards")
@@ -118,18 +112,6 @@ fn main() {
     /* REST API */
 
     api::restify(&mut router, grokdb);
-
-    // router.get("/decks", handler);
-
-    // fn handler(req: &mut Request) -> IronResult<Response> {
-    //     // let ref query = req.extensions.get::<Router>().unwrap().find("query").unwrap_or("/");
-    //     // Ok(Response::with((status::Ok, *query)))
-    //     // let deck = grokdb.decks.get(1);
-    //     foo;
-
-    //     Ok(Response::with((status::Ok, "lol")))
-    // }
-
 
     /* iron logging */
 
