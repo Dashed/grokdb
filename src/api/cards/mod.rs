@@ -6,7 +6,7 @@ pub mod restify;
 use std::sync::Arc;
 
 use rusqlite::types::ToSql;
-use rusqlite::{SqliteStatement, SqliteRow, SqliteError};
+use rusqlite::{SqliteStatement};
 use rustc_serialize::json;
 
 use ::api::{GrokDB};
@@ -57,8 +57,8 @@ pub struct UpdateCard {
 
 impl UpdateCard {
 
+    #[allow(unused_parens)]
     pub fn should_update(&self) -> bool {
-
         return (
             self.title.is_some() ||
             self.description.is_some() ||

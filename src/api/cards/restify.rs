@@ -14,7 +14,7 @@ use std::ops::Deref;
 use std::error::Error;
 
 use ::api::{GrokDB, ErrorResponse};
-use ::api::cards::{CreateCard, Card, UpdateCard, CardResponse, CardsPageRequest, SortBy, SortOrder};
+use ::api::cards::{CreateCard, UpdateCard, CardResponse, CardsPageRequest, SortBy, SortOrder};
 use ::api::decks::restify::deck_exists;
 use ::api::stashes::restify::stash_exists;
 use ::database::QueryError;

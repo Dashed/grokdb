@@ -32,8 +32,8 @@ pub struct UpdateDeck {
 
 impl UpdateDeck {
 
+    #[allow(unused_parens)]
     pub fn should_update(&self) -> bool {
-
         return (
             self.name.is_some() ||
             self.description.is_some() ||

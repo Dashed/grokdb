@@ -6,8 +6,6 @@ extern crate rustc_serialize;
 use iron::status;
 use iron::prelude::*;
 use router::Router;
-use urlencoded::{UrlEncodedQuery, QueryMap, UrlDecodingError};
-use rustc_serialize::json;
 
 use std::sync::Arc;
 use std::ops::Deref;
@@ -20,7 +18,7 @@ use ::api::stashes::reviewable::{ReviewableStash};
 use ::api::stashes::restify::{stash_exists};
 use ::api::cards::restify::{get_card_by_id, card_exists};
 use ::api::review::{get_review_card, UpdateCardScore, ReviewableSelection};
-use ::database::QueryError;
+
 
 // attach review REST endpoints to given router
 pub fn restify(router: &mut Router, grokdb: GrokDB) {

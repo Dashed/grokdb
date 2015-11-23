@@ -141,7 +141,7 @@ pub fn bootstrap(database_name: String) -> Result<DB, BootstrapError> {
                         Err(why) => {
                             return Err(BootstrapError::Sqlite(why));
                         },
-                        Ok(result) => {
+                        Ok(_/*result*/) => {
                             // TODO: assert result is 0.5, otherwise panic
                             // println!("result: {}", result);
                         }

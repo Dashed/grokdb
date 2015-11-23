@@ -6,7 +6,6 @@ extern crate rustc_serialize;
 use iron::status;
 use iron::prelude::*;
 use router::Router;
-use urlencoded::{UrlEncodedQuery, QueryMap, UrlDecodingError};
 use rustc_serialize::json;
 
 use std::sync::Arc;

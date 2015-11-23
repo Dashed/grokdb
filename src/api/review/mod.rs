@@ -6,11 +6,8 @@ mod restify;
 use rand::{thread_rng, Rng};
 
 use std::sync::Arc;
-use std::ops::Deref;
 
 use rusqlite::types::ToSql;
-use rusqlite::{SqliteStatement, SqliteRow, SqliteError};
-use rustc_serialize::json;
 
 use ::database::{DB, QueryError};
 pub use self::restify::restify;

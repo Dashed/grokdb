@@ -7,7 +7,7 @@ pub mod reviewable;
 use std::sync::Arc;
 
 use rusqlite::types::ToSql;
-use rusqlite::{SqliteStatement, SqliteRow, SqliteError};
+use rusqlite::{SqliteStatement};
 use rustc_serialize::json;
 
 use ::database::{DB, QueryError};
@@ -28,8 +28,8 @@ pub struct UpdateStash {
 
 impl UpdateStash {
 
+    #[allow(unused_parens)]
     pub fn should_update(&self) -> bool {
-
         return (
             self.name.is_some() ||
             self.description.is_some()
