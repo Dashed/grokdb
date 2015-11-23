@@ -5,6 +5,11 @@ authors = ["Alberto Leal <mail4alberto@gmail.com>"]
 
 license = "MIT"
 
+[dependencies.rand]
+version = "0.3"
+
+[dependencies.libc]
+version = "0.2"
 
 [dependencies.clap]
 version = "1.4"
@@ -15,7 +20,13 @@ version = "0.2"
 [dependencies.rusqlite]
 git = "https://github.com/Dashed/rusqlite"
 rev = "babbb29757bcf512b90385dcce8397585650cae8"
-features = ["named_params"]
+features = ["named_params", "functions"]
+
+[dependencies.libsqlite3-sys]
+git = "https://github.com/Dashed/rusqlite"
+rev = "babbb29757bcf512b90385dcce8397585650cae8"
+path = "libsqlite3-sys"
+version = "0.2.0"
 
 [dependencies.rustc-serialize]
 version = "0.3"
