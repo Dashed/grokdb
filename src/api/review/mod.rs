@@ -52,13 +52,17 @@ pub trait ReviewableSelection {
 
     fn has_old_cards(&self, purgatory_size: i64, min_score: f64) -> Result<bool, QueryError>;
 
+    // - get cards reviewed sorted by age (desc)
+    // - get top purgatory_size cards
+    // - discards less than min_score
+    // - sort by score (desc) [optional; if false, cards are implicitly sorted by age]
     fn number_of_old_cards(&self, purgatory_size: i64, min_score: f64, sort_by_score: bool) -> Result<i64, QueryError>;
 
-    // top N oldest cards
-    // have score of at least M
-    // top P highest scoring cards
-
     // returns card id
+    // - get cards reviewed sorted by age (desc)
+    // - get top purgatory_size cards
+    // - discards less than min_score
+    // - sort by score (desc) [optional; if false, cards are implicitly sorted by age]
     fn get_old_card(&self, purgatory_size: i64, min_score: f64, index: i64, sort_by_score: bool) -> Result<i64, QueryError>;
 }
 
