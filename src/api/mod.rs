@@ -83,7 +83,8 @@ pub struct __ErrorResponse  {
 pub struct GrokDB {
     pub decks: DecksAPI,
     pub cards: CardsAPI,
-    pub stashes: StashesAPI
+    pub stashes: StashesAPI,
+    pub review: ReviewAPI
 }
 
 pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
@@ -101,6 +102,9 @@ pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
             db: db.clone()
         },
         stashes: StashesAPI {
+            db: db.clone()
+        },
+        review: ReviewAPI {
             db: db.clone()
         }
     };

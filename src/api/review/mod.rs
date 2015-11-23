@@ -6,6 +6,7 @@ mod restify;
 use rand::{thread_rng, Rng};
 
 use std::sync::Arc;
+use std::ops::Deref;
 
 use rusqlite::types::ToSql;
 use rusqlite::{SqliteStatement, SqliteRow, SqliteError};
@@ -92,7 +93,9 @@ pub struct UpdateCardScore {
     changelog: Option<String>
 }
 
-
+static DEFAULT_SUCCESS: i64 = 0;
+static DEFAULT_FAIL: i64 = 0;
+static FORGOT_FAIL: i64 = 2;
 impl UpdateCardScore {
 
     pub fn get_action(&self) -> Action {
@@ -115,18 +118,99 @@ impl UpdateCardScore {
     }
 
     pub fn is_valid_value(&self) -> bool {
-        // TODO: complete
-        return true;
+
+        if !self.is_valid_action() {
+            return false;
+        }
+
+        return match self.get_action() {
+            Action::Success | Action::Fail => {
+                match self.value {
+                    Some(value) => {
+                        return value > 0;
+                    },
+                    None => {
+                        return false;
+                    }
+                }
+            },
+            _ => {
+                // value is ignored for all other actions
+                return true;
+            }
+        }
+
     }
 
     pub fn should_update(&self) -> bool {
-
-        return (
-            // TODO: implement
-            true
-        );
+        return self.is_valid_action() && self.is_valid_value();
     }
 
+    // get fields to update.
+    // this is a helper to construct the sql update query
+    pub fn sqlize(&self) -> (String, Vec<(&str, &ToSql)>) {
+
+        let mut fields: Vec<String> = vec![];
+        let mut values: Vec<(&str, &ToSql)> = vec![];
+
+        match self.get_action() {
+
+            Action::Success => {
+
+                fields.push(format!("success = success + :success"));
+                let tuple: (&str, &ToSql) = (":success", self.value.as_ref().unwrap());
+                values.push(tuple);
+            },
+
+            Action::Fail => {
+
+                fields.push(format!("fail = fail + :fail"));
+                let tuple: (&str, &ToSql) = (":fail", self.value.as_ref().unwrap());
+                values.push(tuple);
+            },
+
+            Action::Reset => {
+
+
+                fields.push(format!("success = :success"));
+                let tuple: (&str, &ToSql) = (":success", &DEFAULT_SUCCESS);
+                values.push(tuple);
+
+                fields.push(format!("fail = :fail"));
+                let tuple: (&str, &ToSql) = (":fail", &DEFAULT_FAIL);
+                values.push(tuple);
+            },
+
+            Action::Forgot => {
+
+                fields.push(format!("success = :success"));
+                let tuple: (&str, &ToSql) = (":success", &DEFAULT_SUCCESS);
+                values.push(tuple);
+
+                fields.push(format!("fail = :fail"));
+                // minor boost relative to a newly created card
+                let tuple: (&str, &ToSql) = (":fail", &FORGOT_FAIL);
+                values.push(tuple);
+            },
+
+            Action::Skip => {
+
+                // noop update (trigger update to set update_at)
+                // TODO: this seems too hacky
+                fields.push(format!("success = success"));
+            },
+
+            _ => unreachable!() // action should be already validated
+        }
+
+        if self.changelog.is_some() {
+            fields.push(format!("changelog = :changelog"));
+            let tuple: (&str, &ToSql) = (":changelog", self.changelog.as_ref().unwrap());
+            values.push(tuple);
+        }
+
+        return (fields.join(", "), values);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -136,9 +220,40 @@ pub struct ReviewAPI {
 
 impl ReviewAPI {
 
-    // pub fn update_reviewed_card(&self, card_id: i64, update_review_request: UpdateCardScore) -> Result<(), QueryError> {
+    pub fn update_reviewed_card(&self, card_id: i64, update_review_request: UpdateCardScore) -> Result<(), QueryError> {
 
-    // }
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        try!(DB::prepare_query(db_conn));
+
+        let (fields, values): (String, Vec<(&str, &ToSql)>) = update_review_request.sqlize();
+
+
+        let mut values = values;
+        values.push((":card_id", &card_id));
+        let values = values;
+
+        let ref query_update = format!("
+            UPDATE CardsScore
+            SET
+            {fields}
+            WHERE card = :card_id;
+        ", fields = fields);
+
+        match db_conn.execute_named(query_update, &values[..]) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query_update.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
+    }
 
     // pub fn remove_cached_review_card(&self, card_id: i64) -> Result<(), QueryError> {
 

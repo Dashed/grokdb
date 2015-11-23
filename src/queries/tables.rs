@@ -242,7 +242,7 @@ OF success, fail, changelog
 ON CardsScore
 BEGIN
    INSERT INTO CardsScoreHistory(occured_at, success, fail, changelog, card)
-   VALUES (strftime('%s', 'now'), NEW.success, NEW.fail, NEW.changelog, NEW.card);
+   VALUES (strftime('%s', 'now'), (NEW.success - OLD.success), (NEW.fail - OLD.fail), NEW.changelog, NEW.card);
 END;
 ";
 

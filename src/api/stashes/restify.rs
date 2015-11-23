@@ -194,6 +194,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         move |req: &mut Request| -> IronResult<Response> {
             let ref grokdb = grokdb.deref();
 
+            // TODO: refactor
             let update_stash_request = req.get::<bodyparser::Struct<UpdateStash>>();
 
             // fetch and parse requested stash id
