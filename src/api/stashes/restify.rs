@@ -534,6 +534,64 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             return Ok(Response::with((res_code, "")));
         }
     });
+
+    // remove all cards from stash
+    router.delete("/stashes/:stash_id/cards", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested stash id
+
+            let stash_id = req.extensions.get::<Router>().unwrap().find("stash_id").unwrap();
+
+            let stash_id: i64 = match stash_id.parse::<u64>() {
+                Ok(stash_id) => stash_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // ensure card exists
+            match stash_exists(grokdb, stash_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* stash exists; continue */}
+            }
+
+            match grokdb.stashes.remove_all_cards_from_stash(stash_id) {
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+                _ => {/* removed all cards from stash */}
+            }
+
+            let res_code = status::Ok;
+            return Ok(Response::with((res_code, "")));
+        }
+    });
 }
 
 /* helpers */
