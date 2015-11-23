@@ -506,13 +506,13 @@ enum Method {
     LeastRecentlyReviewed,
 }
 
+// these should add up to 1
+static NEW_CARDS: f64 = 0.15;
+static OLD_ENOUGH: f64 = 0.3;
+static LEAST_RECENT: f64 = 0.55;
+
 fn choose_method<T>(selection: &T) -> Result<Method, QueryError>
     where T: ReviewableSelection {
-
-    // these should add up to 1
-    let new_cards = 0.15;
-    let old_enough = 0.3;
-    let least_recent = 0.55;
 
     let mut max_pin: f64 = 1f64;
 
@@ -521,7 +521,7 @@ fn choose_method<T>(selection: &T) -> Result<Method, QueryError>
             return Err(why);
         },
         Ok(false) => {
-            max_pin = max_pin - new_cards;
+            max_pin = max_pin - NEW_CARDS;
         },
         _ => {}
     }
@@ -531,7 +531,7 @@ fn choose_method<T>(selection: &T) -> Result<Method, QueryError>
             return Err(why);
         },
         Ok(false) => {
-            max_pin = max_pin - old_enough;
+            max_pin = max_pin - OLD_ENOUGH;
         },
         _ => {}
     }
@@ -541,8 +541,8 @@ fn choose_method<T>(selection: &T) -> Result<Method, QueryError>
     let mut rng = thread_rng();
 
     let method = match rng.gen_range(0f64, max_pin) {
-        pin if pin < least_recent => Method::LeastRecentlyReviewed,
-        pin if pin < (least_recent + old_enough) => Method::OldEnough,
+        pin if pin < LEAST_RECENT => Method::LeastRecentlyReviewed,
+        pin if pin < (LEAST_RECENT + OLD_ENOUGH) => Method::OldEnough,
         _ => Method::NewCards,
     };
 
