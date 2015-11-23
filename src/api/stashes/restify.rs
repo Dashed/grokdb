@@ -562,7 +562,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
-            // ensure card exists
+            // ensure stash exists
             match stash_exists(grokdb, stash_id) {
                 Err(response) => {
                     return response;

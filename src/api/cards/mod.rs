@@ -466,6 +466,109 @@ impl CardsAPI {
 
         return Ok(());
     }
+
+    pub fn count_by_stash(&self, stash_id: i64) -> Result<i64, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                COUNT(1)
+            FROM
+                StashCards
+            WHERE stash = :stash_id;
+        ");
+
+        let params: &[(&str, &ToSql)] = &[
+            (":stash_id", &stash_id)
+        ];
+
+        let maybe_count = db_conn.query_named_row(query, params, |row| -> i64 {
+            return row.get(0);
+        });
+
+        match maybe_count {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(count) => {
+                return Ok(count);
+            }
+        };
+    }
+
+    // TODO: StashCards trait for CardsPageRequest => query = page_query.generate_query()
+    pub fn get_by_stash(&self, stash_id: i64, page_query: CardsPageRequest) -> Result<Vec<i64>, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        // invariant: page_query.offset is legal
+
+        let ref page_query = page_query;
+
+        let ref query = get_by_stash_query(page_query);
+
+        let params: &[(&str, &ToSql)] = &[
+            (":stash_id", &stash_id),
+            (":offset", &(page_query.offset)),
+            (":per_page", &(page_query.per_page))
+        ];
+
+        let maybe_stmt = db_conn.prepare(query);
+
+        if maybe_stmt.is_err() {
+
+            let why = maybe_stmt.unwrap_err();
+
+            let err = QueryError {
+                sqlite_error: why,
+                query: query.clone(),
+            };
+            return Err(err);
+        }
+
+        let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+
+        let maybe_iter = stmt.query_named(params);
+
+        match maybe_iter {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(iter) => {
+
+                let mut vec_of_card_id: Vec<i64> = Vec::new();
+
+                for result_row in iter {
+
+                    let card_id: i64 = match result_row {
+                        Err(why) => {
+                            let err = QueryError {
+                                sqlite_error: why,
+                                query: query.clone(),
+                            };
+                            return Err(err);
+                        },
+                        Ok(row) => row.get(0)
+                    };
+
+                    vec_of_card_id.push(card_id);
+                }
+
+                return Ok(vec_of_card_id);
+            }
+        };
+    }
 }
 
 /* helpers */
@@ -478,6 +581,7 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
     };
 
     let query = match page_query.sort_by {
+
         SortBy::CreatedAt => {
             format!("
                 SELECT
@@ -504,6 +608,7 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
                 ORDER BY c.created_at {sort_order} LIMIT :per_page;
             ", sort_order = sort_order)
         },
+
         SortBy::UpdatedAt => {
             format!("
                 SELECT
@@ -530,6 +635,7 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
                 ORDER BY c.updated_at {sort_order} LIMIT :per_page;
             ", sort_order = sort_order)
         },
+
         SortBy::Title => {
             format!("
                 SELECT
@@ -556,6 +662,7 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
                 ORDER BY c.title {sort_order} LIMIT :per_page;
             ", sort_order = sort_order)
         },
+
         SortBy::ReviewedDate => {
             format!("
                 SELECT
@@ -588,6 +695,7 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
                 ORDER BY cs.updated_at {sort_order} LIMIT :per_page;
             ", sort_order = sort_order)
         },
+
         SortBy::TimesReviewed => {
             format!("
                 SELECT
@@ -617,6 +725,166 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
                 )
                 AND
                 dc.ancestor = :deck_id
+                ORDER BY cs.times_reviewed {sort_order} LIMIT :per_page;
+            ", sort_order = sort_order)
+        },
+    };
+
+    return query;
+}
+
+fn get_by_stash_query(page_query: &CardsPageRequest) -> String {
+
+    let sort_order: &str = match page_query.order {
+        SortOrder::Descending => "DESC",
+        SortOrder::Ascending => "ASC"
+    };
+
+    let query = match page_query.sort_by {
+
+        SortBy::CreatedAt => {
+            format!("
+                SELECT
+                    c.card_id, c.title, c.description, c.front, c.back, c.deck, c.created_at, c.updated_at
+                FROM StashCards AS sc
+
+                INNER JOIN Cards AS c
+                ON c.card_id = sc.card
+
+                WHERE
+                c.oid NOT IN (
+                    SELECT
+                        c.oid
+                    FROM StashCards AS sc
+
+                    INNER JOIN Cards AS c
+                    ON c.card_id = sc.card
+
+                    WHERE sc.stash = :stash_id
+                    ORDER BY c.created_at {sort_order} LIMIT :offset
+                )
+                AND
+                sc.stash = :stash_id
+                ORDER BY c.created_at {sort_order} LIMIT :per_page;
+            ", sort_order = sort_order)
+        },
+
+        SortBy::UpdatedAt => {
+            format!("
+                SELECT
+                    c.card_id, c.title, c.description, c.front, c.back, c.deck, c.created_at, c.updated_at
+                FROM StashCards AS sc
+
+                INNER JOIN Cards AS c
+                ON c.card_id = sc.card
+
+                WHERE
+                c.oid NOT IN (
+                    SELECT
+                        c.oid
+                    FROM StashCards AS sc
+
+                    INNER JOIN Cards AS c
+                    ON c.card_id = sc.card
+
+                    WHERE sc.stash = :stash_id
+                    ORDER BY c.updated_at {sort_order} LIMIT :offset
+                )
+                AND
+                sc.stash = :stash_id
+                ORDER BY c.updated_at {sort_order} LIMIT :per_page;
+            ", sort_order = sort_order)
+        },
+
+        SortBy::Title => {
+            format!("
+                SELECT
+                    c.card_id, c.title, c.description, c.front, c.back, c.deck, c.created_at, c.updated_at
+                FROM StashCards AS sc
+
+                INNER JOIN Cards AS c
+                ON c.card_id = sc.card
+
+                WHERE
+                c.oid NOT IN (
+                    SELECT
+                        c.oid
+                    FROM StashCards AS sc
+
+                    INNER JOIN Cards AS c
+                    ON c.card_id = sc.card
+
+                    WHERE sc.stash = :stash_id
+                    ORDER BY c.title {sort_order} LIMIT :offset
+                )
+                AND
+                sc.stash = :stash_id
+                ORDER BY c.title {sort_order} LIMIT :per_page;
+            ", sort_order = sort_order)
+        },
+
+        SortBy::ReviewedDate => {
+            format!("
+                SELECT
+                    c.card_id, c.title, c.description, c.front, c.back, c.deck, c.created_at, c.updated_at
+                FROM StashCards AS sc
+
+                INNER JOIN Cards AS c
+                ON c.card_id = sc.card
+
+                INNER JOIN CardsScore AS cs
+                ON cs.card = c.card_id
+
+                WHERE
+                c.oid NOT IN (
+                    SELECT
+                        c.oid
+                    FROM StashCards AS sc
+
+                    INNER JOIN Cards AS c
+                    ON c.card_id = sc.card
+
+                    INNER JOIN CardsScore AS cs
+                    ON cs.card = c.card_id
+
+                    WHERE sc.stash = :stash_id
+                    ORDER BY cs.updated_at {sort_order} LIMIT :offset
+                )
+                AND
+                sc.stash = :stash_id
+                ORDER BY cs.updated_at {sort_order} LIMIT :per_page;
+            ", sort_order = sort_order)
+        },
+
+        SortBy::TimesReviewed => {
+            format!("
+                SELECT
+                    c.card_id, c.title, c.description, c.front, c.back, c.deck, c.created_at, c.updated_at
+                FROM StashCards AS sc
+
+                INNER JOIN Cards AS c
+                ON c.card_id = sc.card
+
+                INNER JOIN CardsScore AS cs
+                ON cs.card = c.card_id
+
+                WHERE
+                c.oid NOT IN (
+                    SELECT
+                        c.oid
+                    FROM StashCards AS sc
+
+                    INNER JOIN Cards AS c
+                    ON c.card_id = sc.card
+
+                    INNER JOIN CardsScore AS cs
+                    ON cs.card = c.card_id
+
+                    WHERE sc.stash = :stash_id
+                    ORDER BY cs.times_reviewed {sort_order} LIMIT :offset
+                )
+                AND
+                sc.stash = :stash_id
                 ORDER BY cs.times_reviewed {sort_order} LIMIT :per_page;
             ", sort_order = sort_order)
         },
