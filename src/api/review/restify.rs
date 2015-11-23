@@ -15,6 +15,9 @@ use std::error::Error;
 
 use ::api::{GrokDB, ErrorResponse};
 use ::api::decks::reviewable::{ReviewableDeck};
+use ::api::decks::restify::{deck_exists};
+use ::api::stashes::reviewable::{ReviewableStash};
+use ::api::stashes::restify::{stash_exists};
 use ::api::cards::restify::{get_card_by_id, card_exists};
 use ::api::review::{get_review_card, UpdateCardScore, ReviewableSelection};
 use ::database::QueryError;
@@ -138,8 +141,31 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 deck_id: 0, // doesn't matter which deck
                 grokdb: grokdb_arc.clone()
             };
+            let stash_selection = ReviewableStash {
+                stash_id: 0, // doesn't matter which stash
+                grokdb: grokdb_arc.clone()
+            };
 
             match deck_selection.remove_cached_card(card_id) {
+                Err(err) => {
+
+                    let ref reason = format!("{:?}", err);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: err.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+                _ => {
+                    // cache removed
+                }
+            }
+
+            match stash_selection.remove_cached_card(card_id) {
                 Err(err) => {
 
                     let ref reason = format!("{:?}", err);
@@ -187,6 +213,14 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
+            // ensure deck exists
+            match deck_exists(grokdb, deck_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* deck exists; continue */}
+            }
+
             let deck_selection = ReviewableDeck {
                 deck_id: deck_id,
                 grokdb: grokdb_arc.clone()
@@ -228,4 +262,77 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
+    router.get("/stashes/:stash_id/review", {
+        let grokdb = grokdb.clone();
+        let grokdb_arc = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            let stash_id = req.extensions.get::<Router>().unwrap().find("stash_id").unwrap();
+
+            let stash_id: i64 = match stash_id.parse::<u64>() {
+                Ok(stash_id) => stash_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // ensure stash exists
+            match stash_exists(grokdb, stash_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* stash exists; continue */}
+            }
+
+            let stash_selection = ReviewableStash {
+                stash_id: stash_id,
+                grokdb: grokdb_arc.clone()
+            };
+
+            match get_review_card(&stash_selection) {
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(None) => {
+
+                    let ref reason = format!("No card to review");
+                    let res_code = status::NotFound;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: reason,
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(Some(card_id)) => {
+                    return get_card_by_id(grokdb.clone(), card_id);
+                }
+            }
+        }
+    });
 }

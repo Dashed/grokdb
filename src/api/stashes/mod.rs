@@ -2,6 +2,7 @@ extern crate rusqlite;
 extern crate rustc_serialize;
 
 pub mod restify;
+pub mod reviewable;
 
 use std::sync::Arc;
 
