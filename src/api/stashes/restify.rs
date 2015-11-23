@@ -389,6 +389,93 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             return Ok(Response::with((res_code, "")));
         }
     });
+
+    // remove card from stash
+    router.delete("/cards/:card_id/stashes/:stash_id", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested stash id
+
+            let stash_id = req.extensions.get::<Router>().unwrap().find("stash_id").unwrap();
+
+            let stash_id: i64 = match stash_id.parse::<u64>() {
+                Ok(stash_id) => stash_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // fetch and parse requested card id
+
+            let card_id = req.extensions.get::<Router>().unwrap().find("card_id").unwrap();
+
+            let card_id: i64 = match card_id.parse::<u64>() {
+                Ok(card_id) => card_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // ensure stash exists
+            match stash_exists(grokdb, stash_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* stash exists; continue */}
+            }
+
+            // ensure card exists
+            match card_exists(grokdb, card_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* card exists; continue */}
+            }
+
+            match grokdb.stashes.remove_card_from_stash(stash_id, card_id) {
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+                _ => {/* card added to stash */}
+            }
+
+            let res_code = status::Ok;
+            return Ok(Response::with((res_code, "")));
+        }
+    });
 }
 
 /* helpers */
