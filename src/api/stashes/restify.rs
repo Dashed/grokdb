@@ -592,6 +592,126 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             return Ok(Response::with((res_code, "")));
         }
     });
+
+    // get list of stashes this card belongs to
+    router.get("/cards/:card_id/stashes", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested card id
+
+            let card_id = req.extensions.get::<Router>().unwrap().find("card_id").unwrap();
+
+            let card_id: i64 = match card_id.parse::<u64>() {
+                Ok(card_id) => card_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // ensure card exists
+            match card_exists(grokdb, card_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* card exists; continue */}
+            }
+
+            match grokdb.stashes.count_by_card(card_id) {
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(count) => {
+
+                    if count <= 0 {
+                        let ref v: Vec<StashResponse> = vec![];
+                        let response: String = json::encode(v).unwrap();
+                        return Ok(Response::with((status::Ok, response)));
+                    }
+                }
+            }
+
+            let response: String = match grokdb.stashes.get_by_card(card_id) {
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(list) => {
+
+                    let mut collected_list: Vec<StashResponse> = vec![];
+
+                    for stash_id in &list {
+
+                        let stash_id: i64 = *stash_id;
+
+                        let maybe_stash: Result<StashResponse, QueryError> = grokdb.stashes.get_response(stash_id);
+
+                        let stash: StashResponse = match maybe_stash {
+
+                            Err(why) => {
+                                // why: QueryError
+
+                                let ref reason = format!("{:?}", why);
+                                let res_code = status::NotFound;
+
+                                let err_response = ErrorResponse {
+                                    status: res_code,
+                                    developerMessage: reason,
+                                    userMessage: why.description(),
+                                }.to_json();
+
+                                return Ok(Response::with((res_code, err_response)));
+                            },
+
+                            Ok(stash) => stash,
+                        };
+
+                        collected_list.push(stash);
+                    }
+
+                    let ref collected_list = collected_list;
+
+                    json::encode(collected_list).unwrap()
+                }
+            };
+
+            return Ok(Response::with((status::Ok, response)));
+        }
+    });
 }
 
 /* helpers */

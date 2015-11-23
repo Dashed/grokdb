@@ -412,4 +412,104 @@ impl StashesAPI {
 
         return Ok(());
     }
+
+    pub fn count_by_card(&self, card_id: i64) -> Result<i64, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                COUNT(1)
+            FROM StashCards
+            WHERE card = :card_id;
+        ");
+
+        let params: &[(&str, &ToSql)] = &[
+            (":card_id", &card_id)
+        ];
+
+        let maybe_count = db_conn.query_named_row(query, params, |row| -> i64 {
+            return row.get(0);
+        });
+
+        match maybe_count {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(count) => {
+                return Ok(count);
+            }
+        };
+    }
+
+    pub fn get_by_card(&self, card_id: i64) -> Result<Vec<i64>, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                stash
+            FROM StashCards
+            WHERE card = :card_id;
+        ");
+
+        let params: &[(&str, &ToSql)] = &[
+            (":card_id", &card_id)
+        ];
+
+        let maybe_stmt = db_conn.prepare(query);
+
+        if maybe_stmt.is_err() {
+
+            let why = maybe_stmt.unwrap_err();
+
+            let err = QueryError {
+                sqlite_error: why,
+                query: query.clone(),
+            };
+            return Err(err);
+        }
+
+        let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+
+        let maybe_iter = stmt.query_named(params);
+
+        match maybe_iter {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(iter) => {
+
+                let mut vec_of_stash_id: Vec<i64> = Vec::new();
+
+                for result_row in iter {
+
+                    let stash_id: i64 = match result_row {
+                        Err(why) => {
+                            let err = QueryError {
+                                sqlite_error: why,
+                                query: query.clone(),
+                            };
+                            return Err(err);
+                        },
+                        Ok(row) => row.get(0)
+                    };
+
+                    vec_of_stash_id.push(stash_id);
+                }
+
+                return Ok(vec_of_stash_id);
+            }
+        };
+    }
 }
