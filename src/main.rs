@@ -1,4 +1,5 @@
 // crates
+extern crate chrono;
 extern crate libc;
 extern crate rand;
 extern crate clap;

@@ -9,7 +9,7 @@ pub mod reviewable;
 use std::sync::Arc;
 
 use rusqlite::types::ToSql;
-use rusqlite::{SqliteStatement, SqliteRow, SqliteError};
+use rusqlite::{SqliteStatement, SqliteRow};
 use rustc_serialize::json;
 
 use ::database::{DB, QueryError};

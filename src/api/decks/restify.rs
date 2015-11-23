@@ -6,14 +6,13 @@ extern crate rustc_serialize;
 use iron::status;
 use iron::prelude::*;
 use router::Router;
-use rustc_serialize::json;
 
 use std::sync::Arc;
 use std::ops::Deref;
 use std::error::Error;
 
 use ::api::{GrokDB, ErrorResponse};
-use ::api::decks::{CreateDeck, UpdateDeck, Deck, DeckResponse};
+use ::api::decks::{CreateDeck, UpdateDeck, DeckResponse};
 use ::database::QueryError;
 
 // attach decks REST endpoints to given router

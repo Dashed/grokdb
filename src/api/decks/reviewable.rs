@@ -4,7 +4,6 @@ use std::sync::Arc;
 use std::ops::Deref;
 
 use rusqlite::types::ToSql;
-use rusqlite::{SqliteStatement, SqliteRow, SqliteError};
 
 use ::database::{DB, QueryError};
 use ::api::GrokDB;

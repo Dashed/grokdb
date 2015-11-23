@@ -7,15 +7,13 @@ pub mod decks;
 pub mod cards;
 pub mod stashes;
 pub mod review;
+mod backup;
 
-use rusqlite::SqliteError;
-use iron::{Request, Response, IronResult};
 use iron::status;
 use router::Router;
 use rustc_serialize::json;
 
 use std::sync::Arc;
-use std::ops::Deref;
 
 use self::decks::DecksAPI;
 use self::cards::CardsAPI;
@@ -81,6 +79,9 @@ pub struct __ErrorResponse  {
 
 #[derive(Debug, Clone)]
 pub struct GrokDB {
+
+    pub base_db_name: String,
+
     pub decks: DecksAPI,
     pub cards: CardsAPI,
     pub stashes: StashesAPI,
@@ -90,11 +91,24 @@ pub struct GrokDB {
 pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
 
     // open db connection and bootstrap it
-    let db_conn: Result<DB, BootstrapError> = super::database::bootstrap(database_name);
+    let db_conn: Result<DB, BootstrapError> = super::database::bootstrap(database_name.clone());
 
     let db: Arc<DB> = Arc::new(try!(db_conn));
 
+    // fetch base db name
+    let mut base_db_name: String = format!("{}", database_name);
+
+    if base_db_name.to_lowercase().ends_with(".db") {
+        let lower = base_db_name.to_lowercase();
+        let slice: Vec<_> = lower.split(".db").collect();
+        base_db_name = format!("{}", slice[0]);
+    }
+    let base_db_name = base_db_name;
+
+
     let api = GrokDB {
+        base_db_name: base_db_name,
+
         decks: DecksAPI {
             db: db.clone()
         },
@@ -114,11 +128,14 @@ pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
 
 pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
-    // TODO: db backup
+    backup::restify(router, grokdb.clone());
 
     decks::restify(router, grokdb.clone());
+
     cards::restify(router, grokdb.clone());
+
     stashes::restify(router, grokdb.clone());
+
     review::restify(router, grokdb.clone());
 }
 
