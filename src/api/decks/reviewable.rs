@@ -15,40 +15,58 @@ pub struct ReviewableDeck {
     pub grokdb: Arc<GrokDB>
 }
 
-impl ReviewableSelection for ReviewableDeck {
+impl ReviewableDeck {
 
-    // faster version
-    fn has_cards(&self) -> Result<bool, QueryError> {
+    // check if the card is within the deck or the deck's descendents
+    pub fn has_card(&self, card_id: i64) -> Result<bool, QueryError> {
 
-        match self.number_of_cards() {
-            Err(err) => {
+        let ref grokdb = self.grokdb.deref();
+
+        let db_conn_guard = grokdb.decks.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                COUNT(1)
+            FROM DecksClosure AS dc
+
+            INNER JOIN Cards AS c
+            ON c.deck = dc.descendent
+
+            WHERE
+                dc.ancestor = :deck_id
+            AND
+                c.card_id = :card_id
+            LIMIT 1;
+        ");
+
+        let params: &[(&str, &ToSql)] = &[
+            (":card_id", &card_id),
+            (":deck_id", &(self.deck_id))
+        ];
+
+        let deck_exists = db_conn.query_named_row(query, params, |row| -> bool {
+            let count: i64 = row.get(0);
+            return count >= 1;
+        });
+
+        match deck_exists {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
                 return Err(err);
             },
-            Ok(num_cards) => {
-                return Ok(num_cards > 0);
+            Ok(deck_exists) => {
+                return Ok(deck_exists);
             }
-        }
-    }
+        };
 
-    fn number_of_cards(&self) -> Result<i64, QueryError> {
-
-        match self.grokdb.deref().cards.count_by_deck(self.deck_id) {
-            Err(err) => {
-                return Err(err);
-            },
-            Ok(num_cards) => {
-                return Ok(num_cards);
-            }
-        }
-    }
-
-    fn cache_card(&self, card_id: i64) -> Result<(), QueryError> {
-        // TODO: complete
-        return Ok(());
     }
 
     // returns card id (if exists)
-    fn get_cached_card(&self) -> Result<Option<i64>, QueryError> {
+    fn __get_cached_card(&self) -> Result<Option<i64>, QueryError> {
 
         let ref grokdb = self.grokdb.deref();
 
@@ -60,7 +78,7 @@ impl ReviewableSelection for ReviewableDeck {
         ];
 
         // TODO: can be simplified if this is fixed: https://github.com/jgallagher/rusqlite/issues/79
-
+        // ensure a cache entry exists for this deck
         let ref query_count = format!("
             SELECT
                 COUNT(1)
@@ -117,6 +135,103 @@ impl ReviewableSelection for ReviewableDeck {
         };
     }
 
+}
+
+impl ReviewableSelection for ReviewableDeck {
+
+    // faster version
+    fn has_cards(&self) -> Result<bool, QueryError> {
+
+        match self.number_of_cards() {
+            Err(err) => {
+                return Err(err);
+            },
+            Ok(num_cards) => {
+                return Ok(num_cards > 0);
+            }
+        }
+    }
+
+    fn number_of_cards(&self) -> Result<i64, QueryError> {
+
+        match self.grokdb.deref().cards.count_by_deck(self.deck_id) {
+            Err(err) => {
+                return Err(err);
+            },
+            Ok(num_cards) => {
+                return Ok(num_cards);
+            }
+        }
+    }
+
+    fn cache_card(&self, card_id: i64) -> Result<(), QueryError> {
+
+        let ref grokdb = self.grokdb.deref();
+
+        let db_conn_guard = grokdb.decks.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        try!(DB::prepare_query(db_conn));
+
+        let ref query = format!("
+            INSERT OR REPLACE INTO CachedDeckReview(deck, card)
+            VALUES (:deck_id, :card_id);
+        ");
+
+        let params: &[(&str, &ToSql)] = &[
+            (":deck_id", &(self.deck_id)),
+            (":card_id", &card_id)
+        ];
+
+
+        match db_conn.execute_named(query, params) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
+    }
+
+    fn get_cached_card(&self) -> Result<Option<i64>, QueryError> {
+
+        match self.__get_cached_card() {
+            Err(why) => {
+                return Err(why);
+            },
+            Ok(None) => {
+                return Ok(None);
+            },
+            Ok(Some(card_id)) => {
+
+                match self.has_card(card_id) {
+                    Err(why) => {
+                        return Err(why);
+                    },
+                    Ok(true) => {
+                        return Ok(Some(card_id));
+                    },
+                    Ok(false) => {
+
+                        match self.remove_cache() {
+                            Err(why) => {
+                                return Err(why);
+                            },
+                            Ok(_) => {
+                                return Ok(None);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // remove deck/card review entry by deck
     fn remove_cache(&self) -> Result<(), QueryError> {
 
@@ -132,7 +247,7 @@ impl ReviewableSelection for ReviewableDeck {
         ");
 
         let params: &[(&str, &ToSql)] = &[
-            (":deck_id", &self.deck_id)
+            (":deck_id", &(self.deck_id))
         ];
 
         match db_conn.execute_named(query_delete, params) {

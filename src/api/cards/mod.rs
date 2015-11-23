@@ -1,9 +1,7 @@
-extern crate iron;
 extern crate rusqlite;
-extern crate router;
 extern crate rustc_serialize;
 
-mod restify;
+pub mod restify;
 
 use std::sync::Arc;
 
@@ -14,12 +12,14 @@ use rustc_serialize::json;
 use ::database::{DB, QueryError};
 pub use self::restify::restify;
 
+
 pub enum SortBy {
     CreatedAt,
     UpdatedAt,
     Title,
     ReviewedDate,
     TimesReviewed,
+    // TODO: implement
     // RawScore,
 }
 
@@ -432,8 +432,6 @@ impl CardsAPI {
         let ref db_conn = *db_conn_guard;
 
         try!(DB::prepare_query(db_conn));
-
-        // depth-first delete on deck's children
 
         let ref query_delete = format!("
             DELETE FROM Cards WHERE card_id = :card_id;

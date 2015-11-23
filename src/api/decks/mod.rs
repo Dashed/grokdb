@@ -306,8 +306,7 @@ impl DecksAPI {
 
         try!(DB::prepare_query(db_conn));
 
-        // depth-first delete on deck's children
-
+        // also delete decks within this deck
         let ref query_delete = format!("
             DELETE FROM Decks
             WHERE deck_id IN (
@@ -545,4 +544,5 @@ impl DecksAPI {
 
         return Ok(());
     }
+
 }

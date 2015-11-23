@@ -171,6 +171,19 @@ impl ReviewAPI {
 pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
     where T: ReviewableSelection {
 
+
+    match selection.get_cached_card() {
+        Err(why) => {
+            return Err(why);
+        },
+        Ok(Some(card_id)) => {
+            return Ok(Some(card_id));
+        }
+        Ok(None) => {
+            // no cached card for review
+        }
+    }
+
     // ensure there are cards to review
     match selection.has_cards() {
         Err(why) => {
@@ -331,6 +344,26 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
             }
         }
     };
+
+    // remove any cache
+    match selection.remove_cache() {
+        Err(why) => {
+            return Err(why);
+        },
+        Ok(_) => {
+            // cache removed
+        }
+    }
+
+    // set cache
+    match selection.cache_card(card_id) {
+        Err(why) => {
+            return Err(why);
+        },
+        Ok(_) => {
+            // cache set
+        }
+    }
 
     return Ok(Some(card_id));
 }
