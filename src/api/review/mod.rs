@@ -213,12 +213,56 @@ impl UpdateCardScore {
     }
 }
 
+#[derive(Debug, Clone, RustcEncodable)]
+pub struct ReviewResponse {
+    success: i64,
+    fail: i64,
+    times_reviewed: i64,
+    reviewed_at: i64 // unix timestamp
+}
+
 #[derive(Debug, Clone)]
 pub struct ReviewAPI {
     pub db: Arc<DB>,
 }
 
 impl ReviewAPI {
+
+    pub fn get_review_stat(&self, card_id: i64) -> Result<ReviewResponse, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                success, fail, times_reviewed, updated_at
+            FROM CardsScore
+            WHERE card = :card_id
+            LIMIT 1;
+        ");
+
+        let results = db_conn.query_named_row(query, &[(":card_id", &card_id)], |row| -> ReviewResponse {
+            return ReviewResponse {
+                success: row.get(0),
+                fail: row.get(1),
+                times_reviewed: row.get(2),
+                reviewed_at: row.get(3)
+            };
+        });
+
+        match results {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(card) => {
+                return Ok(card);
+            }
+        };
+    }
 
     pub fn update_reviewed_card(&self, card_id: i64, update_review_request: UpdateCardScore) -> Result<(), QueryError> {
 
@@ -254,42 +298,10 @@ impl ReviewAPI {
 
         return Ok(());
     }
-
-    // pub fn remove_cached_review_card(&self, card_id: i64) -> Result<(), QueryError> {
-
-    //     // executes when card is reviewed
-
-    //     // TODO: remove card id from cached stash and cached deck
-    // }
-
-    // // remove deck/card review entry by card
-    // pub fn remove_cached_deck_review_card(&self, card_id: i64) -> Result<(), QueryError> {
-    //     // TODO: complete
-    // }
-
-    // // remove stash/card review entry by card
-    // pub fn remove_cached_stash_review_card(&self, card_id: i64) -> Result<(), QueryError> {
-    //     // TODO: complete
-    // }
-
-    // // TODO: move to stash api
-    // pub fn get_review_card_for_stash(&self, stash_id: i64) -> Result<Option<i64>, QueryError> {
-
-    //     // get cached card for stash
-
-    // }
-
-    // // // TODO: move to stash api
-    // // returns card id (if exists)
-    // pub fn get_cached_review_card_for_stash(&self, stash_id: i64) -> Result<Option<i64>, QueryError> {
-    //     // TODO: implement
-    // }
-
 }
 
 pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
     where T: ReviewableSelection {
-
 
     match selection.get_cached_card() {
         Err(why) => {

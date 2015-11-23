@@ -9,6 +9,8 @@ use rusqlite::types::ToSql;
 use rusqlite::{SqliteStatement, SqliteRow, SqliteError};
 use rustc_serialize::json;
 
+use ::api::{GrokDB};
+use ::api::review::ReviewResponse;
 use ::database::{DB, QueryError};
 pub use self::restify::restify;
 
@@ -128,7 +130,8 @@ struct CardResponse {
     back: String,
     deck: i64,
     created_at: i64, // unix timestamp
-    updated_at: i64  // unix timestamp
+    updated_at: i64,  // unix timestamp
+    review_stat: ReviewResponse
     // stashes: Vec<i64>
 }
 
@@ -146,7 +149,7 @@ pub struct CardsAPI {
 
 impl CardsAPI {
 
-    pub fn get_response(&self, card_id: i64) -> Result<CardResponse, QueryError> {
+    pub fn get_response(&self, grokdb: &GrokDB, card_id: i64) -> Result<CardResponse, QueryError> {
 
         // get props
 
@@ -159,6 +162,14 @@ impl CardsAPI {
             Ok(card) => card,
         };
 
+        let review_stat: ReviewResponse = match grokdb.review.get_review_stat(card_id) {
+            Err(why) => {
+                // why: QueryError
+                return Err(why);
+            },
+            Ok(review_stat) => review_stat
+        };
+
         let response = CardResponse {
             id: card.id,
             title: card.title,
@@ -167,7 +178,8 @@ impl CardsAPI {
             back: card.back,
             deck: card.deck,
             created_at: card.created_at,
-            updated_at: card.updated_at
+            updated_at: card.updated_at,
+            review_stat: review_stat
         };
 
         return Ok(response);
@@ -185,7 +197,7 @@ impl CardsAPI {
             LIMIT 1;
         ");
 
-        let results = db_conn.query_row(query, &[&card_id], |row| -> Card {
+        let results = db_conn.query_named_row(query, &[(":card_id", &card_id)], |row| -> Card {
             return Card {
                 id: row.get(0),
                 title: row.get(1),

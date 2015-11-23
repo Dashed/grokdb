@@ -605,7 +605,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
                         let card_id: i64 = *card_id;
 
-                        let maybe_card: Result<CardResponse, QueryError> = grokdb.cards.get_response(card_id);
+                        let maybe_card: Result<CardResponse, QueryError> = grokdb.cards.get_response(grokdb, card_id);
 
                         let card: CardResponse = match maybe_card {
 
@@ -646,7 +646,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
 pub fn get_card_by_id(grokdb: &GrokDB, card_id: i64) -> IronResult<Response> {
 
-    let maybe_card: Result<CardResponse, QueryError> = grokdb.cards.get_response(card_id);
+    let maybe_card: Result<CardResponse, QueryError> = grokdb.cards.get_response(grokdb, card_id);
 
     let card: CardResponse = match maybe_card {
 
