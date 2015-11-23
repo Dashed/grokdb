@@ -105,7 +105,7 @@ fn main() {
                                     .unwrap()
                                     .trim();
 
-        router.get("/", Static::new(Path::new(app_path)));
+        router.get("/*", Static::new(Path::new(app_path)));
     }
 
     /* REST API */
