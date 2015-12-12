@@ -35,6 +35,9 @@ version = "0.3"
 version = "0.2"
 
 # iron plugins
+[dependencies.mount]
+version = "0"
+
 [dependencies.staticfile]
 version = "0"
 

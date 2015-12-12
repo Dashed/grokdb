@@ -5,6 +5,7 @@ extern crate rand;
 extern crate clap;
 extern crate iron;
 // [begin] iron framework plugins
+extern crate mount;
 extern crate router;
 extern crate logger;
 extern crate staticfile;
@@ -25,12 +26,13 @@ use api::GrokDB;
 use clap::{Arg, App};
 // [begin] iron framework
 use iron::{Iron, Chain};
+use mount::Mount;
 use router::{Router};
 use logger::Logger;
 use staticfile::Static;
 // [end] iron framework
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 
 fn main() {
@@ -39,9 +41,13 @@ fn main() {
 
     let cmd_matches = App::new("grokdb")
         .version("0.1") // semver semantics
+
         .author("Alberto Leal <mailforalberto@gmail.com> (github.com/dashed)")
+
         .about("flashcard app to help you grok better")
+
         .arg(
+
             Arg::with_name("app_path")
             .short("a")
             .long("app")
@@ -58,6 +64,7 @@ fn main() {
         )
         // TODO: port
         // TODO: multiple static directories to serve
+
         .arg(
             Arg::with_name("database_name")
             .help("Database name to store your flashcards")
@@ -97,25 +104,28 @@ fn main() {
         }
     };
 
-    /* iron router */
-
-    let mut router = Router::new();
-
-    if cmd_matches.is_present("app_path") {
-        let app_path = cmd_matches.value_of("app_path")
-                                    .unwrap()
-                                    .trim();
-
-        router.get("/*", Static::new(Path::new(app_path)));
-    }
+    /* set up iron router */
 
     /* REST API */
 
+    let mut router = Router::new();
     api::restify(&mut router, grokdb);
+
+    /* static files */
+
+    let mut mount = Mount::new();
+
+    let app_path = cmd_matches.value_of("app_path")
+                                .unwrap()
+                                .trim();
+
+    mount
+        .mount("/api", router)
+        .mount("/", Static::new(Path::new(app_path)));
 
     /* iron logging */
 
-    let mut log_chain = Chain::new(router);
+    let mut log_chain = Chain::new(mount);
 
     let (logger_before, logger_after) = Logger::new(None);
 
