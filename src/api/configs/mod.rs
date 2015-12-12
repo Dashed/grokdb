@@ -61,7 +61,7 @@ pub struct ConfigsAPI {
 
 impl ConfigsAPI {
 
-    pub fn exists(&self, config_name: &String) -> Result<bool, QueryError> {
+    pub fn exists(&self, config_name: &str) -> Result<bool, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
@@ -71,8 +71,6 @@ impl ConfigsAPI {
             FROM Configs
             WHERE setting = $1 LIMIT 1;
         ");
-
-        let config_name: &str = &config_name;
 
         let setting_exists = db_conn.query_row(query, &[&config_name], |row| -> bool {
             let count: i64 = row.get(0);
@@ -94,7 +92,7 @@ impl ConfigsAPI {
 
     }
 
-    pub fn get(&self, config_name: &String) -> Result<ConfigResponse, QueryError> {
+    pub fn get(&self, config_name: &str) -> Result<ConfigResponse, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
@@ -107,8 +105,6 @@ impl ConfigsAPI {
                 setting = :setting
             LIMIT 1;
         ");
-
-        let config_name: &str = &config_name;
 
         let params: &[(&str, &ToSql)] = &[
             (":setting", &config_name)
@@ -169,7 +165,7 @@ impl ConfigsAPI {
 
     }
 
-    pub fn delete(&self, config_name: &String) -> Result<(), QueryError> {
+    pub fn delete(&self, config_name: &str) -> Result<(), QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
@@ -182,8 +178,6 @@ impl ConfigsAPI {
             WHERE
             setting = :setting;
         ");
-
-        let config_name: &str = &config_name;
 
         let params: &[(&str, &ToSql)] = &[
             (":setting", &config_name)
