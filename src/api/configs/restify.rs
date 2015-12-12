@@ -13,7 +13,7 @@ use std::ops::Deref;
 use std::error::Error;
 
 use ::api::{GrokDB, ErrorResponse};
-use ::api::configs::{SetConfig, ConfigResponse};
+use ::api::configs::{SetConfig, SetConfigRequest, ConfigResponse};
 use ::database::QueryError;
 
 // attach configs REST endpoints to given router
@@ -21,18 +21,44 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
     let grokdb = Arc::new(grokdb);
 
-    router.post("/configs", {
+    router.get("/configs/:config_name", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
             let ref grokdb = grokdb.deref();
 
-            // parse json
+            // fetch and parse requested card id
+            let config_name: &str = req.extensions.get::<Router>().unwrap().find("config_name").unwrap();
 
-            let set_config_request = req.get::<bodyparser::Struct<SetConfig>>();
+            let config_name: String = config_name.to_string();
+
+            return get_config(&grokdb, &config_name);
+        }
+    });
+
+    router.post("/configs/:config_name", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+
+            // parse json
+            let set_config_request = req.get::<bodyparser::Struct<SetConfigRequest>>();
+
+            // fetch and parse requested card id
+            let config_name: &str = req.extensions.get::<Router>().unwrap().find("config_name").unwrap();
+
+            let config_name: String = config_name.to_string();
+
 
             let set_config_request: SetConfig = match set_config_request {
 
-                Ok(Some(set_config_request)) => set_config_request,
+                Ok(Some(set_config_request)) => {
+
+                    SetConfig {
+                        setting: config_name,
+                        value: set_config_request.value
+                    }
+                },
 
                 Ok(None) => {
 

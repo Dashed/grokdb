@@ -13,6 +13,11 @@ pub use self::restify::restify;
 
 
 #[derive(Debug, Clone, RustcDecodable)]
+pub struct SetConfigRequest {
+    value: String
+}
+
+#[derive(Debug, Clone)]
 pub struct SetConfig {
     setting: String,
     value: String
