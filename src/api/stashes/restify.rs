@@ -722,7 +722,7 @@ fn get_stash_by_id(grokdb: &GrokDB, stash_id: i64) -> IronResult<Response> {
         Err(response) => {
             return response;
         },
-        _ => {/* updating stash exists; continue */}
+        _ => {/* stash exists; continue */}
     }
 
     let maybe_stash: Result<StashResponse, QueryError> = grokdb.stashes.get_response(stash_id);

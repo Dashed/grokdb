@@ -7,6 +7,7 @@ pub mod decks;
 pub mod cards;
 pub mod stashes;
 pub mod review;
+pub mod configs;
 mod backup;
 
 use iron::status;
@@ -19,6 +20,7 @@ use self::decks::DecksAPI;
 use self::cards::CardsAPI;
 use self::stashes::StashesAPI;
 use self::review::ReviewAPI;
+use self::configs::ConfigsAPI;
 use super::database::{DB, BootstrapError};
 
 #[allow(non_snake_case)]
@@ -79,13 +81,12 @@ pub struct __ErrorResponse  {
 
 #[derive(Debug, Clone)]
 pub struct GrokDB {
-
     pub base_db_name: String,
-
     pub decks: DecksAPI,
     pub cards: CardsAPI,
     pub stashes: StashesAPI,
-    pub review: ReviewAPI
+    pub review: ReviewAPI,
+    pub configs: ConfigsAPI
 }
 
 pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
@@ -120,7 +121,10 @@ pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
         },
         review: ReviewAPI {
             db: db.clone()
-        }
+        },
+        configs: ConfigsAPI {
+            db: db.clone()
+        },
     };
 
     return Ok(api);
@@ -137,5 +141,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
     stashes::restify(router, grokdb.clone());
 
     review::restify(router, grokdb.clone());
+
+    configs::restify(router, grokdb.clone());
 }
 

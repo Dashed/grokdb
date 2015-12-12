@@ -64,7 +64,8 @@ impl ReviewableDeck {
 
     }
 
-    // returns card id (if exists)
+    // returns cached card id for this deck.
+    // if a cached entry exists, it's not guaranteed that the card is still in the deck.
     fn __get_cached_card(&self) -> Result<Option<i64>, QueryError> {
 
         let ref grokdb = self.grokdb.deref();
@@ -207,6 +208,8 @@ impl ReviewableSelection for ReviewableDeck {
                 return Ok(None);
             },
             Ok(Some(card_id)) => {
+
+                // check if the card is still within the deck
 
                 match self.has_card(card_id) {
                     Err(why) => {

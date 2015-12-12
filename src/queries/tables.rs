@@ -1,8 +1,12 @@
-pub const SETUP: [&'static str; 22] = [
+pub const SETUP: [&'static str; 23] = [
 
     // configs
 
     CONFIGS,
+
+    // configs/triggers
+
+    CONFIG_ON_UPDATE_TRIGGER,
 
     // decks
 
@@ -74,14 +78,26 @@ pub const SETUP: [&'static str; 22] = [
 /* configs */
 
 const CONFIGS: &'static str = "
-CREATE TABLE IF NOT EXISTS Config (
+CREATE TABLE IF NOT EXISTS Configs (
     setting TEXT PRIMARY KEY NOT NULL,
     value TEXT,
+
+    created_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+
     CHECK (setting <> '') /* ensure not empty */
 );
 ";
 
-
+const CONFIG_ON_UPDATE_TRIGGER: &'static str = "
+CREATE TRIGGER IF NOT EXISTS CONFIG_ON_UPDATE_TRIGGER
+AFTER UPDATE OF
+    setting, value
+ON Configs
+BEGIN
+    UPDATE Configs SET updated_at = strftime('%s', 'now') WHERE setting = NEW.setting;
+END;
+";
 
 /* decks */
 

@@ -28,10 +28,21 @@ pub struct UpdateStash {
 
 impl UpdateStash {
 
+    pub fn valid_name(&self) -> bool {
+
+        if self.name.is_some() {
+            let name = self.name.as_ref().unwrap().trim().to_string();
+
+            return name.len() > 0;
+        }
+
+        return true;
+    }
+
     #[allow(unused_parens)]
     pub fn should_update(&self) -> bool {
         return (
-            self.name.is_some() ||
+            self.valid_name() ||
             self.description.is_some()
         );
     }

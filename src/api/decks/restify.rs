@@ -182,6 +182,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             let deck_id: i64 = match grokdb.decks.create(&create_deck_request) {
                 Err(why) => {
                     // why: QueryError
+
                     let ref reason = format!("{:?}", why);
                     let res_code = status::InternalServerError;
 

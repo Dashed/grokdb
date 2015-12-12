@@ -25,6 +25,7 @@ pub trait ReviewableSelection {
     fn get_cached_card(&self) -> Result<Option<i64>, QueryError>;
     fn remove_cache(&self) -> Result<(), QueryError>;
 
+    // remove any cached entry by card id regardless of selection
     fn remove_cached_card(&self, card_id: i64) -> Result<(), QueryError>;
 
     /* new cards */
@@ -192,7 +193,7 @@ impl UpdateCardScore {
 
             Action::Skip => {
 
-                // noop update (trigger update to set update_at)
+                // noop update (coerce trigger update to set update_at timestamp).
                 // TODO: this seems too hacky
                 fields.push(format!("success = success"));
             },
@@ -325,7 +326,6 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
         }
     }
 
-    let mut rng = thread_rng();
 
     // decide method for choosing the next card
 
@@ -335,6 +335,7 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
         },
         Ok(method) => method
     };
+
 
     let card_id: i64 = match method {
         Method::NewCards => {
@@ -348,6 +349,8 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
 
         Method::OldEnough => {
 
+            let mut rng = thread_rng();
+
             // randomly decide to discard low scoring cards
             let min_score: f64 = {
 
@@ -360,6 +363,7 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
                     Ok(num_cards) => num_cards
                 };
 
+                // flip a coin.
                 if rng.gen_weighted_bool(2) && num_cards >= 2 {
                     cutoff
                 } else {
@@ -397,6 +401,8 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
         },
 
         Method::LeastRecentlyReviewed => {
+
+            let mut rng = thread_rng();
 
             // calculate the purgatory size
             let purgatory_size = {
@@ -474,7 +480,7 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
         }
     };
 
-    // remove any cache
+    // remove any cached entry
     match selection.remove_cache() {
         Err(why) => {
             return Err(why);
@@ -484,7 +490,7 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
         }
     }
 
-    // set cache
+    // set cache entry
     match selection.cache_card(card_id) {
         Err(why) => {
             return Err(why);
@@ -513,6 +519,7 @@ fn choose_method<T>(selection: &T) -> Result<Method, QueryError>
 
     let mut max_pin: f64 = 1f64;
 
+    // if there are no new cards, adjust pin to exclude 'new cards' method.
     match selection.has_new_cards() {
         Err(why) => {
             return Err(why);
@@ -523,6 +530,11 @@ fn choose_method<T>(selection: &T) -> Result<Method, QueryError>
         _ => {}
     }
 
+    // check if there are cards that haven't been reviewed for at least 3 hours
+    // and have a minimum score of 0.
+    //
+    // if there are no such cards that meet the above criteria, then exclude
+    // this method.
     match selection.has_reviewable_cards(3, 0f64) {
         Err(why) => {
             return Err(why);
@@ -534,6 +546,12 @@ fn choose_method<T>(selection: &T) -> Result<Method, QueryError>
     }
 
     let max_pin = max_pin;
+
+    // if there is only one method to choose from.
+    // faster code path.
+    if max_pin <= LEAST_RECENT {
+        return Ok(Method::LeastRecentlyReviewed);
+    }
 
     let mut rng = thread_rng();
 

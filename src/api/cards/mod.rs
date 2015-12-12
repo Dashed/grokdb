@@ -335,7 +335,11 @@ impl CardsAPI {
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
 
-        let ref query = format!("SELECT COUNT(1) FROM Cards WHERE card_id = $1 LIMIT 1;");
+        let ref query = format!("
+            SELECT COUNT(1)
+            FROM Cards
+            WHERE card_id = $1 LIMIT 1;
+        ");
 
         let card_exists = db_conn.query_row(query, &[&card_id], |row| -> bool {
             let count: i64 = row.get(0);
