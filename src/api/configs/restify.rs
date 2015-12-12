@@ -35,6 +35,39 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
+    router.delete("/configs/:config_name", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested card id
+            let config_name: &str = req.extensions.get::<Router>().unwrap().find("config_name").unwrap();
+
+            let config_name: String = config_name.to_string();
+
+            // delete config entry
+
+            match grokdb.configs.delete(&config_name) {
+                Err(why) => {
+                    // why: QueryError
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+                _ => {/* config entry sucessfully deleted */},
+            };
+
+            return Ok(Response::with((status::Ok)));
+        }
+    });
+
     router.post("/configs/:config_name", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {

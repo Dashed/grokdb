@@ -169,5 +169,38 @@ impl ConfigsAPI {
 
     }
 
-    // pub fn delete
+    pub fn delete(&self, config_name: &String) -> Result<(), QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        try!(DB::prepare_query(db_conn));
+
+        let ref query_delete = format!("
+            DELETE FROM
+            Configs
+            WHERE
+            setting = :setting;
+        ");
+
+        let config_name: &str = &config_name;
+
+        let params: &[(&str, &ToSql)] = &[
+            (":setting", &config_name)
+        ];
+
+        match db_conn.execute_named(query_delete, params) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query_delete.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
+
+    }
 }
