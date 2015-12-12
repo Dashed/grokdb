@@ -25,15 +25,25 @@ use api::GrokDB;
 
 use clap::{Arg, App};
 // [begin] iron framework
-use iron::{Iron, Chain};
+use iron::{Iron, Chain, AfterMiddleware, Response, Request, IronResult};
+use iron::error::{IronError};
+use iron::status;
 use mount::Mount;
 use router::{Router};
 use logger::Logger;
 use staticfile::Static;
 // [end] iron framework
 
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
+
+struct Custom404;
+
+impl AfterMiddleware for Custom404 {
+    fn catch(&self, _: &mut Request, err: IronError) -> IronResult<Response> {
+        return Ok(Response::with((status::NotFound, "404 Not Found")));
+    }
+}
 
 fn main() {
 
@@ -131,6 +141,8 @@ fn main() {
 
     log_chain.link_before(logger_before);
     log_chain.link_after(logger_after);
+    log_chain.link_after(Custom404);
+
 
     /* start the server */
 
