@@ -87,14 +87,14 @@ fn main() {
     // set up api
     let grokdb = api::new(database_name);
 
-    if let Err(why) = grokdb {
-        println!("FATAL ERROR:\n{}", why);
-        std::process::exit(1);
-    }
-
     let grokdb: GrokDB = match grokdb {
+
         Ok(grokdb) => grokdb,
-        _ => unreachable!(),
+
+        Err(why) => {
+            println!("FATAL ERROR:\n{}", why);
+            std::process::exit(1);
+        }
     };
 
     /* iron router */
