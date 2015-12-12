@@ -45,7 +45,7 @@ version = "0"
 version = "0"
 
 [dependencies.router]
-version = "0"
+version = "0.1"
 
 [dependencies.bodyparser]
 version = "0"
