@@ -21,6 +21,60 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
     let grokdb = Arc::new(grokdb);
 
+    router.head("/decks/:deck_id", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested deck id
+
+            let deck_id = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
+
+            let deck_id: i64 = match deck_id.parse::<u64>() {
+                Ok(deck_id) => deck_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            match grokdb.decks.exists(deck_id) {
+
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(false) => {
+                    return Ok(Response::with((status::NotFound, "")));
+                },
+
+                Ok(true) => {
+                    return Ok(Response::with((status::Ok, "")));
+                }
+            }
+        }
+    });
+
     router.get("/decks/:deck_id", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
