@@ -5,6 +5,7 @@ extern crate rustc_serialize;
 
 use iron::status;
 use iron::prelude::*;
+use iron::mime::Mime;
 use router::Router;
 
 use std::sync::Arc;
@@ -430,7 +431,9 @@ fn get_deck_by_id(grokdb: &GrokDB, deck_id: i64) -> IronResult<Response> {
 
     let response = deck.to_json();
 
-    return Ok(Response::with((status::Ok, response)));
+    let content_type = "application/json".parse::<Mime>().unwrap();
+
+    return Ok(Response::with((content_type, status::Ok, response)));
 }
 
 pub fn deck_exists(grokdb: &GrokDB, deck_id: i64) -> Result<(), IronResult<Response>> {

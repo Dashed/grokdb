@@ -5,6 +5,7 @@ extern crate rustc_serialize;
 
 use iron::status;
 use iron::prelude::*;
+use iron::mime::Mime;
 use router::Router;
 use urlencoded::{UrlEncodedQuery, QueryMap, UrlDecodingError};
 use rustc_serialize::json;
@@ -636,7 +637,9 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
-            return Ok(Response::with((status::Ok, response)));
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
         }
     });
 
@@ -947,7 +950,9 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
-            return Ok(Response::with((status::Ok, response)));
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
         }
     });
 
@@ -981,7 +986,9 @@ pub fn get_card_by_id(grokdb: &GrokDB, card_id: i64) -> IronResult<Response> {
 
     let response = card.to_json();
 
-    return Ok(Response::with((status::Ok, response)));
+    let content_type = "application/json".parse::<Mime>().unwrap();
+
+    return Ok(Response::with((content_type, status::Ok, response)));
 }
 
 pub fn card_exists(grokdb: &GrokDB, card_id: i64) -> Result<(), IronResult<Response>> {

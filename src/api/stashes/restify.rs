@@ -5,6 +5,7 @@ extern crate rustc_serialize;
 
 use iron::status;
 use iron::prelude::*;
+use iron::mime::Mime;
 use router::Router;
 use rustc_serialize::json;
 
@@ -708,7 +709,9 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
-            return Ok(Response::with((status::Ok, response)));
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
         }
     });
 }
@@ -749,7 +752,9 @@ fn get_stash_by_id(grokdb: &GrokDB, stash_id: i64) -> IronResult<Response> {
 
     let response = stash.to_json();
 
-    return Ok(Response::with((status::Ok, response)));
+    let content_type = "application/json".parse::<Mime>().unwrap();
+
+    return Ok(Response::with((content_type, status::Ok, response)));
 }
 
 pub fn stash_exists(grokdb: &GrokDB, stash_id: i64) -> Result<(), IronResult<Response>> {
