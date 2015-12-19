@@ -1,6 +1,7 @@
 grokdb
 ======
 
+RESTful flashcard application in rust. Does not come with a client (e.g. web UI).
 
 development
 ===========
