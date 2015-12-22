@@ -61,7 +61,7 @@ const AppRouteHandler = React.createClass({
                 </div>
                 <div className="row">
                     <div className="col-sm-12">
-                        <ul className="nav nav-pills">
+                        <ul className="nav nav-pills m-b">
                             <li className="nav-item">
                                 <a
                                     className={classnames('nav-link', {'active': view == 'library'})}
