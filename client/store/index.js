@@ -13,10 +13,10 @@ const SCHEMA = {
     route: null,
 
     deck: {
-        root: null,
-        self: null,
-        children: [],
-        cards: []
+        root: null, // deck_id
+        self: null, // deck_id
+        children: [], // List<deck_id>
+        cards: [] // List<card_id>
     },
 
     card: {
@@ -35,6 +35,11 @@ const SCHEMA = {
 
 function Store() {
 
+    // Simple variable lock intended to be used for checking if the app state
+    // has been reset earlier in a route redirect.
+    // This ensures that the app state is not reset more than once.
+    this._loading = false;
+
     this._state = minitrue(SCHEMA);
     this._stage = this._state.deref();
 
@@ -43,6 +48,15 @@ function Store() {
 }
 
 Store.prototype.constructor = Store;
+
+Store.prototype.loading = function(loading = NOT_SET) {
+
+    if(loading !== NOT_SET) {
+        this._loading = loading;
+    }
+
+    return this._loading;
+};
 
 // reference to app state
 Store.prototype.state = function() {
