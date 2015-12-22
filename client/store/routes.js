@@ -5,6 +5,15 @@ const {NOT_FOUND, OK} = require('./response');
 
 const NOT_ID = {};
 
+// based on: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt#A_stricter_parse_function
+const filterID = function (value, defaultValue) {
+    if(/^(\-|\+)?([0-9]+|Infinity)$/.test(value)) {
+        value = Number(value);
+        return (value > 0) ? value : defaultValue;
+    }
+    return defaultValue;
+};
+
 const createRootDeck = co.wrap(function* (store) {
 
     // create and set root deck
@@ -22,12 +31,22 @@ const createRootDeck = co.wrap(function* (store) {
     return deckID;
 });
 
-
 const loadAppState = co.wrap(function *(store) {
 
     // fetch root deck
 
     const rootDeckID = yield co(function *() {
+
+        const maybeRootDeckID = filterID(store.decks.root(), NOT_ID);
+
+        if(maybeRootDeckID !== NOT_ID) {
+
+            const result = yield store.decks.exists(maybeRootDeckID);
+
+            if(result.response) {
+                return maybeRootDeckID;
+            }
+        }
 
         // check if root deck exists
 
@@ -61,22 +80,15 @@ const loadAppState = co.wrap(function *(store) {
 
 });
 
-// based on: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt#A_stricter_parse_function
-const filterID = function (value, defaultValue) {
-    if(/^(\-|\+)?([0-9]+|Infinity)$/.test(value)) {
-        value = Number(value);
-        return (value > 0) ? value : defaultValue;
-    }
-    return defaultValue;
-};
-
 const ROUTE = {
     DECK: {
         VIEW: {
             CARDS: Symbol(),
             DECKS: Symbol()
         }
-    }
+    },
+
+    SETTINGS: Symbol()
 };
 
 const resolveRoute = function(routeID) {
@@ -85,7 +97,6 @@ const resolveRoute = function(routeID) {
 const toDeck = function(deckID) {
     page.redirect(`/deck/${deckID}/view/cards`);
 };
-
 
 const boostrapRoutes = co.wrap(function *(store) {
 
