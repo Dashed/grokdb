@@ -335,14 +335,163 @@ impl DecksAPI {
         return Ok(());
     }
 
-    pub fn children<'a>(&self, deck_id: i64) -> Result<Vec<i64>, QueryError> {
+    pub fn ancestors(&self, deck_id: i64) -> Result<Vec<i64>, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
 
         let ref query = format!("
-            SELECT descendent
-                FROM DecksClosure
+            SELECT
+                ancestor
+            FROM DecksClosure
+            WHERE
+                descendent = $1
+            AND
+                depth > 0
+            ORDER BY
+                depth DESC;
+        ");
+
+        let params: &[&ToSql] = &[
+            &deck_id, // $1
+        ];
+
+        let maybe_stmt = db_conn.prepare(query);
+
+        if maybe_stmt.is_err() {
+
+            let why = maybe_stmt.unwrap_err();
+
+            let err = QueryError {
+                sqlite_error: why,
+                query: query.clone(),
+            };
+            return Err(err);
+        }
+
+        let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+
+        let maybe_iter = stmt.query_map(params, |row: SqliteRow| -> i64 {
+            return row.get(0);
+        });
+
+        match maybe_iter {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(iter) => {
+
+                let mut vec_of_deck_id: Vec<i64> = Vec::new();
+
+                for maybe_deck_id in iter {
+
+                    let deck_id: i64 = match maybe_deck_id {
+                        Err(why) => {
+                            let err = QueryError {
+                                sqlite_error: why,
+                                query: query.clone(),
+                            };
+                            return Err(err);
+                        },
+                        Ok(deck_id) => deck_id
+                    };
+
+                    vec_of_deck_id.push(deck_id);
+                }
+
+                return Ok(vec_of_deck_id);
+            }
+        };
+    }
+
+    pub fn ancestorsByName(&self, deck_id: i64) -> Result<Vec<String>, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                Decks.name
+            FROM DecksClosure
+            INNER JOIN Decks
+            ON ancestor = Decks.deck_id
+            WHERE
+                descendent = $1
+            AND
+                depth > 0
+            ORDER BY
+                depth DESC;
+        ");
+
+        let params: &[&ToSql] = &[
+            &deck_id, // $1
+        ];
+
+        let maybe_stmt = db_conn.prepare(query);
+
+        if maybe_stmt.is_err() {
+
+            let why = maybe_stmt.unwrap_err();
+
+            let err = QueryError {
+                sqlite_error: why,
+                query: query.clone(),
+            };
+            return Err(err);
+        }
+
+        let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+
+        let maybe_iter = stmt.query_map(params, |row: SqliteRow| -> String {
+            return row.get(0);
+        });
+
+        match maybe_iter {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(iter) => {
+
+                let mut vec_of_deck_names: Vec<String> = Vec::new();
+
+                for maybe_deck_name in iter {
+
+                    let deck_name: String = match maybe_deck_name {
+                        Err(why) => {
+                            let err = QueryError {
+                                sqlite_error: why,
+                                query: query.clone(),
+                            };
+                            return Err(err);
+                        },
+                        Ok(deck_name) => deck_name
+                    };
+
+                    vec_of_deck_names.push(deck_name);
+                }
+
+                return Ok(vec_of_deck_names);
+            }
+        };
+    }
+
+    pub fn children(&self, deck_id: i64) -> Result<Vec<i64>, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                descendent
+            FROM DecksClosure
             WHERE
                 ancestor = $1
             AND
@@ -367,7 +516,6 @@ impl DecksAPI {
         }
 
         let mut stmt: SqliteStatement = maybe_stmt.unwrap();
-
 
         let maybe_iter = stmt.query_map(params, |row: SqliteRow| -> i64 {
             return row.get(0);

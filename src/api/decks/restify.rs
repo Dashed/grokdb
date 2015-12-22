@@ -7,6 +7,7 @@ use iron::status;
 use iron::prelude::*;
 use iron::mime::Mime;
 use router::Router;
+use rustc_serialize::json;
 
 use std::sync::Arc;
 use std::ops::Deref;
@@ -102,6 +103,170 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             };
 
             return get_deck_by_id(grokdb, deck_id);
+        }
+    });
+
+    router.get("/decks/:deck_id/ancestors/name", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested deck id
+
+            let deck_id = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
+
+            let deck_id: i64 = match deck_id.parse::<u64>() {
+                Ok(deck_id) => deck_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            match grokdb.decks.exists(deck_id) {
+
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(false) => {
+                    return Ok(Response::with((status::NotFound, "")));
+                },
+
+                Ok(true) => {
+                    /* deck exists; continue */
+                }
+            }
+
+            let maybe_ancestors: Result<Vec<String>, QueryError> = grokdb.decks.ancestorsByName(deck_id);
+
+            let response: String = match maybe_ancestors {
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+
+                },
+                Ok(ancestors) => {
+                    let ref ancestors = ancestors;
+                    json::encode(ancestors).unwrap()
+                },
+            };
+
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
+        }
+    });
+
+    router.get("/decks/:deck_id/ancestors/id", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested deck id
+
+            let deck_id = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
+
+            let deck_id: i64 = match deck_id.parse::<u64>() {
+                Ok(deck_id) => deck_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            match grokdb.decks.exists(deck_id) {
+
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(false) => {
+                    return Ok(Response::with((status::NotFound, "")));
+                },
+
+                Ok(true) => {
+                    /* deck exists; continue */
+                }
+            }
+
+            let maybe_ancestors: Result<Vec<i64>, QueryError> = grokdb.decks.ancestors(deck_id);
+
+            let response: String = match maybe_ancestors {
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+
+                },
+                Ok(ancestors) => {
+                    let ref ancestors = ancestors;
+                    json::encode(ancestors).unwrap()
+                },
+            };
+
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
         }
     });
 
