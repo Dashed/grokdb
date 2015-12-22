@@ -33,11 +33,16 @@ Deck.prototype.constructor = Deck;
 function Decks(store) {
 
     this._store = store;
-    this._lookup = Immutable.Map(); // Map<int, Deck>
+    this._lookup = Immutable.Map(); // Map<deck_id<int>, Deck>
 
 }
 
 Decks.prototype.constructor = Decks;
+
+// clear lookup table
+Decks.prototype.clearCache = function() {
+    this._lookup = Immutable.Map(); // Map<deck_id<int>, Deck>
+};
 
 Decks.prototype.create = co.wrap(function *(createDeck) {
 
@@ -163,15 +168,6 @@ Decks.prototype.current = function(deckID = NOT_SET) {
 
     return value;
 };
-
-// // clear lookup table
-// Decks.prototype.clearAll = function() {
-
-// };
-
-// Decks.prototype.clear = function(deckID) {
-
-// };
 
 // // returns Promise wrapping Option
 // Decks.prototype.get = function(deckID) {

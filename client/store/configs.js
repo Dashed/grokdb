@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const co = require('co');
 const superhot = require('./superhot');
-const Immutable = require('immutable');
 
 const {Response, NOT_FOUND, OK, INVALID} = require('./response');
 
@@ -24,13 +23,11 @@ Config.prototype.constructor = Config;
 
 function Configs(store) {
     this._store = store;
-
-    this._lookup = Immutable.Map();
 }
 
 Configs.prototype.constructor = Configs;
 
-Configs.prototype.get = co.wrap(function *(name, shouldCache = true) {
+Configs.prototype.get = co.wrap(function *(name) {
 
     return new Promise(function(resolve, reject) {
 
@@ -69,7 +66,7 @@ Configs.prototype.get = co.wrap(function *(name, shouldCache = true) {
 
 });
 
-Configs.prototype.set = co.wrap(function *(name, value, shouldCache = true) {
+Configs.prototype.set = co.wrap(function *(name, value) {
 
     const request = {
         value: String(value)

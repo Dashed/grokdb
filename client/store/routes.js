@@ -24,7 +24,7 @@ const createRootDeck = co.wrap(function* (store) {
         name: 'library'
     });
 
-    const deckID = result.response.id;
+    const deckID = filterID(result.response.id);
 
     result = yield store.configs.set('root_deck', deckID);
 
@@ -34,6 +34,9 @@ const createRootDeck = co.wrap(function* (store) {
 });
 
 const loadAppState = co.wrap(function *(store) {
+
+    // clear caches
+    store.decks.clearCache();
 
     // fetch root deck
 
@@ -58,7 +61,11 @@ const loadAppState = co.wrap(function *(store) {
 
             // ensure root deck exists; if not, create one
 
-            const deckID = configResult.response.value;
+            const deckID = filterID(configResult.response.value, NOT_ID);
+
+            if(deckID === NOT_ID) {
+                return createRootDeck(store);
+            }
 
             const result = yield store.decks.exists(deckID);
 
@@ -83,12 +90,14 @@ const loadAppState = co.wrap(function *(store) {
 });
 
 const ROUTE = {
-    DECK: {
+    LIBRARY: {
         VIEW: {
             CARDS: Symbol(),
             DECKS: Symbol()
         }
     },
+
+    STASHES: Symbol(),
 
     SETTINGS: Symbol()
 };
@@ -116,12 +125,14 @@ const boostrapRoutes = co.wrap(function *(store) {
             return;
         }
 
+        context.deck_id = deckID;
+
         next();
     };
 
     const ensureDeckIDExists = co.wrap(function *(context, next) {
 
-        const deckID = context.params.deck_id;
+        const deckID = context.deck_id;
 
         // ensure not root deck
         if(deckID == store.decks.root()) {
@@ -132,7 +143,7 @@ const boostrapRoutes = co.wrap(function *(store) {
         const result = yield store.decks.exists(deckID);
 
         if(!result.response) {
-            toRootDeck();
+            toRootDeck(context);
             return;
         }
 
@@ -159,6 +170,26 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     page('/', reloadAppState, toRootDeck);
 
+    page('/settings', reloadAppState, function(context, next) {
+
+        store.resetStage();
+        store.routes.route(ROUTE.SETTINGS);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/stashes', reloadAppState, function(context, next) {
+
+        store.resetStage();
+        store.routes.route(ROUTE.STASHES);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
     page('/deck', reloadAppState, toRootDeck);
 
     page('/deck/:deck_id', reloadAppState, function(context) {
@@ -171,37 +202,44 @@ const boostrapRoutes = co.wrap(function *(store) {
         toDeck(deckID);
     });
 
-    page('/deck/:deck_id/view/cards', reloadAppState, ensureValidDeckID, ensureDeckIDExists, co.wrap(function *(context, next) {
 
-        const deckID = context.params.deck_id;
+    page('/deck/:deck_id/view/decks', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
 
         store.resetStage();
         store.decks.current(deckID);
-        store.routes.route(ROUTE.DECK.VIEW.CARDS);
+        store.routes.route(ROUTE.LIBRARY.VIEW.DECKS);
         store.commit();
 
         next();
 
-    }), postRouteLoad);
+    }, postRouteLoad);
 
-    page('/deck/:deck_id/view/decks', reloadAppState, ensureValidDeckID, ensureDeckIDExists, co.wrap(function *(context, next) {
+    page('/deck/:deck_id/view/cards', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
 
-        const deckID = context.params.deck_id;
+        const deckID = context.deck_id;
 
         store.resetStage();
         store.decks.current(deckID);
-        store.routes.route(ROUTE.DECK.VIEW.DECKS);
+        store.routes.route(ROUTE.LIBRARY.VIEW.CARDS);
         store.commit();
 
         next();
 
-    }), postRouteLoad);
+    }, postRouteLoad);
+
 
     // route not found; redirect to the root deck
-    page('*', reloadAppState, toRootDeck);
+    page('*', function(context, next) {
+        console.error('not found', context);
+        next();
+    }, reloadAppState, toRootDeck);
+
+    page.base('/#');
 
     page.start({
-        hashbang: true,
+        // hashbang: true,
         click: false
     });
 });
@@ -232,6 +270,22 @@ Routes.prototype.route = function(routeID = NOT_SET) {
 
 Routes.prototype.watchRoute = function() {
     return this._store.state().cursor(['route']);
+};
+
+Routes.prototype.toLibrary = function() {
+
+    this._store.resetStage();
+    const deckID = this._store.decks.current();
+
+    page(`/deck/${deckID}/view/cards`);
+};
+
+Routes.prototype.toSettings = function() {
+    page(`/settings`);
+};
+
+Routes.prototype.toStashes = function() {
+    page(`/stashes`);
 };
 
 module.exports = {
