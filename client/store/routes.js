@@ -3,6 +3,8 @@ const page = require('page');
 
 const {NOT_FOUND, OK} = require('./response');
 
+// sentinel values
+const NOT_SET = {};
 const NOT_ID = {};
 
 // based on: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt#A_stricter_parse_function
@@ -175,7 +177,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
         store.resetStage();
         store.decks.current(deckID);
-        store.route(ROUTE.DECK.VIEW.CARDS);
+        store.routes.route(ROUTE.DECK.VIEW.CARDS);
         store.commit();
 
         next();
@@ -188,7 +190,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
         store.resetStage();
         store.decks.current(deckID);
-        store.route(ROUTE.DECK.VIEW.DECKS);
+        store.routes.route(ROUTE.DECK.VIEW.DECKS);
         store.commit();
 
         next();
@@ -204,7 +206,32 @@ const boostrapRoutes = co.wrap(function *(store) {
     });
 });
 
+function Routes(store) {
+
+    this._store = store;
+}
+
+Routes.prototype.route = function(routeID = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['route']);
+
+    if(routeID !== NOT_SET) {
+        stage = stage.updateIn(['route'], function() {
+            return routeID;
+        });
+
+        this._store.stage(stage);
+
+        value = routeID;
+    }
+
+    return value;
+};
+
 module.exports = {
     bootstrap: boostrapRoutes,
-    types: ROUTE
+    types: ROUTE,
+    Routes: Routes
 };

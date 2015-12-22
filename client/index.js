@@ -17,7 +17,7 @@ co(function* () {
     yield new Promise(function(resolve) {
         store.resetStage();
 
-        const route = store.route();
+        const route = store.routes.route();
         if(isSymbol(route)) {
             resolve();
         }

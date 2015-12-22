@@ -2,8 +2,10 @@ const minitrue = require('minitrue');
 
 const bootstrap = require('./bootstrap');
 
+const {Routes} = require('./routes');
 const {Decks} = require('./decks');
 const {Configs} = require('./configs');
+
 
 // sentinel value
 const NOT_SET = {};
@@ -43,6 +45,7 @@ function Store() {
     this._state = minitrue(SCHEMA);
     this._stage = this._state.deref();
 
+    this.routes = new Routes(this);
     this.decks = new Decks(this);
     this.configs = new Configs(this);
 }
@@ -89,22 +92,5 @@ Store.prototype.commit = function() {
         return this._stage;
     });
 };
-
-Store.prototype.route = function(routeID = NOT_SET) {
-
-    let value = this._stage.getIn(['route']);
-
-    if(routeID !== NOT_SET) {
-
-        this._stage = this._stage.updateIn(['route'], function() {
-            return routeID;
-        });
-
-        value = routeID;
-    }
-
-    return value;
-};
-
 
 module.exports = bootstrap(new Store());
