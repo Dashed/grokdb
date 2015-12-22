@@ -230,6 +230,10 @@ Routes.prototype.route = function(routeID = NOT_SET) {
     return value;
 };
 
+Routes.prototype.watchRoute = function() {
+    return this._store.state().cursor(['route']);
+};
+
 module.exports = {
     bootstrap: boostrapRoutes,
     types: ROUTE,

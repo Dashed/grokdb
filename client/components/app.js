@@ -1,9 +1,21 @@
 const React = require('react');
+const invariant = require('invariant');
 
+const orwell = require('orwell');
 
-const App = React.createClass({
+const Library = require('./library');
+const {types: ROUTES} = require('store/routes');
+
+const AppRouteHandler = React.createClass({
+
+    propTypes: {
+        RouteHandler: React.PropTypes.oneOfType([ React.PropTypes.func, React.PropTypes.string ])
+    },
 
     render() {
+
+        const {RouteHandler} = this.props;
+
         return (
             <div key="app">
                 <div className="row">
@@ -15,13 +27,68 @@ const App = React.createClass({
                 </div>
                 <div className="row">
                     <div className="col-sm-12">
-                        {'hello'}
+                        <ul className="nav nav-pills">
+                            <li className="nav-item">
+                                <a className="nav-link active" href="#">
+                                    {'Library'}
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a className="nav-link" href="#">
+                                    {'Stashes'}
+                                </a>
+                            </li>
+                            <li className="nav-item pull-right">
+                                <a className="nav-link" href="#">
+                                    {'Settings'}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-sm-12">
+                        <RouteHandler />
                     </div>
                 </div>
             </div>
         );
     }
 });
+
+const App = orwell(AppRouteHandler, {
+
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
+    watch(props, manual, context) {
+        return context.store.routes.watchRoute();
+    },
+
+    assignNewProps(props, context) {
+
+        const route = context.store.routes.route();
+
+        let handler;
+
+        switch(route) {
+
+        case ROUTES.DECK.VIEW.CARDS:
+        case ROUTES.DECK.VIEW.DECKS:
+            handler = Library;
+            break;
+
+        default:
+            invariant(false, `Unexpected route. Given: ${String(route)}`);
+        }
+
+        return {
+            RouteHandler: handler
+        };
+    }
+});
+
 
 // container for everything
 const AppContainer = React.createClass({

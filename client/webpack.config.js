@@ -42,6 +42,7 @@ module.exports = {
             'superagent/lib/client',
             'classnames',
             'shallowequal',
+            'invariant',
             // 'slug',
             // 'markdown-it',
             'react-textarea-autosize',
