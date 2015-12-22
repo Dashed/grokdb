@@ -32,15 +32,11 @@ const boostrapRoutes = co.wrap(function *(store) {
     };
 
     const toRootDeck = function() {
-        const rootDeckID = store.rootDeck();
+        const rootDeckID = store.decks.root();
         toDeck(rootDeckID);
     };
 
-    page('/', toRootDeck);
-
-    page('/deck', toRootDeck);
-
-    page('/deck/:deck_id', function(context) {
+    const ensureValidDeckID = function(context, next) {
 
         const deckID = filterID(context.params.deck_id, NOT_ID);
 
@@ -49,27 +45,16 @@ const boostrapRoutes = co.wrap(function *(store) {
             return;
         }
 
-        toDeck(deckID);
-    });
+        next();
+    };
 
-    page('/deck/:deck_id/view', function(context) {
+    const ensureDeckIDExists = co.wrap(function *(context, next) {
 
-        const deckID = filterID(context.params.deck_id, NOT_ID);
+        const deckID = context.params.deck_id;
 
-        if(deckID === NOT_ID) {
-            toRootDeck();
-            return;
-        }
-
-        toDeck(deckID);
-    });
-
-    page('/deck/:deck_id/view/cards', co.wrap(function *(context) {
-
-        const deckID = filterID(context.params.deck_id, NOT_ID);
-
-        if(deckID === NOT_ID) {
-            toRootDeck();
+        // ensure not root deck
+        if(deckID == store.decks.root()) {
+            next();
             return;
         }
 
@@ -79,6 +64,27 @@ const boostrapRoutes = co.wrap(function *(store) {
             toRootDeck();
             return;
         }
+
+        next();
+    });
+
+    page('/', toRootDeck);
+
+    page('/deck', toRootDeck);
+
+    page('/deck/:deck_id', ensureValidDeckID, function(context) {
+        const deckID = context.params.deck_id;
+        toDeck(deckID);
+    });
+
+    page('/deck/:deck_id/view', ensureValidDeckID, function(context) {
+        const deckID = context.params.deck_id;
+        toDeck(deckID);
+    });
+
+    page('/deck/:deck_id/view/cards', ensureValidDeckID, ensureDeckIDExists, co.wrap(function *(context) {
+
+        const deckID = context.params.deck_id;
 
         store.resetStage();
         store.decks.current(deckID);
@@ -87,26 +93,15 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     }));
 
-    page('/deck/:deck_id/view/decks', co.wrap(function *(context) {
+    page('/deck/:deck_id/view/decks', ensureValidDeckID, ensureDeckIDExists, co.wrap(function *(context) {
 
-        const deckID = filterID(context.params.deck_id, NOT_ID);
-
-        if(deckID === NOT_ID) {
-            toRootDeck();
-            return;
-        }
-
-        const result = yield store.decks.exists(deckID);
-
-        if(!result.response) {
-            toRootDeck();
-            return;
-        }
+        const deckID = context.params.deck_id;
 
         store.resetStage();
         store.decks.current(deckID);
         store.route(ROUTE.DECK.VIEW.DECKS);
         store.commit();
+
     }));
 
     page('*', toRootDeck);
