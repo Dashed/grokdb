@@ -93,7 +93,9 @@ const ROUTE = {
     LIBRARY: {
         VIEW: {
             CARDS: Symbol(),
-            DECKS: Symbol()
+            DECKS: Symbol(),
+            DESCRIPTION: Symbol(),
+            META: Symbol()
         }
     },
 
@@ -229,6 +231,32 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     }, postRouteLoad);
 
+    page('/deck/:deck_id/view/description', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.current(deckID);
+        store.routes.route(ROUTE.LIBRARY.VIEW.DESCRIPTION);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/view/meta', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.current(deckID);
+        store.routes.route(ROUTE.LIBRARY.VIEW.META);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
 
     // route not found; redirect to the root deck
     page('*', function(context, next) {
@@ -272,12 +300,54 @@ Routes.prototype.watchRoute = function() {
     return this._store.state().cursor(['route']);
 };
 
-Routes.prototype.toLibrary = function() {
+Routes.prototype.toLibrary = function(toDeckID = NOT_SET) {
 
-    this._store.resetStage();
-    const deckID = this._store.decks.current();
+    if(toDeckID === NOT_SET) {
+        this._store.resetStage();
+        toDeckID = this._store.decks.current();
+    }
 
-    page(`/deck/${deckID}/view/cards`);
+    page(`/deck/${toDeckID}/view/cards`);
+};
+
+Routes.prototype.toLibraryCards = function(toDeckID = NOT_SET) {
+
+    if(toDeckID === NOT_SET) {
+        this._store.resetStage();
+        toDeckID = this._store.decks.current();
+    }
+
+    page(`/deck/${toDeckID}/view/cards`);
+};
+
+Routes.prototype.toLibraryDecks = function(toDeckID = NOT_SET) {
+
+    if(toDeckID === NOT_SET) {
+        this._store.resetStage();
+        toDeckID = this._store.decks.current();
+    }
+
+    page(`/deck/${toDeckID}/view/decks`);
+};
+
+Routes.prototype.toLibraryDescription = function(toDeckID = NOT_SET) {
+
+    if(toDeckID === NOT_SET) {
+        this._store.resetStage();
+        toDeckID = this._store.decks.current();
+    }
+
+    page(`/deck/${toDeckID}/view/description`);
+};
+
+Routes.prototype.toLibraryMeta = function(toDeckID = NOT_SET) {
+
+    if(toDeckID === NOT_SET) {
+        this._store.resetStage();
+        toDeckID = this._store.decks.current();
+    }
+
+    page(`/deck/${toDeckID}/view/meta`);
 };
 
 Routes.prototype.toSettings = function() {

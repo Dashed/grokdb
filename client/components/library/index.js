@@ -1,6 +1,8 @@
 const React = require('react');
 
 const Breadcrumb = require('./breadcrumb');
+const Header = require('./header');
+const Subnav = require('./subnav');
 
 const Library = React.createClass({
     render() {
@@ -13,7 +15,12 @@ const Library = React.createClass({
                 </div>
                 <div className="row">
                     <div className="col-sm-12">
-                        {'library'}
+                        <Header />
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-sm-12">
+                        <Subnav />
                     </div>
                 </div>
             </div>

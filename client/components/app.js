@@ -130,6 +130,8 @@ const App = orwell(AppRouteHandler, {
 
         case ROUTES.LIBRARY.VIEW.CARDS:
         case ROUTES.LIBRARY.VIEW.DECKS:
+        case ROUTES.LIBRARY.VIEW.DESCRIPTION:
+        case ROUTES.LIBRARY.VIEW.META:
             handler = Library;
             view = 'library';
             break;
