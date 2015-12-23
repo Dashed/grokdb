@@ -53,15 +53,9 @@ const AppRouteHandler = React.createClass({
         return (
             <div key="app">
                 <div className="row">
-                    <div className="col-sm-12">
-                        <header>
-                            <h1 className="display-4 m-y">grokdb</h1>
-                        </header>
-                    </div>
-                </div>
-                <div className="row">
-                    <div className="col-sm-12">
-                        <ul className="nav nav-pills m-b">
+                    <div className="col-sm-12 m-y" id="appheader">
+                        <h1 className="item display-4 pull-left m-y-0 m-r-md">grokdb</h1>
+                        <ul className="item nav nav-pills">
                             <li className="nav-item">
                                 <a
                                     className={classnames('nav-link', {'active': view == 'library'})}
