@@ -2,6 +2,7 @@ const React = require('react');
 const _ = require('lodash');
 const invariant = require('invariant');
 const shallowEqual = require('shallowequal');
+const isPromise = require('is-promise');
 
 const isFunction = _.isFunction;
 const assign = _.assign;
@@ -102,7 +103,7 @@ const Courier = function(inputSpec) {
 
             const ret = assignNewProps.call(null, props, context, this.__isMounted);
 
-            if(ret instanceof Promise || isPlainObject(ret)) {
+            if(isPromise(ret) || isPlainObject(ret)) {
                 return ret;
             }
 
@@ -214,7 +215,7 @@ const Courier = function(inputSpec) {
 
             const pendingResult = this.assignNewProps(props, context);
 
-            if(pendingResult instanceof Promise) {
+            if(isPromise(pendingResult)) {
 
                 this.setState({
                     pending: true,
@@ -278,7 +279,7 @@ const Courier = function(inputSpec) {
             let pendingResult = this.assignNewProps(this.props, this.context);
             let currentProps = void 0;
 
-            if(pendingResult instanceof Promise) {
+            if(isPromise(pendingResult)) {
                 pending = true;
                 currentProps = assign({}, this.props);
             } else {
@@ -314,8 +315,9 @@ const Courier = function(inputSpec) {
                 return;
             }
 
-            invariant(this.state.pendingResult instanceof Promise,
-                `Expected this.state.pendingResult to be instanceof Promise. Given: ${this.state.pendingResult}`);
+
+            invariant(isPromise(this.state.pendingResult),
+                `Expected this.state.pendingResult to be like a Promise. Given: ${this.state.pendingResult}`);
 
             Promise.resolve(this.state.pendingResult)
                 .then((newProps) => {
