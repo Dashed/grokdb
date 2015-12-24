@@ -2,5 +2,5 @@
 Issues
 ======
 
-- https://phabricator.babeljs.io/T6644
-    + babel-runtime locked at 5.x until it is resolved
+- https://github.com/petkaantonov/bluebird/issues/903
+    + some combo of babel, co, and bluebird doesn't seem stable.
