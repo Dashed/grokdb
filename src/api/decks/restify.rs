@@ -7,7 +7,10 @@ use iron::status;
 use iron::prelude::*;
 use iron::mime::Mime;
 use router::Router;
+use urlencoded::{UrlEncodedQuery, QueryMap};
 use rustc_serialize::json;
+use regex::Regex;
+
 
 use std::sync::Arc;
 use std::ops::Deref;
@@ -22,6 +25,111 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
     let grokdb = Arc::new(grokdb);
 
+    let decks_list_re = Regex::new(r"^[1-9]\d*(,[1-9]\d*)*$").unwrap();
+
+    router.get("/decks", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            let list_deck_ids: Vec<i64> = match req.get_ref::<UrlEncodedQuery>() {
+
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(ref hashmap) => {
+                    let hashmap: &QueryMap = hashmap;
+
+                    let decks: Vec<i64> = match hashmap.contains_key("decks") {
+                        true => {
+                            let maybe_decks: &Vec<String> = hashmap.get("decks").unwrap();
+
+                            if maybe_decks.len() <= 0 {
+                                vec![]
+                            } else {
+
+                                let ref decks_str: String = maybe_decks[0];
+
+                                if decks_list_re.is_match(decks_str) {
+                                    let decks = decks_str.split(",").map(
+                                        |x: &str| -> i64 {
+                                            x.parse::<i64>().unwrap()
+                                    });
+
+                                    decks.collect::<Vec<i64>>()
+                                } else {
+
+                                    let ref reason = format!("Invalid list of deck ids");
+                                    let res_code = status::BadRequest;
+
+                                    let err_response = ErrorResponse {
+                                        status: res_code,
+                                        developerMessage: reason,
+                                        userMessage: reason,
+                                    }.to_json();
+
+                                    return Ok(Response::with((res_code, err_response)));
+                                }
+                            }
+                        },
+
+                        _ => vec![]
+                    };
+
+                    decks
+                }
+            };
+
+            let mut decks: Vec<DeckResponse> = vec![];
+
+            for deck_id in list_deck_ids {
+
+                let maybe_deck: Result<DeckResponse, QueryError> = grokdb.decks.get_response(deck_id);
+
+                let deck: DeckResponse = match maybe_deck {
+
+                    Err(why) => {
+                        // why: QueryError
+
+                        let ref reason = format!("{:?}", why);
+                        let res_code = status::NotFound;
+
+                        let err_response = ErrorResponse {
+                            status: res_code,
+                            developerMessage: reason,
+                            userMessage: why.description(),
+                        }.to_json();
+
+                        return Ok(Response::with((res_code, err_response)));
+                    },
+
+                    Ok(deck) => deck,
+                };
+
+                decks.push(deck);
+            }
+
+            let ref decks = decks;
+
+            let response = json::encode(decks).unwrap();
+
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
+        }
+    });
+
     router.head("/decks/:deck_id", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
@@ -29,7 +137,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
             // fetch and parse requested deck id
 
-            let deck_id = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
+            let deck_id: &str = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
 
             let deck_id: i64 = match deck_id.parse::<u64>() {
                 Ok(deck_id) => deck_id as i64,

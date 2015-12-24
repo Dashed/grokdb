@@ -5,6 +5,9 @@ authors = ["Alberto Leal <mailforalberto@gmail.com>"]
 
 license = "MIT"
 
+[dependencies.regex]
+version = "0.1"
+
 [dependencies.rand]
 version = "0.3"
 

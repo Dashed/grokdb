@@ -1,4 +1,5 @@
 // crates
+extern crate regex;
 extern crate chrono;
 extern crate libc;
 extern crate rand;

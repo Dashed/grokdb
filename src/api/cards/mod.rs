@@ -132,6 +132,7 @@ struct CardResponse {
     created_at: i64, // unix timestamp
     updated_at: i64,  // unix timestamp
     review_stat: ReviewResponse
+    // TODO: needed?
     // stashes: Vec<i64>
 }
 
