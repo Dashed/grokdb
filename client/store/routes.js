@@ -30,6 +30,8 @@ const createRootDeck = co.wrap(function* (store) {
 
     // TODO: error handling of result
 
+    yield store.decks.load(deckID);
+
     return deckID;
 });
 
@@ -49,6 +51,7 @@ const loadAppState = co.wrap(function *(store) {
             const result = yield store.decks.exists(maybeRootDeckID);
 
             if(result.response) {
+                yield store.decks.load(maybeRootDeckID);
                 return maybeRootDeckID;
             }
         }
@@ -72,6 +75,8 @@ const loadAppState = co.wrap(function *(store) {
             if(!result.response) {
                 return createRootDeck(store);
             }
+
+            yield store.decks.load(deckID);
 
             return deckID;
 
