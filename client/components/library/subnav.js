@@ -2,7 +2,7 @@ const React = require('react');
 const invariant = require('invariant');
 const classnames = require('classnames');
 
-const orwell = require('orwell');
+const courier = require('courier');
 
 const {types: ROUTES} = require('store/routes');
 
@@ -85,7 +85,9 @@ const Subnav = React.createClass({
     }
 });
 
-const SubnavOrwell = orwell(Subnav, {
+const SubnavOrwell = courier({
+
+    component: Subnav,
 
     contextTypes: {
         store: React.PropTypes.object.isRequired

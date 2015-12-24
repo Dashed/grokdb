@@ -2,7 +2,7 @@ const React = require('react');
 const invariant = require('invariant');
 const classnames = require('classnames');
 
-const orwell = require('orwell');
+const courier = require('courier');
 
 const Library = require('./library');
 const Stashes = require('./stashes');
@@ -93,7 +93,9 @@ const AppRouteHandler = React.createClass({
     }
 });
 
-const App = orwell(AppRouteHandler, {
+const App = courier({
+
+    component: AppRouteHandler,
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
