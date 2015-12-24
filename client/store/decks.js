@@ -84,6 +84,78 @@ Decks.prototype.clearCache = function() {
     this._lookup = Immutable.Map(); // Map<deck_id<int>, Deck>
 };
 
+// load and cache deck onto lookup table
+Decks.prototype.load = co.wrap(function *(deckID = NOT_SET) {
+
+    if(deckID === NOT_SET) {
+        return Promise.resolve(void 0);
+    }
+
+
+    return deckLoader.load(deckID)
+        .then((deck) => {
+
+            deckID = Number(deckID);
+
+            // cache onto lookup table
+
+            this._lookup = this._lookup.set(deckID, deck);
+
+            return deck;
+        });
+
+});
+
+Decks.prototype.loadMany = co.wrap(function *(deckIDs) {
+
+    invariant(_.isArray(deckIDs), 'Expected array.');
+
+    return deckLoader.loadMany(deckIDs)
+        .then((decks) => {
+
+            // cache onto lookup table
+
+            _.forEach(decks, (deck) => {
+                // TODO: room for optimization
+                this._lookup = this._lookup.set(deck.id, deck);
+            });
+
+            return decks;
+        });
+
+});
+
+Decks.prototype.get = function(deckID) {
+
+    deckID = Number(deckID);
+
+    const deck = this._lookup.get(deckID, NOT_SET);
+
+    if(deck === NOT_SET) {
+        return co.wrap(function *(self) {
+
+            yield self.load(deckID);
+
+            return self._lookup.get(deckID);
+
+        })(this);
+
+    }
+
+    return Promise.resolve(deck);
+};
+
+Decks.prototype.getMany = function(deckIDs) {
+
+    invariant(_.isArray(deckIDs), 'Expected array.');
+
+    deckIDs = _.map(deckIDs, (deckID) => {
+        return this.get(deckID);
+    });
+
+    return Promise.all(deckIDs);
+};
+
 Decks.prototype.create = co.wrap(function *(createDeck) {
 
     if(!_.has(createDeck, 'name')) {
@@ -209,28 +281,20 @@ Decks.prototype.current = function(deckID = NOT_SET) {
     return value;
 };
 
-Decks.prototype.load = co.wrap(function *(deckID = NOT_SET) {
+// get list of children decks for current deck
+Decks.prototype.children = function() {
 
-    if(deckID === NOT_SET) {
-        return Promise.resolve(void 0);
-    }
+    const currentID = this.current();
 
-    deckID = Number(deckID);
+    return this.get(currentID)
+        .then((currentDeck) => {
+            invariant(_.isArray(currentDeck.children),
+                `Expected currentDeck.children to be an array. Given ${currentDeck.children}`);
 
-    return deckLoader.load(deckID)
-        .then((deck) => {
-
-            this._lookup.set(deckID, deck);
-
-            return deck;
+            return this.getMany(currentDeck.children);
         });
 
-});
-
-// // returns Promise wrapping Option
-// Decks.prototype.get = function(deckID) {
-
-// };
+};
 
 
 module.exports = {
