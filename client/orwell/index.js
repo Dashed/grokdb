@@ -8,6 +8,8 @@ const isPlainObject = _.isPlainObject;
 const isArray = _.isArray;
 const assign = _.assign;
 
+throw Error('dont use');
+
 const WATCH_OBSERVABLE = function() {
     return void 0;
 };
@@ -141,8 +143,8 @@ const orwell = function(Component, orwellSpec) {
             }
         },
 
-        // this function is subscribed to all given observable, and is called whenever
-        // any of those observable change in some way.
+        // this function is subscribed to all given observables, and is called whenever
+        // any of those observables change in some way.
         handleChanged() {
 
             if(!this.__isMounted()) {
@@ -200,6 +202,7 @@ const orwell = function(Component, orwellSpec) {
             if(!shouldAssignNewProps.call(ctx, nextProps, nextContext)) {
                 return;
             }
+
             this.setState({
                 currentProps: assign({}, nextProps, this.assignNewProps(nextProps, nextContext))
             });
