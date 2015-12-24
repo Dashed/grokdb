@@ -43,6 +43,7 @@ module.exports = {
             'classnames',
             'shallowequal',
             'invariant',
+            'is-promise',
             // 'slug',
             // 'markdown-it',
             'react-textarea-autosize',
