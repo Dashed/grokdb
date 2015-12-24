@@ -1,11 +1,51 @@
 const Immutable = require('immutable');
 const co = require('co');
 const _ = require('lodash');
+const invariant = require('invariant');
+const DataLoader = require('dataloader');
+
 const superhot = require('./superhot');
 
 const {Response, NOT_FOUND, OK, INVALID} = require('./response');
 
 const NOT_SET = {};
+
+const deckLoader = new DataLoader(function(keys) {
+
+    return new Promise(function(resolve, reject) {
+
+        if(keys.length <= 0) {
+            resolve([]);
+            return;
+        }
+
+        keys = keys.join(',');
+
+        superhot
+            .get(`/api/decks?decks=${keys}`)
+            .end(function(err, response) {
+
+                switch(response.status) {
+
+                case 200:
+
+                    invariant(_.isArray(response.body), `Expected array. Given ${response.body}`);
+
+                    return resolve(response.body);
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                }
+
+            });
+
+    });
+});
 
 function Deck(inputs) {
 
@@ -29,7 +69,6 @@ function Deck(inputs) {
 
 Deck.prototype.constructor = Deck;
 
-
 function Decks(store) {
 
     this._store = store;
@@ -41,6 +80,7 @@ Decks.prototype.constructor = Decks;
 
 // clear lookup table
 Decks.prototype.clearCache = function() {
+    deckLoader.clearAll();
     this._lookup = Immutable.Map(); // Map<deck_id<int>, Deck>
 };
 
@@ -168,6 +208,24 @@ Decks.prototype.current = function(deckID = NOT_SET) {
 
     return value;
 };
+
+Decks.prototype.load = co.wrap(function *(deckID = NOT_SET) {
+
+    if(deckID === NOT_SET) {
+        return Promise.resolve(void 0);
+    }
+
+    deckID = Number(deckID);
+
+    return deckLoader.load(deckID)
+        .then((deck) => {
+
+            this._lookup.set(deckID, deck);
+
+            return deck;
+        });
+
+});
 
 // // returns Promise wrapping Option
 // Decks.prototype.get = function(deckID) {
