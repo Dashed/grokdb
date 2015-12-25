@@ -281,6 +281,13 @@ Decks.prototype.currentID = function(deckID = NOT_SET) {
     return value;
 };
 
+Decks.prototype.current = function() {
+
+    const currentID = this.currentID();
+
+    return this.get(currentID);
+};
+
 // get list of children decks for current deck
 Decks.prototype.children = function() {
 
