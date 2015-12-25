@@ -266,7 +266,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             }
 
-            let maybe_ancestors: Result<Vec<String>, QueryError> = grokdb.decks.ancestorsByName(deck_id);
+            let maybe_ancestors: Result<Vec<String>, QueryError> = grokdb.decks.ancestors_by_name(deck_id);
 
             let response: String = match maybe_ancestors {
                 Err(why) => {

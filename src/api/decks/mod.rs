@@ -410,7 +410,7 @@ impl DecksAPI {
         };
     }
 
-    pub fn ancestorsByName(&self, deck_id: i64) -> Result<Vec<String>, QueryError> {
+    pub fn ancestors_by_name(&self, deck_id: i64) -> Result<Vec<String>, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
