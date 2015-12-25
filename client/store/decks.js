@@ -1,5 +1,4 @@
 const Immutable = require('immutable');
-const co = require('co');
 const _ = require('lodash');
 const invariant = require('invariant');
 const DataLoader = require('dataloader');
@@ -88,12 +87,11 @@ Decks.prototype.clearCache = function() {
 };
 
 // load and cache deck onto lookup table
-Decks.prototype.load = co.wrap(function *(deckID = NOT_SET) {
+Decks.prototype.load = function(deckID = NOT_SET) {
 
     if(deckID === NOT_SET) {
         return Promise.resolve(void 0);
     }
-
 
     return deckLoader.load(deckID)
         .then((deck) => {
@@ -111,9 +109,9 @@ Decks.prototype.load = co.wrap(function *(deckID = NOT_SET) {
             return deck;
         });
 
-});
+};
 
-Decks.prototype.loadMany = co.wrap(function *(deckIDs) {
+Decks.prototype.loadMany = function(deckIDs) {
 
     invariant(_.isArray(deckIDs), 'Expected array.');
 
@@ -136,7 +134,7 @@ Decks.prototype.loadMany = co.wrap(function *(deckIDs) {
             });
         });
 
-});
+};
 
 Decks.prototype.get = function(deckID) {
 
@@ -145,14 +143,10 @@ Decks.prototype.get = function(deckID) {
     const deck = this._lookup.cursor(deckID).deref(NOT_SET);
 
     if(deck === NOT_SET) {
-        return co.wrap(function *(self) {
-
-            yield self.load(deckID);
-
-            return self._lookup.cursor(deckID).deref();
-
-        })(this);
-
+        return this.load(deckID)
+            .then(() => {
+                return this._lookup.cursor(deckID).deref();
+            });
     }
 
     return Promise.resolve(deck);
@@ -174,7 +168,7 @@ Decks.prototype.observable = function(deckID) {
     return this._lookup.cursor(deckID);
 };
 
-Decks.prototype.create = co.wrap(function *(createDeck) {
+Decks.prototype.create = function(createDeck) {
 
     if(!_.has(createDeck, 'name')) {
         throw new Error('invalid inputs to Deck.create');
@@ -222,9 +216,9 @@ Decks.prototype.create = co.wrap(function *(createDeck) {
             });
     });
 
-});
+};
 
-Decks.prototype.exists = co.wrap(function *(deckID) {
+Decks.prototype.exists = function(deckID) {
 
     deckID = Number(deckID);
 
@@ -256,7 +250,7 @@ Decks.prototype.exists = co.wrap(function *(deckID) {
             });
     });
 
-});
+};
 
 Decks.prototype.root = function(rootDeckID = NOT_SET) {
 
@@ -341,7 +335,7 @@ Decks.prototype.watchCurrent = function() {
 
             const deckSelfCursor = this._store.state().cursor(['deck', 'self']);
 
-            const deckSelfUnsub = deckSelfCursor.observe(co.wrap(function *(self, newID, oldID) {
+            const deckSelfUnsub = deckSelfCursor.observe(function(self, newID, oldID) {
 
                 if(newID == currentID || newID == oldID) {
                     return;
@@ -350,14 +344,18 @@ Decks.prototype.watchCurrent = function() {
                 currentUnsub.call(null);
 
                 // ensure new deck is on lookup table
-                yield self.get(currentID);
+                Promise.resolve(self.get(currentID))
+                    .then(function() {
+                        currentID = newID;
+                        currentCursor = self._lookup.cursor(currentID);
+                        currentUnsub = attachCurrentObserver(currentCursor, currentID, observer);
 
-                currentID = newID;
-                currentCursor = self._lookup.cursor(currentID);
-                currentUnsub = attachCurrentObserver(currentCursor, currentID, observer);
+                        observer.call(null);
 
-                observer.call(null);
-            }).bind(null, this));
+                        return null;
+                    });
+
+            }.bind(null, this));
 
             return function() {
                 currentUnsub.call(null);

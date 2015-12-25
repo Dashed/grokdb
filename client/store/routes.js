@@ -1,5 +1,5 @@
-const co = require('co');
 const page = require('page');
+const co = require('co');
 
 const {NOT_FOUND, OK} = require('./response');
 
@@ -16,24 +16,30 @@ const filterID = function (value, defaultValue) {
     return defaultValue;
 };
 
-const createRootDeck = co.wrap(function* (store) {
+const createRootDeck = function(store) {
+
+
+    let deckID;
 
     // create and set root deck
-
-    let result = yield store.decks.create({
+    return store.decks.create({
         name: 'library'
+    })
+    .then(function(result) {
+
+        deckID = filterID(result.response.id);
+        return store.configs.set('root_deck', deckID);
+    })
+    .then(function(result) {
+
+        // TODO: error handling of result
+
+        return store.decks.load(deckID);
+    })
+    .then(function() {
+        return deckID;
     });
-
-    const deckID = filterID(result.response.id);
-
-    result = yield store.configs.set('root_deck', deckID);
-
-    // TODO: error handling of result
-
-    yield store.decks.load(deckID);
-
-    return deckID;
-});
+};
 
 const loadAppState = co.wrap(function *(store) {
 
@@ -137,7 +143,7 @@ const boostrapRoutes = co.wrap(function *(store) {
         next();
     };
 
-    const ensureDeckIDExists = co.wrap(function *(context, next) {
+    const ensureDeckIDExists = function(context, next) {
 
         const deckID = context.deck_id;
 
@@ -147,15 +153,25 @@ const boostrapRoutes = co.wrap(function *(store) {
             return;
         }
 
-        const result = yield store.decks.exists(deckID);
+        store.decks.exists(deckID)
+        .then(function(result) {
 
-        if(!result.response) {
-            toRootDeck(context);
-            return;
-        }
+            return new Promise(function(resolve, reject) {
 
-        next();
-    });
+                if(!result.response) {
+                    toRootDeck(context);
+                    return reject();
+                }
+
+                resolve(store.decks.get(deckID));
+            });
+        })
+        .then(function() {
+            next();
+            return null;
+        });
+
+    };
 
     const reloadAppState = co.wrap(function *(context, next) {
 

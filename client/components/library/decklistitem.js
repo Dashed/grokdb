@@ -1,5 +1,4 @@
 const React = require('react');
-const co = require('co');
 const Immutable = require('immutable');
 
 const courier = require('courier');
@@ -47,16 +46,13 @@ module.exports = courier({
 
     assignNewProps: function(props, context) {
 
-        return co(function *() {
+        const deckID = props.deckID;
 
-            const deckID = props.deckID;
-
-            const deck = yield context.store.decks.get(deckID);
-
-            return {
-                deck: deck
-            };
-
-        });
+        return context.store.decks.get(deckID)
+            .then(function(deck) {
+                return {
+                    deck: deck
+                };
+            });
     }
 });

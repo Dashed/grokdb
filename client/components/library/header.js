@@ -1,5 +1,4 @@
 const React = require('react');
-const co = require('co');
 
 const courier = require('courier');
 
@@ -37,14 +36,11 @@ module.exports = courier({
 
     assignNewProps: function(props, context) {
 
-        return co(function *() {
-
-            const currentDeck = yield context.store.decks.current();
-
-            return {
-                currentDeck: currentDeck
-            };
-
-        });
+        return context.store.decks.current()
+            .then(function(currentDeck) {
+                return {
+                    currentDeck: currentDeck
+                };
+            });
     }
 });
