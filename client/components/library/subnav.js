@@ -4,12 +4,17 @@ const classnames = require('classnames');
 
 const courier = require('courier');
 
+const {symbol} = require('utils/proptype');
 const {types: ROUTES} = require('store/routes');
 
 const Subnav = React.createClass({
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
+    },
+
+    propTypes: {
+        route: symbol.isRequired
     },
 
     switchView(routeID) {
