@@ -19,13 +19,24 @@ orwell({
     waitingComponent: Waiting,
     errorComponent: ErrorComponent,
 
-    watchObservables(props, manual, context) {
+    observe(observable, update, unsubscribe) {
+
+        const unsub = observable.observe(function() {
+            update();
+        });
+
+        unsubscribe(function() {
+            ubsub();
+        });
+    },
+
+    watch(props, manual, context) {
 
         return observable;
         return [...];
     },
 
-    shouldRewatchObservables(props, context) {
+    shouldRewatch(props, context) {
         return true / false;
     },
 
@@ -253,7 +264,6 @@ const Courier = function(inputSpec) {
 
                 return;
             }
-
 
             this.setState({
                 pending: false,
