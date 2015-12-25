@@ -74,6 +74,8 @@ const SHOULD_REWATCH_OBSERVABLE = function() {
 
 const Courier = function(inputSpec) {
 
+    const onlyWaitingOnMount = _.has(inputSpec, 'onlyWaitingOnMount') ? inputSpec.onlyWaitingOnMount : false;
+
     const Component = inputSpec.component;
     const WaitingComponent = inputSpec.waitingComponent || null;
     const ErrorComponent = inputSpec.errorComponent || null;
@@ -231,8 +233,11 @@ const Courier = function(inputSpec) {
                     pending: true,
                     pendingResult: pendingResult,
                     error: void 0
-                    // TODO: remove; don't overwrite currentProps
-                    // currentProps: assign({}, this.state.currentProps, props)
+
+                    // currentProps remain the same since doing something like:
+                    // assign({}, this.state.currentProps, props)
+                    // and passing it onto child components is the incorrect
+                    // approach.
                 });
 
                 Promise.resolve(pendingResult)
@@ -390,14 +395,27 @@ const Courier = function(inputSpec) {
                 return (ErrorComponent ? <ErrorComponent {...this.state.currentProps} /> : null);
             }
 
-            // after the initial render on initial mount, if WaitingComponent is not given,
-            // then persist Component until props from promise resolves.
-            if(this.state.pending && !WaitingComponent && this.afterInitialRender) {
-                return (<Component {...this.state.currentProps} />);
-            }
+
+
 
             if(this.state.pending) {
+
+                // after the initial render on initial mount, if WaitingComponent is not given,
+                // then persist Component until props from promise resolves.
+                if(!WaitingComponent && this.afterInitialRender) {
+                    return (<Component {...this.state.currentProps} />);
+                }
+
+                if(onlyWaitingOnMount) {
+                    if(!this.afterInitialRender) {
+                        return (WaitingComponent ? <WaitingComponent {...this.state.currentProps} /> : null);
+                    }
+
+                    return (<Component {...this.state.currentProps} />);
+                }
+
                 return (WaitingComponent ? <WaitingComponent {...this.state.currentProps} /> : null);
+
             }
 
             return (<Component {...this.state.currentProps} />);
