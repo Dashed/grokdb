@@ -4,7 +4,7 @@ const invariant = require('invariant');
 const courier = require('courier');
 const {types: ROUTES} = require('store/routes');
 
-const DecksList = require('./decks');
+const LibraryDecks = require('./decks');
 const CardsList = require('./cards');
 
 const LibraryDetail = React.createClass({
@@ -61,7 +61,7 @@ module.exports = courier({
             break;
 
         case ROUTES.LIBRARY.VIEW.DECKS:
-            Handler = DecksList;
+            Handler = LibraryDecks;
             break;
 
         case ROUTES.LIBRARY.VIEW.DESCRIPTION:

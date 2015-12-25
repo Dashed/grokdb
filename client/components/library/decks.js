@@ -1,17 +1,17 @@
 const React = require('react');
 const co = require('co');
 const _ = require('lodash');
-// TODO: remove
-// const Immutable = require('immutable');
+const Immutable = require('immutable');
 
 const courier = require('courier');
 
+const DeckListItem = require('./decklistitem');
 
-const DecksList = React.createClass({
+const LibraryDecks = React.createClass({
 
     propTypes: {
-        decks: React.PropTypes.array.isRequired
-        // decks: React.PropTypes.instanceOf(Immutable.List).isRequired
+        // decks: React.PropTypes.array.isRequired
+        childrenID: React.PropTypes.instanceOf(Immutable.List).isRequired
     },
 
     contextTypes: {
@@ -22,21 +22,21 @@ const DecksList = React.createClass({
         event.preventDefault();
         event.stopPropagation();
 
+        // TODO: complete
 
     },
 
     deckList() {
 
-        const decks = this.props.decks;
+        const childrenID = this.props.childrenID;
 
-        return _.map(decks, function(deck) {
+        return childrenID.map((deckID, index) => {
 
-            const deckName = deck.get('name');
+            const key = '' + deckID + index;
 
-            const key = '' + deckName + deck.get('id');
-
-            return (<li key={key} className="list-group-item">{deckName}</li>);
-
+            return (
+                <DeckListItem key={key} deckID={deckID} />
+            );
         });
     },
 
@@ -70,22 +70,23 @@ const DecksList = React.createClass({
 
 module.exports = courier({
 
-    component: DecksList,
+    component: LibraryDecks,
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
     },
 
+    watch(props, manual, context) {
+        return context.store.decks.watchCurrent();
+    },
+
     assignNewProps: function(props, context) {
 
-        return co(function *() {
+        const childrenID = context.store.decks.childrenID();
 
-            const decks = yield context.store.decks.children();
-            return {
-                decks: decks
-            };
-
-        });
+        return {
+            childrenID: childrenID
+        };
 
     }
 

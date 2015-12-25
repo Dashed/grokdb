@@ -365,6 +365,7 @@ const Courier = function(inputSpec) {
             }
 
             // TODO: is this needed?
+            // Dec 25/15: probably not. but what if assert(shallowequal(this.props, nextProps))?
             // if(this.state.pending) {
             //     return;
             // }

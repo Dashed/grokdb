@@ -169,6 +169,11 @@ Decks.prototype.getMany = function(deckIDs) {
     return Promise.all(deckIDs);
 };
 
+// get observable deck
+Decks.prototype.observable = function(deckID) {
+    return this._lookup.cursor(deckID);
+};
+
 Decks.prototype.create = co.wrap(function *(createDeck) {
 
     if(!_.has(createDeck, 'name')) {
@@ -362,23 +367,33 @@ Decks.prototype.watchCurrent = function() {
     };
 };
 
-// get list of children decks for current deck
-Decks.prototype.children = function() {
+Decks.prototype.childrenID = function() {
 
-    const currentID = this.currentID();
+    let currentID = this.currentID();
+    const deck = this._lookup.cursor(currentID).deref();
 
-    return this.get(currentID)
-        .then((currentDeck) => {
+    invariant(Immutable.Map.isMap(deck), 'Expect current deck to be Immutable.Map');
 
-            const children = currentDeck.get('children');
-
-            invariant(Immutable.List.isList(children),
-                `Expected currentDeck.children to be Immutable.List. Given ${children}`);
-
-            return this.getMany(children);
-        });
-
+    return deck.get('children');
 };
+
+// get list of children decks for current deck
+// Decks.prototype.children = function() {
+
+//     const currentID = this.currentID();
+
+//     return this.get(currentID)
+//         .then((currentDeck) => {
+
+//             const children = currentDeck.get('children');
+
+//             invariant(Immutable.List.isList(children),
+//                 `Expected currentDeck.children to be Immutable.List. Given ${children}`);
+
+//             return this.getMany(children);
+//         });
+
+// };
 
 
 module.exports = {
