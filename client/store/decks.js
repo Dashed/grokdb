@@ -165,7 +165,22 @@ Decks.prototype.getMany = function(deckIDs) {
 
 // get observable deck
 Decks.prototype.observable = function(deckID) {
-    return this._lookup.cursor(deckID);
+
+    return {
+        observe: (observer) => {
+
+            const cursor = this._lookup.cursor(deckID);
+
+            return cursor.observe(function(newDeck, oldDeck) {
+
+                if(!newDeck) {
+                    return;
+                }
+
+                observer.call(null, newDeck, oldDeck);
+            });
+        }
+    };
 };
 
 Decks.prototype.create = function(createDeck) {
@@ -193,8 +208,6 @@ Decks.prototype.create = function(createDeck) {
             .type('json')
             .send(request)
             .end(function(err, response) {
-
-                console.log(err, response);
 
                 switch(response.status) {
 

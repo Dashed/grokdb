@@ -1,5 +1,7 @@
 const page = require('page');
 const co = require('co');
+const _ = require('lodash');
+const invariant = require('invariant');
 
 const {NOT_FOUND, OK} = require('./response');
 
@@ -30,7 +32,7 @@ const createRootDeck = function(store) {
         deckID = filterID(result.response.id);
         return store.configs.set('root_deck', deckID);
     })
-    .then(function(result) {
+    .then(function(/*result*/) {
 
         // TODO: error handling of result
 
@@ -319,6 +321,13 @@ Routes.prototype.route = function(routeID = NOT_SET) {
 
 Routes.prototype.watchRoute = function() {
     return this._store.state().cursor(['route']);
+};
+
+Routes.prototype.toDeck = function(deckID) {
+
+    invariant(_.isNumber(filterID(deckID)) && deckID > 0, `Malformed deckID. Given ${deckID}`);
+
+    page(`/deck/${deckID}/view/cards`);
 };
 
 Routes.prototype.toLibrary = function(toDeckID = NOT_SET) {

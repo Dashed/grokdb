@@ -5,8 +5,20 @@ const courier = require('courier');
 
 const DeckListItem = React.createClass({
 
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
     propTypes: {
+        deckID: React.PropTypes.number.isRequired,
         deck: React.PropTypes.instanceOf(Immutable.Map).isRequired
+    },
+
+    onClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.context.store.routes.toDeck(this.props.deckID);
     },
 
     render() {
@@ -15,7 +27,9 @@ const DeckListItem = React.createClass({
 
         return (
             <li className="list-group-item">
-                {deck.get('name')}
+                <a href="#" onClick={this.onClick} >
+                    {deck.get('name')}
+                </a>
             </li>
         );
     }
