@@ -342,6 +342,8 @@ impl DecksAPI {
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
 
+        // fetch ancestors in order from furthest to nearest
+
         let ref query = format!("
             SELECT
                 ancestor
