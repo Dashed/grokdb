@@ -268,7 +268,11 @@ const Courier = function(inputSpec) {
         displayName: `${Component.displayName}.OrwellContainer`,
 
         shouldComponentUpdate(nextProps, nextState) {
-            return !shallowEqual(this.state.currentProps, nextState.currentProps);
+            // optimistic HoC update if pending status differs, especially when
+            // component and waitingComponent differs
+            return (this.state.pending !== nextState.pending ||
+            // otherwise compare props
+                !shallowEqual(this.state.currentProps, nextState.currentProps));
         },
 
         getInitialState() {
