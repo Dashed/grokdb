@@ -102,8 +102,10 @@ Decks.prototype.load = co.wrap(function *(deckID = NOT_SET) {
 
             // cache onto lookup table
 
+            deck = Immutable.fromJS(deck);
+
             this._lookup.cursor(deckID).update(function() {
-                return Immutable.fromJS(deck);
+                return deck;
             });
 
             return deck;
@@ -120,14 +122,18 @@ Decks.prototype.loadMany = co.wrap(function *(deckIDs) {
 
             // cache onto lookup table
 
-            _.forEach(decks, (deck) => {
-                // TODO: room for optimization
-                this._lookup.cursor(deck.id).update(function() {
-                    return Immutable.fromJS(deck);
-                });
-            });
+            return _.map(decks, (deck) => {
 
-            return decks;
+                const deckID = Number(deck.id);
+                deck = Immutable.fromJS(deck);
+
+                // TODO: room for optimization
+                this._lookup.cursor(deckID).update(function() {
+                    return deck;
+                });
+
+                return deck;
+            });
         });
 
 });
@@ -293,6 +299,67 @@ Decks.prototype.current = function() {
     const currentID = this.currentID();
 
     return this.get(currentID);
+};
+
+Decks.prototype.watchCurrent = function() {
+
+    const attachCurrentObserver = function(currentCursor, currentID, observer) {
+        const currentUnsub = currentCursor.observe(function(newCurrent, oldCurrent) {
+
+            if(!Immutable.Map.isMap(newCurrent) || !Immutable.Map.isMap(oldCurrent)) {
+                // lookup table may have been cleared
+                currentUnsub.call(null);
+                return;
+            }
+
+            const actualID = newCurrent.get('id');
+
+            if(actualID != currentID || actualID != oldCurrent.get('id')) {
+                // change occured on deck of unexpected id
+                currentUnsub.call(null);
+                return;
+            }
+
+            observer.call(null);
+
+        });
+
+        return currentUnsub;
+    };
+
+    return {
+        observe: (observer) => {
+
+            let currentID = this.currentID();
+            let currentCursor = this._lookup.cursor(currentID);
+            let currentUnsub = attachCurrentObserver(currentCursor, currentID, observer);
+
+            const deckSelfCursor = this._store.state().cursor(['deck', 'self']);
+
+            const deckSelfUnsub = deckSelfCursor.observe(co.wrap(function *(self, newID, oldID) {
+
+                if(newID == currentID || newID == oldID) {
+                    return;
+                }
+
+                currentUnsub.call(null);
+
+                // ensure new deck is on lookup table
+                yield self.get(currentID);
+
+                currentID = newID;
+                currentCursor = self._lookup.cursor(currentID);
+                currentUnsub = attachCurrentObserver(currentCursor, currentID, observer);
+
+                observer.call(null);
+            }).bind(null, this));
+
+            return function() {
+                currentUnsub.call(null);
+                deckSelfUnsub.call(null);
+            };
+        }
+    };
 };
 
 // get list of children decks for current deck
