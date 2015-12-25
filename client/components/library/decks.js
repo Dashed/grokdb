@@ -1,6 +1,8 @@
 const React = require('react');
 const co = require('co');
 const _ = require('lodash');
+// TODO: remove
+// const Immutable = require('immutable');
 
 const courier = require('courier');
 
@@ -8,7 +10,8 @@ const courier = require('courier');
 const DecksList = React.createClass({
 
     propTypes: {
-        // decks: React.PropTypes.array.isRequired
+        decks: React.PropTypes.array.isRequired
+        // decks: React.PropTypes.instanceOf(Immutable.List).isRequired
     },
 
     contextTypes: {
@@ -24,11 +27,15 @@ const DecksList = React.createClass({
 
     deckList() {
 
-        return _.map(this.props.decks, function(deck) {
+        const decks = this.props.decks;
 
-            const key = '' + deck.name + deck.id;
+        return _.map(decks, function(deck) {
 
-            return (<li key={key} className="list-group-item">{deck.name}</li>);
+            const deckName = deck.get('name');
+
+            const key = '' + deckName + deck.get('id');
+
+            return (<li key={key} className="list-group-item">{deckName}</li>);
 
         });
     },

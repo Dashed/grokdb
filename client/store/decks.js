@@ -3,6 +3,7 @@ const co = require('co');
 const _ = require('lodash');
 const invariant = require('invariant');
 const DataLoader = require('dataloader');
+const minitrue = require('minitrue');
 
 const superhot = require('./superhot');
 
@@ -72,7 +73,7 @@ Deck.prototype.constructor = Deck;
 function Decks(store) {
 
     this._store = store;
-    this._lookup = Immutable.Map(); // Map<deck_id<int>, Deck>
+    this._lookup = minitrue({}); // Map<deck_id<int>, Deck>
 
 }
 
@@ -81,7 +82,9 @@ Decks.prototype.constructor = Decks;
 // clear lookup table
 Decks.prototype.clearCache = function() {
     deckLoader.clearAll();
-    this._lookup = Immutable.Map(); // Map<deck_id<int>, Deck>
+    this._lookup.update(function() {
+        return Immutable.Map();
+    });
 };
 
 // load and cache deck onto lookup table
@@ -99,7 +102,9 @@ Decks.prototype.load = co.wrap(function *(deckID = NOT_SET) {
 
             // cache onto lookup table
 
-            this._lookup = this._lookup.set(deckID, deck);
+            this._lookup.cursor(deckID).update(function() {
+                return Immutable.fromJS(deck);
+            });
 
             return deck;
         });
@@ -117,7 +122,9 @@ Decks.prototype.loadMany = co.wrap(function *(deckIDs) {
 
             _.forEach(decks, (deck) => {
                 // TODO: room for optimization
-                this._lookup = this._lookup.set(deck.id, deck);
+                this._lookup.cursor(deck.id).update(function() {
+                    return Immutable.fromJS(deck);
+                });
             });
 
             return decks;
@@ -129,14 +136,14 @@ Decks.prototype.get = function(deckID) {
 
     deckID = Number(deckID);
 
-    const deck = this._lookup.get(deckID, NOT_SET);
+    const deck = this._lookup.cursor(deckID).deref(NOT_SET);
 
     if(deck === NOT_SET) {
         return co.wrap(function *(self) {
 
             yield self.load(deckID);
 
-            return self._lookup.get(deckID);
+            return self._lookup.cursor(deckID).deref();
 
         })(this);
 
@@ -147,9 +154,9 @@ Decks.prototype.get = function(deckID) {
 
 Decks.prototype.getMany = function(deckIDs) {
 
-    invariant(_.isArray(deckIDs), 'Expected array.');
+    invariant(Immutable.List.isList(deckIDs), 'Expected Immutable.List.');
 
-    deckIDs = _.map(deckIDs, (deckID) => {
+    deckIDs = deckIDs.map((deckID) => {
         return this.get(deckID);
     });
 
@@ -295,10 +302,13 @@ Decks.prototype.children = function() {
 
     return this.get(currentID)
         .then((currentDeck) => {
-            invariant(_.isArray(currentDeck.children),
-                `Expected currentDeck.children to be an array. Given ${currentDeck.children}`);
 
-            return this.getMany(currentDeck.children);
+            const children = currentDeck.get('children');
+
+            invariant(Immutable.List.isList(children),
+                `Expected currentDeck.children to be Immutable.List. Given ${children}`);
+
+            return this.getMany(children);
         });
 
 };
