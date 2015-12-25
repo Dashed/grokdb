@@ -41,6 +41,14 @@ impl UpdateDeck {
         );
     }
 
+    #[allow(unused_parens)]
+    pub fn should_update_deck_props(&self) -> bool {
+        return (
+            self.name.is_some() ||
+            self.description.is_some()
+        );
+    }
+
     // get fields to update.
     // this is a helper to construct the sql update query
     pub fn sqlize(&self) -> (String, Vec<(&str, &ToSql)>) {
@@ -57,12 +65,6 @@ impl UpdateDeck {
         if self.description.is_some() {
             fields.push(format!("description = :description"));
             let tuple: (&str, &ToSql) = (":description", self.description.as_ref().unwrap());
-            values.push(tuple);
-        }
-
-        if self.parent.is_some() {
-            fields.push(format!("parent = :parent"));
-            let tuple: (&str, &ToSql) = (":parent", self.parent.as_ref().unwrap());
             values.push(tuple);
         }
 

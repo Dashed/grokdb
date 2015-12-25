@@ -660,7 +660,8 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         _ => {/* noop */}
                     }
 
-                    let deck_parent: i64 = match grokdb.decks.get_parent(deck_id) {
+                    let should_move: bool = match grokdb.decks.has_parent(deck_id) {
+
                         Err(why) => {
                             // why: QueryError
 
@@ -675,10 +676,34 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
                             return Ok(Response::with((res_code, err_response)));
                         },
-                        Ok(parent) => parent
+
+                        Ok(false) => true,
+
+                        Ok(true) => {
+
+                            let deck_parent: i64 = match grokdb.decks.get_parent(deck_id) {
+                                Err(why) => {
+                                    // why: QueryError
+
+                                    let ref reason = format!("{:?}", why);
+                                    let res_code = status::InternalServerError;
+
+                                    let err_response = ErrorResponse {
+                                        status: res_code,
+                                        developerMessage: reason,
+                                        userMessage: why.description(),
+                                    }.to_json();
+
+                                    return Ok(Response::with((res_code, err_response)));
+                                },
+                                Ok(parent) => parent
+                            };
+
+                            deck_parent != parent_deck_id
+                        }
                     };
 
-                    if deck_parent != parent_deck_id {
+                    if should_move {
 
                         // parent deck different, move deck to new parent
                         match grokdb.decks.connect_decks(deck_id, parent_deck_id) {
@@ -702,23 +727,27 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 _ => {/* noop; continue */}
             }
 
-            // update deck
-            match grokdb.decks.update(deck_id, update_deck_request) {
-                Err(why) => {
-                    // why: QueryError
+            // update deck props
+            if update_deck_request.should_update_deck_props() {
 
-                    let ref reason = format!("{:?}", why);
-                    let res_code = status::InternalServerError;
+                match grokdb.decks.update(deck_id, update_deck_request) {
+                    Err(why) => {
+                        // why: QueryError
 
-                    let err_response = ErrorResponse {
-                        status: res_code,
-                        developerMessage: reason,
-                        userMessage: why.description(),
-                    }.to_json();
+                        let ref reason = format!("{:?}", why);
+                        let res_code = status::InternalServerError;
 
-                    return Ok(Response::with((res_code, err_response)));
-                },
-                _ => {/* deck updated */}
+                        let err_response = ErrorResponse {
+                            status: res_code,
+                            developerMessage: reason,
+                            userMessage: why.description(),
+                        }.to_json();
+
+                        return Ok(Response::with((res_code, err_response)));
+                    },
+                    _ => {/* deck updated */}
+                }
+
             }
 
             return get_deck_by_id(grokdb.clone(), deck_id);
