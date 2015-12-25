@@ -79,6 +79,7 @@ function Decks(store) {
 Decks.prototype.constructor = Decks;
 
 // clear lookup table
+// sync
 Decks.prototype.clearCache = function() {
     deckLoader.clearAll();
     this._lookup.update(function() {
@@ -87,6 +88,7 @@ Decks.prototype.clearCache = function() {
 };
 
 // load and cache deck onto lookup table
+// async
 Decks.prototype.load = function(deckID = NOT_SET) {
 
     if(deckID === NOT_SET) {
@@ -111,6 +113,7 @@ Decks.prototype.load = function(deckID = NOT_SET) {
 
 };
 
+// async
 Decks.prototype.loadMany = function(deckIDs) {
 
     invariant(_.isArray(deckIDs), 'Expected array.');
@@ -136,6 +139,7 @@ Decks.prototype.loadMany = function(deckIDs) {
 
 };
 
+// async
 Decks.prototype.get = function(deckID) {
 
     deckID = Number(deckID);
@@ -152,6 +156,7 @@ Decks.prototype.get = function(deckID) {
     return Promise.resolve(deck);
 };
 
+// async
 Decks.prototype.getMany = function(deckIDs) {
 
     invariant(Immutable.List.isList(deckIDs), 'Expected Immutable.List.');
@@ -164,6 +169,7 @@ Decks.prototype.getMany = function(deckIDs) {
 };
 
 // get observable deck
+// sync
 Decks.prototype.observable = function(deckID) {
 
     return {
@@ -183,6 +189,7 @@ Decks.prototype.observable = function(deckID) {
     };
 };
 
+// async
 Decks.prototype.create = function(createDeck) {
 
     if(!_.has(createDeck, 'name')) {
@@ -231,6 +238,7 @@ Decks.prototype.create = function(createDeck) {
 
 };
 
+// async
 Decks.prototype.exists = function(deckID) {
 
     deckID = Number(deckID);
@@ -265,6 +273,7 @@ Decks.prototype.exists = function(deckID) {
 
 };
 
+// sync
 Decks.prototype.root = function(rootDeckID = NOT_SET) {
 
     let stage = this._store.stage();
@@ -306,6 +315,7 @@ Decks.prototype.currentID = function(deckID = NOT_SET) {
     return value;
 };
 
+// async
 Decks.prototype.current = function() {
 
     const currentID = this.currentID();
@@ -313,31 +323,32 @@ Decks.prototype.current = function() {
     return this.get(currentID);
 };
 
+const attachCurrentObserver = function(currentCursor, currentID, observer) {
+    const currentUnsub = currentCursor.observe(function(newCurrent, oldCurrent) {
+
+        if(!Immutable.Map.isMap(newCurrent) || !Immutable.Map.isMap(oldCurrent)) {
+            // lookup table may have been cleared
+            currentUnsub.call(null);
+            return;
+        }
+
+        const actualID = newCurrent.get('id');
+
+        if(actualID != currentID || actualID != oldCurrent.get('id')) {
+            // change occured on deck of unexpected id
+            currentUnsub.call(null);
+            return;
+        }
+
+        observer.call(null);
+
+    });
+
+    return currentUnsub;
+};
+
+// sync
 Decks.prototype.watchCurrent = function() {
-
-    const attachCurrentObserver = function(currentCursor, currentID, observer) {
-        const currentUnsub = currentCursor.observe(function(newCurrent, oldCurrent) {
-
-            if(!Immutable.Map.isMap(newCurrent) || !Immutable.Map.isMap(oldCurrent)) {
-                // lookup table may have been cleared
-                currentUnsub.call(null);
-                return;
-            }
-
-            const actualID = newCurrent.get('id');
-
-            if(actualID != currentID || actualID != oldCurrent.get('id')) {
-                // change occured on deck of unexpected id
-                currentUnsub.call(null);
-                return;
-            }
-
-            observer.call(null);
-
-        });
-
-        return currentUnsub;
-    };
 
     return {
         observe: (observer) => {
@@ -378,6 +389,7 @@ Decks.prototype.watchCurrent = function() {
     };
 };
 
+// sync
 Decks.prototype.childrenID = function() {
 
     let currentID = this.currentID();
@@ -386,6 +398,49 @@ Decks.prototype.childrenID = function() {
     invariant(Immutable.Map.isMap(deck), 'Expect current deck to be Immutable.Map');
 
     return deck.get('children');
+};
+
+// async
+Decks.prototype.ancestors = function(deckID) {
+
+    return new Promise(function(resolve, reject) {
+
+        superhot
+            .get(`/api/decks/${deckID}/ancestors/id`)
+            .end(function(err, response) {
+
+                switch(response.status) {
+
+                case 200:
+
+                    invariant(_.isArray(response.body), `Expected array. Given ${response.body}`);
+
+                    return resolve(response.body);
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                }
+
+            });
+    });
+};
+
+// async
+Decks.prototype.path = function(deckID) {
+
+    return this.ancestors(deckID)
+        .then((ancestors) => {
+            ancestors.push(deckID);
+
+            ancestors = _.map(ancestors, this.get.bind(this));
+
+            return Promise.all(ancestors);
+        });
 };
 
 // get list of children decks for current deck

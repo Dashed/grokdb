@@ -1,16 +1,91 @@
 const React = require('react');
+const _ = require('lodash');
+const invariant = require('invariant');
+
+const courier = require('courier');
 
 const Breadcrumb = React.createClass({
+
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
+    propTypes: {
+        path: React.PropTypes.array.isRequired
+    },
+
+    toDeck(deckID) {
+        return (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            this.context.store.routes.toDeck(deckID);
+        };
+    },
+
+    generateCrumb() {
+
+        const {path} = this.props;
+
+        invariant(path.length >= 1, 'Expected path to be non-empty');
+
+        const end = path.length - 1;
+
+        return _.map(path, (deck, index) => {
+
+            const deckID = deck.get('id');
+
+            const key = '' + deckID + index;
+
+            if(end == index) {
+                return (
+                    <li key={key} className="active">
+                        {deck.get('name')}
+                    </li>
+                );
+            }
+
+            return (
+                <li key={key}>
+                    <a
+                    onClick={this.toDeck(deckID)}
+                    href="#">{deck.get('name')}</a>
+                </li>
+            );
+        });
+    },
+
     render() {
+
         return (
-        <div>
             <ol className="breadcrumb m-y-0">
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Library</a></li>
-                <li className="active">Data</li>
+                {this.generateCrumb()}
             </ol>
-        </div>);
+        );
     }
 });
 
-module.exports = Breadcrumb;
+module.exports = courier({
+
+    component: Breadcrumb,
+
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
+    watch(props, manual, context) {
+        return context.store.decks.watchCurrent();
+    },
+
+    assignNewProps: function(props, context) {
+
+        const deckID = context.store.decks.currentID();
+
+        return context.store.decks.path(deckID)
+            .then(function(path) {
+                return {
+                    path: path
+                };
+            });
+    }
+});
