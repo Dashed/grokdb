@@ -65,9 +65,24 @@ const Breadcrumb = React.createClass({
     }
 });
 
+const BreadcrumbWaiting = React.createClass({
+    render() {
+        return (
+            <ol className="breadcrumb m-y-0">
+                <li className="active" style={{color: '#eceeef'}}>
+                    {'loading'}
+                </li>
+            </ol>
+        );
+    }
+});
+
 module.exports = courier({
 
     component: Breadcrumb,
+    waitingComponent: BreadcrumbWaiting,
+
+    onlyWaitingOnMount: true,
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
