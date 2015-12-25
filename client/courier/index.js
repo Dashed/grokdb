@@ -230,7 +230,9 @@ const Courier = function(inputSpec) {
                 this.setState({
                     pending: true,
                     pendingResult: pendingResult,
-                    currentProps: assign({}, this.state.currentProps, props)
+                    error: void 0
+                    // TODO: remove; don't overwrite currentProps
+                    // currentProps: assign({}, this.state.currentProps, props)
                 });
 
                 Promise.resolve(pendingResult)
@@ -278,10 +280,13 @@ const Courier = function(inputSpec) {
 
         shouldComponentUpdate(nextProps, nextState) {
 
+            // note: shouldComponentUpdate() is never called on initial render.
+            // whenever it is called, the next render is no longer the initial render.
             this.afterInitialRender = true;
 
-            // optimistic HoC update if pending status differs, especially when
-            // component and waitingComponent differs
+            // optimistic HoC update if pending status differs,
+            // since this.state.currentProps == nextState.currentProps as
+            // promise begin to resolve or is finishing resolving.
             return (this.state.pending !== nextState.pending ||
             // otherwise compare props
                 !shallowEqual(this.state.currentProps, nextState.currentProps));
