@@ -395,22 +395,12 @@ const Courier = function(inputSpec) {
                 return (ErrorComponent ? <ErrorComponent {...this.state.currentProps} /> : null);
             }
 
-
-
-
             if(this.state.pending) {
 
                 // after the initial render on initial mount, if WaitingComponent is not given,
                 // then persist Component until props from promise resolves.
-                if(!WaitingComponent && this.afterInitialRender) {
-                    return (<Component {...this.state.currentProps} />);
-                }
-
-                if(onlyWaitingOnMount) {
-                    if(!this.afterInitialRender) {
-                        return (WaitingComponent ? <WaitingComponent {...this.state.currentProps} /> : null);
-                    }
-
+                // otherwise, if onlyWaitingOnMount == true, then persist Component after initial render
+                if((!WaitingComponent || onlyWaitingOnMount) && this.afterInitialRender) {
                     return (<Component {...this.state.currentProps} />);
                 }
 
