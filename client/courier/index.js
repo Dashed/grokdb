@@ -74,7 +74,6 @@ const SHOULD_REWATCH_OBSERVABLE = function() {
 
 const Courier = function(inputSpec) {
 
-
     const Component = inputSpec.component;
     const WaitingComponent = inputSpec.waitingComponent || null;
     const ErrorComponent = inputSpec.errorComponent || null;
@@ -231,7 +230,7 @@ const Courier = function(inputSpec) {
                 this.setState({
                     pending: true,
                     pendingResult: pendingResult,
-                    currentProps: props
+                    currentProps: assign({}, this.state.currentProps, props)
                 });
 
                 Promise.resolve(pendingResult)
@@ -278,6 +277,9 @@ const Courier = function(inputSpec) {
         displayName: `${Component.displayName}.OrwellContainer`,
 
         shouldComponentUpdate(nextProps, nextState) {
+
+            this.afterInitialRender = true;
+
             // optimistic HoC update if pending status differs, especially when
             // component and waitingComponent differs
             return (this.state.pending !== nextState.pending ||
@@ -288,6 +290,7 @@ const Courier = function(inputSpec) {
         getInitialState() {
 
             this.mounted = false;
+            this.afterInitialRender = false;
 
             let pending = true;
             let pendingResult = this.assignNewProps(this.props, this.context);
@@ -352,6 +355,7 @@ const Courier = function(inputSpec) {
 
         componentWillUnmount() {
             this.mounted = false;
+            this.afterInitialRender = false;
             this.cleanWatchers();
         },
 
@@ -379,6 +383,12 @@ const Courier = function(inputSpec) {
             if(this.state.error !== void 0) {
                 console.error('Error occured', this.state.error);
                 return (ErrorComponent ? <ErrorComponent {...this.state.currentProps} /> : null);
+            }
+
+            // after the initial render on initial mount, if WaitingComponent is not given,
+            // then persist Component until props from promise resolves.
+            if(this.state.pending && !WaitingComponent && this.afterInitialRender) {
+                return (<Component {...this.state.currentProps} />);
             }
 
             if(this.state.pending) {
