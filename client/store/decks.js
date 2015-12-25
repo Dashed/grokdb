@@ -261,7 +261,7 @@ Decks.prototype.root = function(rootDeckID = NOT_SET) {
 };
 
 // fetch/set current deck id from app state
-Decks.prototype.current = function(deckID = NOT_SET) {
+Decks.prototype.currentID = function(deckID = NOT_SET) {
 
     let stage = this._store.stage();
 
@@ -284,7 +284,7 @@ Decks.prototype.current = function(deckID = NOT_SET) {
 // get list of children decks for current deck
 Decks.prototype.children = function() {
 
-    const currentID = this.current();
+    const currentID = this.currentID();
 
     return this.get(currentID)
         .then((currentDeck) => {

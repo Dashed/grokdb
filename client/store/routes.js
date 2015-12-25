@@ -215,7 +215,7 @@ const boostrapRoutes = co.wrap(function *(store) {
         const deckID = context.deck_id;
 
         store.resetStage();
-        store.decks.current(deckID);
+        store.decks.currentID(deckID);
         store.routes.route(ROUTE.LIBRARY.VIEW.DECKS);
         store.commit();
 
@@ -228,7 +228,7 @@ const boostrapRoutes = co.wrap(function *(store) {
         const deckID = context.deck_id;
 
         store.resetStage();
-        store.decks.current(deckID);
+        store.decks.currentID(deckID);
         store.routes.route(ROUTE.LIBRARY.VIEW.CARDS);
         store.commit();
 
@@ -241,7 +241,7 @@ const boostrapRoutes = co.wrap(function *(store) {
         const deckID = context.deck_id;
 
         store.resetStage();
-        store.decks.current(deckID);
+        store.decks.currentID(deckID);
         store.routes.route(ROUTE.LIBRARY.VIEW.DESCRIPTION);
         store.commit();
 
@@ -254,7 +254,7 @@ const boostrapRoutes = co.wrap(function *(store) {
         const deckID = context.deck_id;
 
         store.resetStage();
-        store.decks.current(deckID);
+        store.decks.currentID(deckID);
         store.routes.route(ROUTE.LIBRARY.VIEW.META);
         store.commit();
 
@@ -309,7 +309,7 @@ Routes.prototype.toLibrary = function(toDeckID = NOT_SET) {
 
     if(toDeckID === NOT_SET) {
         this._store.resetStage();
-        toDeckID = this._store.decks.current();
+        toDeckID = this._store.decks.currentID();
     }
 
     page(`/deck/${toDeckID}/view/cards`);
@@ -319,7 +319,7 @@ Routes.prototype.toLibraryCards = function(toDeckID = NOT_SET) {
 
     if(toDeckID === NOT_SET) {
         this._store.resetStage();
-        toDeckID = this._store.decks.current();
+        toDeckID = this._store.decks.currentID();
     }
 
     page(`/deck/${toDeckID}/view/cards`);
@@ -329,7 +329,7 @@ Routes.prototype.toLibraryDecks = function(toDeckID = NOT_SET) {
 
     if(toDeckID === NOT_SET) {
         this._store.resetStage();
-        toDeckID = this._store.decks.current();
+        toDeckID = this._store.decks.currentID();
     }
 
     page(`/deck/${toDeckID}/view/decks`);
@@ -339,7 +339,7 @@ Routes.prototype.toLibraryDescription = function(toDeckID = NOT_SET) {
 
     if(toDeckID === NOT_SET) {
         this._store.resetStage();
-        toDeckID = this._store.decks.current();
+        toDeckID = this._store.decks.currentID();
     }
 
     page(`/deck/${toDeckID}/view/description`);
@@ -349,7 +349,7 @@ Routes.prototype.toLibraryMeta = function(toDeckID = NOT_SET) {
 
     if(toDeckID === NOT_SET) {
         this._store.resetStage();
-        toDeckID = this._store.decks.current();
+        toDeckID = this._store.decks.currentID();
     }
 
     page(`/deck/${toDeckID}/view/meta`);
