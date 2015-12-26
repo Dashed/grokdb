@@ -24,4 +24,8 @@ PKG_CONFIG_PATH=$(echo /usr/local/Cellar/sqlite/3.9.1/lib/pkgconfig/) cargo run
 
 ## development
 
-During development, run: `cargo watch check`
+During development, run: `cargo watch check |& dybuk`
+
+- https://github.com/passcod/cargo-watch
+- https://github.com/rsolomo/cargo-check
+- https://github.com/Ticki/dybuk
