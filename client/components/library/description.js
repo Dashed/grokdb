@@ -6,9 +6,11 @@ const courier = require('courier');
 const RenderSourceTabs = require('components/rendersourcetabs');
 const MarkdownPreview = require('components/markdownpreview');
 
-const placeholder = 'No description given.';
-
 const DeckDescription = React.createClass({
+
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
 
     propTypes: {
         description: React.PropTypes.string.isRequired
@@ -44,16 +46,32 @@ const DeckDescription = React.createClass({
     },
 
     onEdit() {
+
+        this.context.store.routes.confirm(this.confirmDiscard);
+
         this.setState({
             isEditing: true,
-            showRender: false
+            showRender: false,
+            newDescription: void 0
         });
+
     },
 
     onCancelEdit() {
+
+        if(this.state.isEditing && _.isString(this.state.newDescription)) {
+            const ret = window.confirm(this.confirmDiscard());
+            if(!ret) {
+                return;
+            }
+        }
+
         this.setState({
             isEditing: false,
-            showRender: true
+            showRender: true,
+
+            // discard any changes
+            newDescription: void 0
         });
     },
 
@@ -62,6 +80,26 @@ const DeckDescription = React.createClass({
         this.setState({
             newDescription: event.target.value
         });
+    },
+
+    onDescriptionSave(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if(!_.isString(this.state.newDescription)) {
+            return;
+        }
+
+        this.setState({
+            isEditing: false,
+            showRender: true
+            // note: leave newDescription alone for optimistic update
+        });
+
+        this.context.store.decks.patchCurrent({
+            description: this.state.newDescription
+        });
+
     },
 
     getDescription() {
@@ -78,7 +116,7 @@ const DeckDescription = React.createClass({
 
     },
 
-    getComponent() {
+    getDescriptionComponent() {
 
         const description = this.getDescription();
 
@@ -86,8 +124,17 @@ const DeckDescription = React.createClass({
             return <MarkdownPreview key="preview" text={description} />;
         }
 
+        const placeholder = this.state.isEditing ?
+            'Enter a description for this deck.' :
+            'No description given.';
+
         return (
             <TextareaAutosize
+                ref={function(input) {
+                  if (input != null) {
+                    input.focus();
+                  }
+                }}
                 key="textarea"
                 useCacheForDOMMeasurements
                 minRows={6}
@@ -100,6 +147,47 @@ const DeckDescription = React.createClass({
                 readOnly={!this.state.isEditing}
             />
         );
+    },
+
+    getSaveComponent() {
+
+        if(!this.state.isEditing) {
+            return null;
+        }
+
+        return (
+            <div className="row">
+                <div className="col-sm-12">
+                    <hr />
+                    <a
+                        href="#"
+                        className="btn btn-success btn-sm"
+                        role="button"
+                        onClick={this.onDescriptionSave}
+                    >
+                        {'Save'}
+                    </a>
+                </div>
+            </div>
+        );
+
+    },
+
+    confirmDiscard() {
+
+        if(this.state.isEditing && _.isString(this.state.newDescription)) {
+            return 'You have unsaved changes for deck description. Are you sure you want to discard these changes?';
+        }
+
+    },
+
+    componentWillUnmount() {
+
+        const confirm = this.context.store.routes.confirm();
+
+        if(confirm == this.confirmDiscard) {
+            this.context.store.routes.removeConfirm();
+        }
     },
 
     render() {
@@ -119,9 +207,12 @@ const DeckDescription = React.createClass({
                 </div>
                 <div className="row">
                     <div className="col-sm-12">
-                        {this.getComponent()}
+                        {this.getDescriptionComponent()}
                     </div>
                 </div>
+                {
+                    this.getSaveComponent()
+                }
             </div>
         );
     }
