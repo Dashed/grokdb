@@ -2,6 +2,14 @@ const React = require('react');
 const classnames = require('classnames');
 
 
+const generateButtonStyle = function(truth) {
+    return {
+        'btn-primary': truth,
+        'btn-primary-outline': !truth,
+        'disabled': truth
+    };
+};
+
 const RenderSourceTabs = React.createClass({
 
     getDefaultProps() {
@@ -43,24 +51,23 @@ const RenderSourceTabs = React.createClass({
         const {showRender} = this.props;
 
         return (
-            <ul className="nav nav-pills m-b" style={{fontSize: '0.8rem'}}>
-                <li className="nav-item">
-                    <a
-                        className={classnames('nav-link', {'active': showRender})}
+            <div className="row">
+                <div className="col-sm-12">
+                    <a href="#"
+                        className={classnames('btn-sm', 'btn', generateButtonStyle(showRender))}
                         onClick={this.onSwitchTab('render')}
-                        href="#">
-                        {'Render'}
+                    >
+                    {'Render'}
                     </a>
-                </li>
-                <li className="nav-item">
-                    <a
-                        className={classnames('nav-link', {'active': !showRender})}
+                    {' '}
+                    <a href="#"
+                        className={classnames('btn-sm', 'btn', generateButtonStyle(!showRender))}
                         onClick={this.onSwitchTab('source')}
-                        href="#">
-                        {'Source'}
+                    >
+                    {'Source'}
                     </a>
-                </li>
-            </ul>
+                </div>
+            </div>
         );
     }
 });

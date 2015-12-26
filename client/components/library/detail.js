@@ -28,6 +28,7 @@ const LibraryDetail = React.createClass({
 });
 
 module.exports = courier({
+
     component: LibraryDetail,
 
     contextTypes: {
