@@ -49,8 +49,8 @@ module.exports = {
             'react-textarea-autosize',
             // 'qs',
             // 'moment',
-            'react-prop-once',
-            // 'scriptjs',
+            'react-prop-once', // TODO: remove if unused
+            'scriptjs',
             // 'markdown-it-abbr',
             // 'markdown-it-footnote',
             // 'markdown-it-sub',
