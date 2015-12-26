@@ -8,7 +8,7 @@ const MarkdownPreview = require('components/markdownpreview');
 
 const placeholder = 'No description given.';
 
-const Description = React.createClass({
+const DeckDescription = React.createClass({
 
     propTypes: {
         description: React.PropTypes.string.isRequired
@@ -112,7 +112,7 @@ const Description = React.createClass({
 
 module.exports = courier({
 
-    component: Description,
+    component: DeckDescription,
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
