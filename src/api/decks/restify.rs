@@ -486,12 +486,12 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
-            // ensure deck title is non-empty string
+            // ensure deck title is non-empty string when trimmed
             let mut create_deck_request = create_deck_request;
             create_deck_request.name = create_deck_request.name.trim().to_string();
 
             if create_deck_request.name.len() <= 0 {
-                let ref reason = format!("deck name should be non-empty string");
+                let ref reason = format!("deck name should be non-empty string when trimmed");
                 let res_code = status::BadRequest;
 
                 let err_response = ErrorResponse {

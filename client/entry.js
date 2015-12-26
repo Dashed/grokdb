@@ -18,7 +18,7 @@ new Promise(function(resolve) {
 
 }).then(function(hasLocalMathJax) {
 
-    const mjscript = hasLocalMathJax ? 'mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML' :
+    const mjscript = hasLocalMathJax ? '/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML' :
         'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
 
     scriptjs(mjscript, function() {

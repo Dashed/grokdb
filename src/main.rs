@@ -33,20 +33,30 @@ use mount::Mount;
 use router::{Router};
 use logger::Logger;
 use staticfile::Static;
+use iron::middleware::Handler;
 // [end] iron framework
 
-use std::path::{Path};
+use std::path::{Path, PathBuf};
 
 
-struct Custom404;
+struct Custom404 {
+    staticfile: Static
+}
 
 impl AfterMiddleware for Custom404 {
-    fn catch(&self, _: &mut Request, err: IronError) -> IronResult<Response> {
-        return Ok(Response::with((status::NotFound, "404 Not Found")));
+    fn catch(&self, req: &mut Request, err: IronError) -> IronResult<Response> {
+
+        // TODO: so hacky. need better alternative
+        req.url.path = vec!["index.html".to_string()];
+
+        return self.staticfile.handle(req);
+        // return Ok(Response::with((status::NotFound, "404 Not Found")));
     }
 }
 
 fn main() {
+
+    // let do this! ᕕ( ᐛ )ᕗ
 
     // parse command line args
 
@@ -126,7 +136,7 @@ fn main() {
 
     let mut mount = Mount::new();
 
-    let app_path = cmd_matches.value_of("app_path")
+    let app_path: &str = cmd_matches.value_of("app_path")
                                 .unwrap()
                                 .trim();
 
@@ -142,7 +152,13 @@ fn main() {
 
     log_chain.link_before(logger_before);
     log_chain.link_after(logger_after);
-    log_chain.link_after(Custom404);
+
+
+    let custom_404 = Custom404 {
+        staticfile: Static::new(app_path)
+    };
+
+    log_chain.link_after(custom_404);
 
 
     /* start the server */
