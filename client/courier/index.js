@@ -9,6 +9,11 @@ const assign = _.assign;
 const isArray = _.isArray;
 const isPlainObject = _.isPlainObject;
 const isObject = _.isObject;
+const hasProp = _.has;
+
+// TODO: override shouldComponentUpdate
+// TODO: onError prop
+// TODO: document more
 
 // TODO: this is a fork of orwell; merge into orwell when stable.
 
@@ -74,7 +79,7 @@ const SHOULD_REWATCH_OBSERVABLE = function() {
 
 const Courier = function(inputSpec) {
 
-    const onlyWaitingOnMount = _.has(inputSpec, 'onlyWaitingOnMount') ? inputSpec.onlyWaitingOnMount : false;
+    const onlyWaitingOnMount = hasProp(inputSpec, 'onlyWaitingOnMount') ? inputSpec.onlyWaitingOnMount : false;
 
     const Component = inputSpec.component;
     const WaitingComponent = inputSpec.waitingComponent || null;
