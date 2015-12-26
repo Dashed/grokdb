@@ -495,11 +495,18 @@ impl DecksAPI {
         let ref query = format!("
             SELECT
                 descendent
-            FROM DecksClosure
+            FROM
+                DecksClosure
+            INNER JOIN
+                Decks
+            ON DecksClosure.descendent = Decks.deck_id
             WHERE
                 ancestor = $1
             AND
-                depth = 1;
+                depth = 1
+            ORDER BY
+                Decks.name
+            COLLATE NOCASE ASC;
         ");
 
         let params: &[&ToSql] = &[
