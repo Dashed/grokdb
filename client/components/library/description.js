@@ -1,6 +1,7 @@
 const React = require('react');
 const TextareaAutosize = require('react-textarea-autosize');
 const _ = require('lodash');
+const classnames = require('classnames');
 
 const courier = require('courier');
 const RenderSourceTabs = require('components/rendersourcetabs');
@@ -131,9 +132,9 @@ const DeckDescription = React.createClass({
         return (
             <TextareaAutosize
                 ref={function(input) {
-                  if (input != null) {
-                    input.focus();
-                  }
+                    if (input != null) {
+                        input.focus();
+                    }
                 }}
                 key="textarea"
                 useCacheForDOMMeasurements
@@ -161,7 +162,9 @@ const DeckDescription = React.createClass({
                     <hr />
                     <a
                         href="#"
-                        className="btn btn-success btn-sm"
+                        className={classnames('btn', 'btn-success', 'btn-sm', {
+                            'disabled': !_.isString(this.state.newDescription)
+                        })}
                         role="button"
                         onClick={this.onDescriptionSave}
                     >
