@@ -335,21 +335,22 @@ Decks.prototype.current = function() {
 const attachCurrentObserver = function(currentCursor, currentID, observer) {
     const currentUnsub = currentCursor.observe(function(newCurrent, oldCurrent) {
 
-        if(!Immutable.Map.isMap(newCurrent) || !Immutable.Map.isMap(oldCurrent)) {
-            // lookup table may have been cleared
-            currentUnsub.call(null);
+        if(!Immutable.Map.isMap(newCurrent)) {
+            // lookup table may have been cleared.
+            // cancel event.
             return;
         }
 
         const actualID = newCurrent.get('id');
 
-        if(actualID != currentID || actualID != oldCurrent.get('id')) {
-            // change occured on deck of unexpected id
-            currentUnsub.call(null);
+        if(actualID == currentID && newCurrent != oldCurrent) {
+
+            observer.call(null);
             return;
         }
 
-        observer.call(null);
+        // change occured on deck of unexpected id
+        currentUnsub.call(null);
 
     });
 
@@ -368,19 +369,20 @@ Decks.prototype.watchCurrent = function() {
 
             const deckSelfCursor = this._store.state().cursor(['deck', 'self']);
 
-            const deckSelfUnsub = deckSelfCursor.observe(function(self, newID, oldID) {
+            const deckSelfUnsub = deckSelfCursor.observe((newID, oldID) => {
 
-                if(newID == currentID || newID == oldID) {
+                if(newID == currentID) {
                     return;
                 }
 
                 currentUnsub.call(null);
 
                 // ensure new deck is on lookup table
-                Promise.resolve(self.get(currentID))
-                    .then(function() {
+                Promise.resolve(this.get(newID))
+                    .then(() => {
+
                         currentID = newID;
-                        currentCursor = self._lookup.cursor(currentID);
+                        currentCursor = this._lookup.cursor(currentID);
                         currentUnsub = attachCurrentObserver(currentCursor, currentID, observer);
 
                         observer.call(null);
@@ -388,7 +390,7 @@ Decks.prototype.watchCurrent = function() {
                         return null;
                     });
 
-            }.bind(null, this));
+            });
 
             return function() {
                 currentUnsub.call(null);
