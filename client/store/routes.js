@@ -298,6 +298,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 function Routes(store) {
 
     this._store = store;
+    this._confirm = void 0;
 }
 
 Routes.prototype.route = function(routeID = NOT_SET) {
@@ -323,69 +324,121 @@ Routes.prototype.watchRoute = function() {
     return this._store.state().cursor(['route']);
 };
 
+Routes.prototype.confirm = function(callback) {
+
+    if(_.isFunction(callback)) {
+        this._confirm = callback;
+    }
+
+    return this._confirm;
+};
+
+Routes.prototype.removeConfirm = function() {
+    this._confirm = void 0;
+};
+
+// call this function to check if all pre-conditions are satisfied before a route
+// can be changed. if pre-conditions are satisfied, then callback is called.
+// otherwise, callback is not called.
+Routes.prototype.shouldChangeRoute = function(callback) {
+
+    const confirm = this.confirm();
+
+    if(_.isFunction(confirm)) {
+        const message = confirm.call(null);
+
+        if(_.isString(message)) {
+            const ret = window.confirm(message);
+
+            if(!ret) {
+                return;
+            }
+        }
+    }
+
+    this.removeConfirm();
+
+    callback.call(null);
+
+};
+
 Routes.prototype.toDeck = function(deckID) {
 
     invariant(_.isNumber(filterID(deckID)) && deckID > 0, `Malformed deckID. Given ${deckID}`);
 
-    page(`/deck/${deckID}/view/cards`);
+    this.shouldChangeRoute(() => {
+        page(`/deck/${deckID}/view/cards`);
+    });
 };
 
-Routes.prototype.toLibrary = function(toDeckID = NOT_SET) {
+Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID = NOT_SET) {
 
-    if(toDeckID === NOT_SET) {
-        this._store.resetStage();
-        toDeckID = this._store.decks.currentID();
-    }
+    this.shouldChangeRoute(() => {
 
-    page(`/deck/${toDeckID}/view/cards`);
-};
+        if(toDeckID === NOT_SET) {
+            this._store.resetStage();
+            toDeckID = this._store.decks.currentID();
+        }
 
-Routes.prototype.toLibraryCards = function(toDeckID = NOT_SET) {
+        page(`/deck/${toDeckID}/view/cards`);
+    });
 
-    if(toDeckID === NOT_SET) {
-        this._store.resetStage();
-        toDeckID = this._store.decks.currentID();
-    }
-
-    page(`/deck/${toDeckID}/view/cards`);
 };
 
 Routes.prototype.toLibraryDecks = function(toDeckID = NOT_SET) {
 
-    if(toDeckID === NOT_SET) {
-        this._store.resetStage();
-        toDeckID = this._store.decks.currentID();
-    }
+    this.shouldChangeRoute(() => {
 
-    page(`/deck/${toDeckID}/view/decks`);
+        if(toDeckID === NOT_SET) {
+            this._store.resetStage();
+            toDeckID = this._store.decks.currentID();
+        }
+
+        page(`/deck/${toDeckID}/view/decks`);
+    });
+
 };
 
 Routes.prototype.toLibraryDescription = function(toDeckID = NOT_SET) {
 
-    if(toDeckID === NOT_SET) {
-        this._store.resetStage();
-        toDeckID = this._store.decks.currentID();
-    }
+    this.shouldChangeRoute(() => {
 
-    page(`/deck/${toDeckID}/view/description`);
+        if(toDeckID === NOT_SET) {
+            this._store.resetStage();
+            toDeckID = this._store.decks.currentID();
+        }
+
+        page(`/deck/${toDeckID}/view/description`);
+    });
+
 };
 
 Routes.prototype.toLibraryMeta = function(toDeckID = NOT_SET) {
 
-    if(toDeckID === NOT_SET) {
-        this._store.resetStage();
-        toDeckID = this._store.decks.currentID();
-    }
+    this.shouldChangeRoute(() => {
 
-    page(`/deck/${toDeckID}/view/meta`);
+        if(toDeckID === NOT_SET) {
+            this._store.resetStage();
+            toDeckID = this._store.decks.currentID();
+        }
+
+        page(`/deck/${toDeckID}/view/meta`);
+    });
+
 };
 
 Routes.prototype.toSettings = function() {
-    page(`/settings`);
+
+    this.shouldChangeRoute(() => {
+        page(`/settings`);
+    });
 };
 
 Routes.prototype.toStashes = function() {
-    page(`/stashes`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stashes`);
+    });
 };
 
 module.exports = {
