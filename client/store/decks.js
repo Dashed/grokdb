@@ -207,7 +207,9 @@ Decks.prototype.create = function(createDeck) {
         }
 
         if(_.has(createDeck, 'parent')) {
+
             request.parent = Number(createDeck.parent);
+
         }
 
         superhot

@@ -105,8 +105,13 @@ const loadAppState = co.wrap(function *(store) {
 const ROUTE = {
     LIBRARY: {
         VIEW: {
+
             CARDS: Symbol(),
+            ADD_CARD: Symbol(),
+
             DECKS: Symbol(),
+            ADD_DECK: Symbol(),
+
             DESCRIPTION: Symbol(),
             META: Symbol()
         }
@@ -228,6 +233,19 @@ const boostrapRoutes = co.wrap(function *(store) {
     });
 
 
+    page('/deck/:deck_id/add/deck', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.LIBRARY.VIEW.ADD_DECK);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
     page('/deck/:deck_id/view/decks', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
 
         const deckID = context.deck_id;
@@ -248,6 +266,19 @@ const boostrapRoutes = co.wrap(function *(store) {
         store.resetStage();
         store.decks.currentID(deckID);
         store.routes.route(ROUTE.LIBRARY.VIEW.CARDS);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/add/deck', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.LIBRARY.VIEW.ADD_CARD);
         store.commit();
 
         next();
@@ -287,7 +318,18 @@ const boostrapRoutes = co.wrap(function *(store) {
         next();
     }, reloadAppState, toRootDeck);
 
-    page.base('/#');
+    page.exit(function(context, next) {
+
+        // if a confirm callback is set, confirm to the user if they want to perform a
+        // route change. (e.g. discard changes)
+        store.routes.shouldChangeRoute(function() {
+            next();
+        });
+
+    });
+
+    // TODO: remove
+    // page.base('/#');
 
     page.start({
         // hashbang: true,
@@ -327,6 +369,10 @@ Routes.prototype.watchRoute = function() {
 Routes.prototype.confirm = function(callback) {
 
     if(_.isFunction(callback)) {
+
+        // if user reloads the page, confirm to the user
+        window.onbeforeunload = callback;
+
         this._confirm = callback;
     }
 
@@ -334,6 +380,9 @@ Routes.prototype.confirm = function(callback) {
 };
 
 Routes.prototype.removeConfirm = function() {
+
+    window.onbeforeunload = void 0;
+
     this._confirm = void 0;
 };
 
@@ -395,6 +444,20 @@ Routes.prototype.toLibraryDecks = function(toDeckID = NOT_SET) {
         }
 
         page(`/deck/${toDeckID}/view/decks`);
+    });
+
+};
+
+Routes.prototype.toAddNewDeck = function(toDeckID = NOT_SET) {
+
+    this.shouldChangeRoute(() => {
+
+        if(toDeckID === NOT_SET) {
+            this._store.resetStage();
+            toDeckID = this._store.decks.currentID();
+        }
+
+        page(`/deck/${toDeckID}/add/deck`);
     });
 
 };
