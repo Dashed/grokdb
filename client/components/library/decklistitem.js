@@ -35,9 +35,32 @@ const DeckListItem = React.createClass({
     }
 });
 
+// this is a placeholder component on initial load/mount to occupy the space
+// that the component will cover in order to prevent any inducement of jank.
+const DeckListItemWaiting = React.createClass({
+
+    onClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+    },
+
+    render() {
+
+        return (
+            <li className="list-group-item">
+                <a href="#" onClick={this.onClick} style={{color: '#ffffff'}} >
+                    {'loading'}
+                </a>
+            </li>
+        );
+    }
+});
+
 module.exports = courier({
 
     component: DeckListItem,
+    waitingComponent: DeckListItemWaiting,
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
