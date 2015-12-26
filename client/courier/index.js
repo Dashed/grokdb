@@ -197,9 +197,12 @@ const Courier = function(inputSpec) {
                 numberSubscribers++;
 
                 // create unique function instance that proxies handleChanged().
-                const listener = () => {
+                let listener = () => {
                     this.handleChanged();
                 };
+
+                // attach HoC origin for external debugging cases
+                listener.displayName = this.constructor.displayName;
 
                 const cleanup = fn.call(null, listener, this.__isMounted);
                 if(cleanup && isFunction(cleanup)) {
@@ -218,9 +221,12 @@ const Courier = function(inputSpec) {
 
                 numberSubscribers += observables.length;
 
-                const listener = () => {
+                let listener = () => {
                     this.handleChanged();
                 };
+
+                // attach HoC origin for external debugging cases
+                listener.displayName = this.constructor.displayName;
 
                 let len = observables.length;
                 while(len-- > 0) {
