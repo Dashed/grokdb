@@ -13,7 +13,7 @@ const hasProp = _.has;
 
 // TODO: override shouldComponentUpdate
 // TODO: onError prop
-// TODO: document more
+// TODO: add more more comment documentation
 
 // TODO: this is a fork of orwell; merge into orwell when stable.
 
@@ -26,10 +26,21 @@ const hasProp = _.has;
 
 /**
 
+Rationale:
+- be able to asynchronously construct props using Promises
+- can also construct props synchronously by returning a plain object
+
+API / usage:
+
 orwell({
     component: Component,
     waitingComponent: Waiting,
     errorComponent: ErrorComponent,
+
+    // called when promise is rejected
+    onError(reason) {
+
+    },
 
     observe(observable, update, unsubscribe) {
 
@@ -45,9 +56,12 @@ orwell({
     watch(props, manual, context) {
 
         return observable;
+
+        // an array of observables. type: Array<Observable>
         return [...];
     },
 
+    // return bool
     shouldRewatch(props, context) {
         return true / false;
     },
