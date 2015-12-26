@@ -17,6 +17,13 @@ const hasProp = _.has;
 
 // TODO: this is a fork of orwell; merge into orwell when stable.
 
+// TODO:
+// Issues regarding interoperability between Promises and react:
+// - https://github.com/facebook/react/issues/5465
+// - https://facebook.github.io/react/blog/2015/12/16/ismounted-antipattern.html
+// - Promise spec doesn't outline solid cases for cancellation
+// - http://stackoverflow.com/questions/21781434/status-of-cancellable-promises
+
 /**
 
 orwell({
@@ -77,6 +84,10 @@ const SHOULD_REWATCH_OBSERVABLE = function() {
     return false;
 };
 
+const ON_ERROR = function(reason) {
+    console.error('Error occured', reason);
+};
+
 const Courier = function(inputSpec) {
 
     const onlyWaitingOnMount = hasProp(inputSpec, 'onlyWaitingOnMount') ? inputSpec.onlyWaitingOnMount : false;
@@ -89,6 +100,7 @@ const Courier = function(inputSpec) {
     let assignNewProps = inputSpec.assignNewProps || null;
     let watchObservables = inputSpec.watch || null;
     let shouldRewatchObservables = inputSpec.shouldRewatch || null;
+    let onError = inputSpec.onError || null;
 
     /* fallbacks */
 
@@ -108,10 +120,20 @@ const Courier = function(inputSpec) {
         shouldRewatchObservables = SHOULD_REWATCH_OBSERVABLE;
     }
 
+    if (!isFunction(onError)) {
+        onError = ON_ERROR;
+    }
+
     /* create HoC */
 
     const classSpec = {
 
+        // see: https://facebook.github.io/react/blog/2015/12/16/ismounted-antipattern.html
+        //
+        // This is provided externally for the caller to ensure if the HoC is still mounted.
+        // This is useful especially if the caller manually pings the HoC if an external event
+        // has occurred.
+        //
         __isMounted() {
             return !!this.mounted;
         },
@@ -160,7 +182,12 @@ const Courier = function(inputSpec) {
 
                 numberSubscribers++;
 
-                const cleanup = fn.call(null, this.handleChanged, this.__isMounted);
+                // create unique function instance that proxies handleChanged().
+                const listener = () => {
+                    this.handleChanged();
+                };
+
+                const cleanup = fn.call(null, listener, this.__isMounted);
                 if(cleanup && isFunction(cleanup)) {
                     unsubs.push(cleanup);
                 }
@@ -347,12 +374,13 @@ const Courier = function(inputSpec) {
                 return;
             }
 
-
             invariant(isPromise(this.state.pendingResult),
                 `Expected this.state.pendingResult to be like a Promise. Given: ${this.state.pendingResult}`);
 
             Promise.resolve(this.state.pendingResult)
-                .then((newProps) => {
+                .then(
+                // fulfillment
+                (newProps) => {
 
                     if(!this.mounted) {
                         // component unmounted before promise was resolved
@@ -364,6 +392,21 @@ const Courier = function(inputSpec) {
                         pendingResult: void 0,
                         currentProps: assign({}, this.props, newProps)
                     });
+                },
+                // rejection
+                (reason) => {
+
+                    if(!this.mounted) {
+                        // component unmounted before promise was resolved
+                        return;
+                    }
+
+                    this.setState({
+                        pending: false,
+                        pendingResult: void 0,
+                        error: reason
+                    });
+
                 });
 
         },
@@ -396,7 +439,11 @@ const Courier = function(inputSpec) {
         render() {
 
             if(this.state.error !== void 0) {
-                console.error('Error occured', this.state.error);
+
+                if(onError) {
+                    onError.call(null, this.state.error);
+                }
+
                 return (ErrorComponent ? <ErrorComponent {...this.state.currentProps} /> : null);
             }
 
