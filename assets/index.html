@@ -7,7 +7,13 @@
     <link rel="stylesheet" href="./bootstrap.css">
     <script type="text/x-mathjax-config">
         MathJax.Hub.Config({
-            skipStartupTypeset: true
+            skipStartupTypeset: true,
+
+            tex2jax: {
+                inlineMath: [ ["$", "$"], ["\\\\(","\\\\)"] ],
+                displayMath: [ ["$$","$$"], ["\\[", "\\]"] ],
+                processEscapes: true
+            }
         });
     </script>
     <style type="text/css">
