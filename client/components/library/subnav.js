@@ -24,10 +24,12 @@ const Subnav = React.createClass({
 
             switch(routeID) {
             case ROUTES.LIBRARY.VIEW.CARDS:
+            case ROUTES.LIBRARY.VIEW.ADD_CARD:
                 this.context.store.routes.toLibraryCards();
                 break;
 
             case ROUTES.LIBRARY.VIEW.DECKS:
+            case ROUTES.LIBRARY.VIEW.ADD_DECK:
                 this.context.store.routes.toLibraryDecks();
                 break;
 
@@ -55,7 +57,9 @@ const Subnav = React.createClass({
             <ul className="nav nav-tabs m-b">
                 <li className="nav-item">
                     <a
-                        className={classnames('nav-link', {'active': route == ROUTES.LIBRARY.VIEW.CARDS})}
+                        className={classnames('nav-link', {
+                            'active': route == ROUTES.LIBRARY.VIEW.CARDS || route == ROUTES.LIBRARY.VIEW.ADD_CARD
+                        })}
                         onClick={this.switchView(ROUTES.LIBRARY.VIEW.CARDS)}
                         href="#">
                         {'Cards'}
@@ -63,7 +67,9 @@ const Subnav = React.createClass({
                 </li>
                 <li className="nav-item">
                     <a
-                        className={classnames('nav-link', {'active': route == ROUTES.LIBRARY.VIEW.DECKS})}
+                        className={classnames('nav-link', {
+                            'active': route == ROUTES.LIBRARY.VIEW.DECKS || route == ROUTES.LIBRARY.VIEW.ADD_DECK
+                        })}
                         onClick={this.switchView(ROUTES.LIBRARY.VIEW.DECKS)}
                         href="#">
                         {'Decks'}

@@ -21,7 +21,7 @@ const LibraryDecks = React.createClass({
         event.preventDefault();
         event.stopPropagation();
 
-        // TODO: complete
+        this.context.store.routes.toAddNewDeck();
 
     },
 

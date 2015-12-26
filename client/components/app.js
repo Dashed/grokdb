@@ -125,7 +125,9 @@ const App = courier({
             break;
 
         case ROUTES.LIBRARY.VIEW.CARDS:
+        case ROUTES.LIBRARY.VIEW.ADD_CARD:
         case ROUTES.LIBRARY.VIEW.DECKS:
+        case ROUTES.LIBRARY.VIEW.ADD_DECK:
         case ROUTES.LIBRARY.VIEW.DESCRIPTION:
         case ROUTES.LIBRARY.VIEW.META:
             handler = Library;

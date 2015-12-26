@@ -14,21 +14,23 @@ const NO_OP = () => void 0;
 
 const RenderSourceTabs = React.createClass({
 
+    propTypes: {
+        onSwitch: React.PropTypes.func.isRequired,
+        showRender: React.PropTypes.bool,
+        showEditButton: React.PropTypes.bool,
+        isEditing: React.PropTypes.bool,
+        onEdit: React.PropTypes.func,
+        onCancelEdit: React.PropTypes.func
+    },
+
     getDefaultProps() {
         return {
+            showEditButton: true,
             isEditing: false,
             showRender: true,
             onEdit: NO_OP,
             onCancelEdit: NO_OP
         };
-    },
-
-    propTypes: {
-        onSwitch: React.PropTypes.func.isRequired,
-        showRender: React.PropTypes.bool,
-        isEditing: React.PropTypes.bool,
-        onEdit: React.PropTypes.func,
-        onCancelEdit: React.PropTypes.func
     },
 
     onSwitchTab(tabType) {
@@ -67,6 +69,10 @@ const RenderSourceTabs = React.createClass({
     },
 
     getEditButton() {
+
+        if(!this.props.showEditButton) {
+            return null;
+        }
 
         if(!this.props.isEditing) {
             return (

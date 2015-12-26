@@ -5,6 +5,7 @@ const courier = require('courier');
 const {types: ROUTES} = require('store/routes');
 
 const LibraryDecks = require('./decks');
+const AddDeck = require('./adddeck');
 const CardsList = require('./cards');
 const Description = require('./description');
 const Meta = require('./meta');
@@ -20,9 +21,7 @@ const LibraryDetail = React.createClass({
         const {Handler} = this.props;
 
         return (
-            <div>
-                <Handler />
-            </div>
+            <Handler />
         );
     }
 });
@@ -52,6 +51,10 @@ module.exports = courier({
 
         case ROUTES.LIBRARY.VIEW.DECKS:
             Handler = LibraryDecks;
+            break;
+
+        case ROUTES.LIBRARY.VIEW.ADD_DECK:
+            Handler = AddDeck;
             break;
 
         case ROUTES.LIBRARY.VIEW.DESCRIPTION:
