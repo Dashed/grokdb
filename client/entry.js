@@ -6,40 +6,25 @@ require('babel-runtime/core-js/promise').default = require('bluebird');
 // see: https://github.com/petkaantonov/bluebird/blob/master/API.md#promiselongstacktraces---void
 require('bluebird').longStackTraces();
 
-// const scriptjs = require('scriptjs');
-// const co = require('co');
-// const superhot = require('store/superhot');
-// const _ = require('lodash');
+// superagent proxy
+const superhot = require('store/superhot');
+const scriptjs = require('scriptjs');
 
-// co(function*() {
-//     const response = yield new Promise(function(resolve) {
-//         superhot.get('/env').end(function(err, res){
-//             resolve(res);
-//         });
-//     });
+new Promise(function(resolve) {
 
-//     const env = response.body;
+    superhot.get('/mathjax/MathJax.js').end(function(err, response){
+        resolve(response.status == 200);
+    });
 
-//     let hasLocalMathJax = false;
-//     if(_.has(env, 'local_mathjax') && env.local_mathjax) {
+}).then(function(hasLocalMathJax) {
 
-//         const _response = yield new Promise(function(resolve) {
-//             superhot.get('/mathjax/MathJax.js').end(function(err, res){
-//                 resolve(res);
-//             });
-//         });
+    const mjscript = hasLocalMathJax ? 'mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML' :
+        'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
 
-//         hasLocalMathJax = _response.status == 200;
-//     }
+    scriptjs(mjscript, function() {
+        require('./index.js');
+    });
 
-//     const mjscript = hasLocalMathJax ? 'mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML' :
-//         'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-
-//     scriptjs(mjscript, function() {
-//         require('./index.js');
-//     });
-
-// });
-
-require('./index.js');
-
+    // silence bluebird warning
+    return null;
+});
