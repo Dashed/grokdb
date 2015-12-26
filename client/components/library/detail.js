@@ -6,6 +6,8 @@ const {types: ROUTES} = require('store/routes');
 
 const LibraryDecks = require('./decks');
 const CardsList = require('./cards');
+const Description = require('./description');
+const Meta = require('./meta');
 
 const LibraryDetail = React.createClass({
 
@@ -25,21 +27,8 @@ const LibraryDetail = React.createClass({
     }
 });
 
-
-
-// const WaitingLibraryDetail = React.createClass({
-//     render() {
-//         return (
-//             <div>
-//                 {'waiting'}
-//             </div>
-//         );
-//     }
-// });
-
 module.exports = courier({
     component: LibraryDetail,
-    // waitingComponent: WaitingLibraryDetail,
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
@@ -65,9 +54,11 @@ module.exports = courier({
             break;
 
         case ROUTES.LIBRARY.VIEW.DESCRIPTION:
+            Handler = Description;
             break;
 
         case ROUTES.LIBRARY.VIEW.META:
+            Handler = Meta;
             break;
 
         default:
