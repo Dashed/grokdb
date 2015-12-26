@@ -10,12 +10,16 @@ const generateButtonStyle = function(truth) {
     };
 };
 
+const NO_OP = () => void 0;
+
 const RenderSourceTabs = React.createClass({
 
     getDefaultProps() {
         return {
             isEditing: false,
-            showRender: true
+            showRender: true,
+            onEdit: NO_OP,
+            onCancelEdit: NO_OP
         };
     },
 
@@ -23,6 +27,8 @@ const RenderSourceTabs = React.createClass({
         onSwitch: React.PropTypes.func.isRequired,
         showRender: React.PropTypes.bool,
         isEditing: React.PropTypes.bool,
+        onEdit: React.PropTypes.func,
+        onCancelEdit: React.PropTypes.func
     },
 
     onSwitchTab(tabType) {
@@ -46,6 +52,54 @@ const RenderSourceTabs = React.createClass({
 
     },
 
+    onEdit(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.props.onEdit.call(null);
+    },
+
+    onCancelEdit(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.props.onCancelEdit.call(null);
+    },
+
+    getEditButton() {
+
+        if(!this.props.isEditing) {
+            return (
+                <a href="#"
+                    className={classnames(
+                        'btn-sm',
+                        'btn',
+                        'pull-right',
+                        'btn-success'
+                    )}
+                    onClick={this.onEdit}
+                >
+                {'Edit'}
+                </a>
+            );
+        }
+
+        return (
+            <a href="#"
+                className={classnames(
+                    'btn-sm',
+                    'btn',
+                    'pull-right',
+                    'btn-danger'
+                )}
+                onClick={this.onCancelEdit}
+            >
+            {'Cancel Edit'}
+            </a>
+        );
+
+    },
+
     render() {
 
         const {showRender} = this.props;
@@ -66,6 +120,7 @@ const RenderSourceTabs = React.createClass({
                     >
                     {'Source'}
                     </a>
+                    {this.getEditButton()}
                 </div>
             </div>
         );

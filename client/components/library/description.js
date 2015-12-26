@@ -43,6 +43,20 @@ const DeckDescription = React.createClass({
 
     },
 
+    onEdit() {
+        this.setState({
+            isEditing: true,
+            showRender: false
+        });
+    },
+
+    onCancelEdit() {
+        this.setState({
+            isEditing: false,
+            showRender: true
+        });
+    },
+
     onDescriptionChange(event) {
 
         this.setState({
@@ -83,7 +97,7 @@ const DeckDescription = React.createClass({
                 placeholder={placeholder}
                 onChange={this.onDescriptionChange}
                 value={description}
-                readOnly={this.state.isEditing}
+                readOnly={!this.state.isEditing}
             />
         );
     },
@@ -97,6 +111,9 @@ const DeckDescription = React.createClass({
                         <RenderSourceTabs
                             showRender={this.state.showRender}
                             onSwitch={this.onSwitchTab}
+                            isEditing={this.state.isEditing}
+                            onEdit={this.onEdit}
+                            onCancelEdit={this.onCancelEdit}
                         />
                     </div>
                 </div>
