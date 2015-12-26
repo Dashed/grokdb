@@ -196,7 +196,7 @@ Decks.prototype.create = function(createDeck) {
         throw new Error('invalid inputs to Deck.create');
     }
 
-    return new Promise(function(resolve, reject) {
+    return new Promise((resolve, reject) => {
 
         let request = {
             name: createDeck.name,
@@ -214,11 +214,18 @@ Decks.prototype.create = function(createDeck) {
             .post(`/api/decks`)
             .type('json')
             .send(request)
-            .end(function(err, response) {
+            .end((err, response) => {
 
                 switch(response.status) {
 
                 case 200:
+
+                    const deck = Immutable.fromJS(response.body);
+                    const deckID = Number(deck.id);
+
+                    this._lookup.cursor(deckID).update(function() {
+                        return deck;
+                    });
 
                     const record = new Deck(response.body);
 
@@ -312,7 +319,7 @@ Decks.prototype.currentID = function(deckID = NOT_SET) {
         value = deckID;
     }
 
-    return value;
+    return Number(value);
 };
 
 // async
@@ -443,23 +450,65 @@ Decks.prototype.path = function(deckID) {
         });
 };
 
-// get list of children decks for current deck
-// Decks.prototype.children = function() {
+// async
+Decks.prototype.patch = function(deckID, patch) {
 
-//     const currentID = this.currentID();
+    invariant(_.isPlainObject(patch), `Expected deck patch to be plain object. Given: ${patch}`);
 
-//     return this.get(currentID)
-//         .then((currentDeck) => {
+    deckID = Number(deckID);
 
-//             const children = currentDeck.get('children');
+    const oldDeck = this._lookup.cursor(deckID).deref();
 
-//             invariant(Immutable.List.isList(children),
-//                 `Expected currentDeck.children to be Immutable.List. Given ${children}`);
+    // optimistic update
+    this._lookup.cursor(deckID).update(function(__oldDeck) {
 
-//             return this.getMany(children);
-//         });
+        patch = Immutable.fromJS(patch);
 
-// };
+        return __oldDeck.mergeDeep(patch);
+    });
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .patch(`/api/decks/${deckID}`)
+            .send(patch)
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    const deck = Immutable.fromJS(response.body);
+
+                    this._lookup.cursor(deckID).update(function() {
+                        return deck;
+                    });
+
+                    return resolve(deck);
+
+                default:
+
+                    // revert optimistic update
+                    this._lookup.cursor(deckID).update(function() {
+                        return oldDeck;
+                    });
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                }
+            });
+
+    });
+
+};
+
+// async
+Decks.prototype.patchCurrent = function(patch) {
+    this.patch(this.currentID(), patch);
+};
 
 
 module.exports = {
