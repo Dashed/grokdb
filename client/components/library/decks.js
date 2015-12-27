@@ -9,7 +9,6 @@ const DeckListItem = require('./decklistitem');
 const LibraryDecks = React.createClass({
 
     propTypes: {
-        // decks: React.PropTypes.array.isRequired
         childrenID: React.PropTypes.instanceOf(Immutable.List).isRequired
     },
 
