@@ -6,6 +6,7 @@ const {types: ROUTES} = require('store/routes');
 
 const LibraryDecks = require('./decks');
 const AddDeck = require('./adddeck');
+const AddCard = require('./addcard');
 const CardsList = require('./cards');
 const Description = require('./description');
 const Meta = require('./meta');
@@ -55,6 +56,10 @@ module.exports = courier({
 
         case ROUTES.LIBRARY.VIEW.ADD_DECK:
             Handler = AddDeck;
+            break;
+
+        case ROUTES.LIBRARY.VIEW.ADD_CARD:
+            Handler = AddCard;
             break;
 
         case ROUTES.LIBRARY.VIEW.DESCRIPTION:

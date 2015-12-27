@@ -278,6 +278,19 @@ const boostrapRoutes = co.wrap(function *(store) {
 
         store.resetStage();
         store.decks.currentID(deckID);
+        store.routes.route(ROUTE.LIBRARY.VIEW.ADD_DECK);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/add/card', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
         store.routes.route(ROUTE.LIBRARY.VIEW.ADD_CARD);
         store.commit();
 
@@ -430,6 +443,20 @@ Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID
         }
 
         page(`/deck/${toDeckID}/view/cards`);
+    });
+
+};
+
+Routes.prototype.toAddNewCard = function(toDeckID = NOT_SET) {
+
+    this.shouldChangeRoute(() => {
+
+        if(toDeckID === NOT_SET) {
+            this._store.resetStage();
+            toDeckID = this._store.decks.currentID();
+        }
+
+        page(`/deck/${toDeckID}/add/card`);
     });
 
 };
