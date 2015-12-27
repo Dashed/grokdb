@@ -44,6 +44,7 @@ module.exports = courier({
 
         return context.store.decks.current()
             .then(function(currentDeck) {
+
                 return {
                     currentDeck: currentDeck
                 };
