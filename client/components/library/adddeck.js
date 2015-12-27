@@ -24,7 +24,7 @@ const AddDeck = React.createClass({
     },
 
     shouldAddDeck() {
-        return String(this.state.name).length > 0;
+        return String(this.state.name).trim().length > 0;
     },
 
     onSwitchTab(tabType) {
@@ -52,7 +52,7 @@ const AddDeck = React.createClass({
         event.preventDefault();
         event.stopPropagation();
 
-        if(String(this.state.name).length > 0 || String(this.state.description).length > 0) {
+        if(String(this.state.name).trim().length > 0 || String(this.state.description).length > 0) {
             const ret = window.confirm(this.confirmDiscard());
             if(!ret) {
                 return;
@@ -84,7 +84,7 @@ const AddDeck = React.createClass({
         const parentDeckID = this.context.store.decks.currentID();
 
         this.context.store.decks.create({
-            name: this.state.name,
+            name: String(this.state.name).trim(),
             description: this.state.description,
             parent: parentDeckID
         })
@@ -107,7 +107,7 @@ const AddDeck = React.createClass({
     onNameChange(event) {
 
         this.setState({
-            name: String(event.target.value).trim()
+            name: String(event.target.value)
         });
     },
 
@@ -137,7 +137,7 @@ const AddDeck = React.createClass({
 
     confirmDiscard() {
 
-        if(String(this.state.name).length <= 0 && String(this.state.description).length <= 0) {
+        if(String(this.state.name).trim().length <= 0 && String(this.state.description).length <= 0) {
             return void 0;
         }
 
