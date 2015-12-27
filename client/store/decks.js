@@ -337,7 +337,9 @@ const attachCurrentObserver = function(currentCursor, currentID, observer) {
 
         if(!Immutable.Map.isMap(newCurrent)) {
             // lookup table may have been cleared.
-            // cancel event.
+            // bail event propagation early.
+            // note: don't unsubscribe at this point, as deck record may be reloaded.
+            // e.g. entry: deck record --> void 0 --> deck record
             return;
         }
 
