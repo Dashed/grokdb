@@ -10,7 +10,7 @@ const CardDetail = React.createClass({
             <div>
                 <div className="row">
                     <div className="col-sm-12">
-                        <Breadcrumb />
+                        {'card name'}
                     </div>
                 </div>
             </div>

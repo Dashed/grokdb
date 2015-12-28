@@ -7,7 +7,6 @@ const courier = require('courier');
 const Library = require('./library');
 const Stashes = require('./stashes');
 const Settings = require('./settings');
-const CardDetail = require('./card/index.js');
 
 const {types: ROUTES} = require('store/routes');
 
@@ -131,16 +130,12 @@ const App = courier({
         case ROUTES.LIBRARY.VIEW.ADD_DECK:
         case ROUTES.LIBRARY.VIEW.DESCRIPTION:
         case ROUTES.LIBRARY.VIEW.META:
-            handler = Library;
-            view = 'library';
-            break;
-
         case ROUTES.CARD.VIEW.FRONT:
         case ROUTES.CARD.VIEW.BACK:
         case ROUTES.CARD.VIEW.DESCRIPTION:
         case ROUTES.CARD.VIEW.META:
         case ROUTES.CARD.VIEW.STASHES:
-            handler = CardDetail;
+            handler = Library;
             view = 'library';
             break;
 
