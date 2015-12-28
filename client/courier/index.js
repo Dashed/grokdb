@@ -11,8 +11,7 @@ const isPlainObject = _.isPlainObject;
 const isObject = _.isObject;
 const hasProp = _.has;
 
-// TODO: override shouldComponentUpdate
-// TODO: onError prop
+// TODO: overridable shouldComponentUpdate
 // TODO: add more more comment documentation
 
 // TODO: this is a fork of orwell; merge into orwell when stable.
@@ -421,6 +420,10 @@ const Courier = function(inputSpec) {
                         return;
                     }
 
+                    if(onError) {
+                        onError.call(null, this.state.error);
+                    }
+
                     this.setState({
                         pending: false,
                         pendingResult: void 0,
@@ -459,11 +462,6 @@ const Courier = function(inputSpec) {
         render() {
 
             if(this.state.error !== void 0) {
-
-                if(onError) {
-                    onError.call(null, this.state.error);
-                }
-
                 return (ErrorComponent ? <ErrorComponent {...this.state.currentProps} /> : null);
             }
 
