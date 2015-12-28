@@ -1,7 +1,9 @@
 const React = require('react');
+const _ = require('lodash');
 
 const courier = require('courier');
 
+const CardListItem = require('./cardlistitem');
 
 const CardsList = React.createClass({
 
@@ -9,11 +11,31 @@ const CardsList = React.createClass({
         store: React.PropTypes.object.isRequired
     },
 
+    propTypes: {
+        cardIDs: React.PropTypes.array.isRequired
+    },
+
     toNewCard(event) {
         event.preventDefault();
         event.stopPropagation();
 
         this.context.store.routes.toAddNewCard();
+
+    },
+
+    cardsList() {
+
+        const cardIDs = this.props.cardIDs;
+
+        return _.map(cardIDs, (cardID, index) => {
+
+            const key = '' + cardID + index;
+
+            return (
+                <CardListItem key={key} cardID={cardID} />
+            );
+
+        });
 
     },
 
@@ -31,6 +53,13 @@ const CardsList = React.createClass({
                         </div>
                     </div>
                 </div>
+                <div className="row">
+                    <div className="col-sm-12">
+                        <ul className="list-group">
+                            {this.cardsList()}
+                        </ul>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -38,6 +67,28 @@ const CardsList = React.createClass({
 
 
 module.exports = courier({
+
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
     component: CardsList,
+
+    // watch(props, manual, context) {
+    //     return context.store.cards.watchCurrentCards();
+    // },
+
+    assignNewProps: function(props, context) {
+
+        return context.store.cards.currentCardsID()
+            .then((cardIDs) => {
+
+                return {
+                    cardIDs: cardIDs
+                };
+
+            });
+
+    }
 
 });

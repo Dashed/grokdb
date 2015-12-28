@@ -403,7 +403,7 @@ const Courier = function(inputSpec) {
 
                     if(!this.mounted) {
                         // component unmounted before promise was resolved
-                        return;
+                        return null;
                     }
 
                     this.setState({
@@ -419,7 +419,7 @@ const Courier = function(inputSpec) {
 
                     if(!this.mounted) {
                         // component unmounted before promise was resolved
-                        return;
+                        return null;
                     }
 
                     if(onError) {
