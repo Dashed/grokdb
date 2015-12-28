@@ -371,7 +371,9 @@ Decks.prototype.watchCurrent = function() {
 
             const deckSelfCursor = this._store.state().cursor(['deck', 'self']);
 
-            const deckSelfUnsub = deckSelfCursor.observe((newID, oldID) => {
+            const deckSelfUnsub = deckSelfCursor.observe((newID/*, oldID*/) => {
+
+                // invariant: newID != oldID
 
                 if(newID == currentID) {
                     return;
