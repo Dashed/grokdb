@@ -32,7 +32,7 @@ const DumbCardsList = React.createClass({
             <div className="row">
                 <div className="col-sm-12">
                     <ul className="list-group">
-                        {''}
+                        {this.cardsList()}
                     </ul>
                 </div>
             </div>
