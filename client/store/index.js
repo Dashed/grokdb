@@ -2,9 +2,10 @@ const minitrue = require('minitrue');
 
 const bootstrap = require('./bootstrap');
 
+const {Configs} = require('./configs');
 const {Routes} = require('./routes');
 const {Decks} = require('./decks');
-const {Configs} = require('./configs');
+const {Cards} = require('./cards');
 
 
 // sentinel value
@@ -47,6 +48,7 @@ function Store() {
 
     this.routes = new Routes(this);
     this.decks = new Decks(this);
+    this.cards = new Cards(this);
     this.configs = new Configs(this);
 }
 
