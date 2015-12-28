@@ -51,7 +51,7 @@ const cardLoader = new DataLoader(function(keys) {
 function Cards(store) {
 
     this._store = store;
-    this._lookup = minitrue({}); // Map<deck_id<int>, Deck>
+    this._lookup = minitrue({}); // Map<card_id<int>, Card>
 
 }
 
@@ -73,19 +73,19 @@ Cards.prototype.load = function(cardID = NOT_SET) {
     }
 
     return cardLoader.load(cardID)
-        .then((deck) => {
+        .then((card) => {
 
             cardID = Number(cardID);
 
             // cache onto lookup table
 
-            deck = Immutable.fromJS(deck);
+            card = Immutable.fromJS(card);
 
             this._lookup.cursor(cardID).update(function() {
-                return deck;
+                return card;
             });
 
-            return deck;
+            return card;
         });
 
 };
@@ -130,19 +130,19 @@ Cards.prototype.loadByDeck = function(cardID = NOT_SET, deckID) {
     });
 
     return cardLoader.load(cardID)
-        .then((deck) => {
+        .then((card) => {
 
             cardID = Number(cardID);
 
             // cache onto lookup table
 
-            deck = Immutable.fromJS(deck);
+            card = Immutable.fromJS(card);
 
             this._lookup.cursor(cardID).update(function() {
-                return deck;
+                return card;
             });
 
-            return deck;
+            return card;
         });
 
 };
@@ -204,6 +204,92 @@ Cards.prototype.currentID = function(cardID = NOT_SET) {
     }
 
     return Number(value);
+};
+
+// async
+Cards.prototype.current = function() {
+
+    const currentID = this.currentID();
+
+    return this.get(currentID);
+};
+
+const attachCurrentObserver = function(currentCursor, currentID, observer) {
+
+    let snapshotCurrent = currentCursor.deref();
+
+    const currentUnsub = currentCursor.observe(function(newCurrent, oldCurrent) {
+
+        if(!Immutable.Map.isMap(newCurrent)) {
+            // lookup table may have been cleared.
+            // bail event propagation early.
+            // note: don't unsubscribe at this point, as card record may be reloaded.
+            // e.g. entry: card record --> void 0 --> card record
+            return;
+        }
+
+        const actualID = newCurrent.get('id');
+
+        // Immutable.is is deep compare, but should prevent unnecessary DOM renders or network requests
+        if(actualID == currentID && newCurrent != oldCurrent && !Immutable.is(snapshotCurrent, newCurrent)) {
+
+            snapshotCurrent = newCurrent;
+
+            observer.call(null);
+            return;
+        }
+
+        // change occured on card of unexpected id
+        currentUnsub.call(null);
+
+    });
+
+    return currentUnsub;
+};
+
+// sync
+Cards.prototype.watchCurrent = function() {
+
+    return {
+        observe: (observer) => {
+
+            let currentID = this.currentID();
+            let currentCursor = this._lookup.cursor(currentID);
+            let currentUnsub = attachCurrentObserver(currentCursor, currentID, observer);
+
+            const cardSelfCursor = this._store.state().cursor(['card', 'self']);
+
+            const cardSelfUnsub = cardSelfCursor.observe((newID/*, oldID*/) => {
+
+                // invariant: newID != oldID
+
+                if(newID == currentID) {
+                    return;
+                }
+
+                currentUnsub.call(null);
+
+                // ensure new card is on lookup table
+                Promise.resolve(this.get(newID))
+                    .then(() => {
+
+                        currentID = newID;
+                        currentCursor = this._lookup.cursor(currentID);
+                        currentUnsub = attachCurrentObserver(currentCursor, currentID, observer);
+
+                        observer.call(null);
+
+                        return null;
+                    });
+
+            });
+
+            return function() {
+                currentUnsub.call(null);
+                cardSelfUnsub.call(null);
+            };
+        }
+    };
 };
 
 // async

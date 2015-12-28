@@ -332,6 +332,10 @@ Decks.prototype.current = function() {
     return this.get(currentID);
 };
 
+Decks.prototype.watchCurrentID = function() {
+    return this._store.state().cursor(['deck', 'self']);
+};
+
 const attachCurrentObserver = function(currentCursor, currentID, observer) {
 
     let snapshotCurrent = currentCursor.deref();
@@ -363,10 +367,6 @@ const attachCurrentObserver = function(currentCursor, currentID, observer) {
     });
 
     return currentUnsub;
-};
-
-Decks.prototype.watchCurrentID = function() {
-    return this._store.state().cursor(['deck', 'self']);
 };
 
 // sync
