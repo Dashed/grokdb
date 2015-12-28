@@ -19,7 +19,7 @@ const Header = React.createClass({
         return (
             <div>
                 <h4 className="m-y">
-                    <span className="text-muted lead">{`#${deckID}`}</span>
+                    <span className="text-muted lead">{`Deck #${deckID}`}</span>
                     {' '}
                     <span>{deckName}</span>
                 </h4>
