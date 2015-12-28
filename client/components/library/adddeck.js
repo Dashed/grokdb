@@ -60,13 +60,14 @@ const AddDeck = React.createClass({
             return;
         }
 
-
         const confirm = this.context.store.routes.confirm();
 
         if(confirm == this.confirmDiscard) {
             this.context.store.routes.removeConfirm();
         }
 
+        // disable the button to prevent spamming.
+        // e.g. atomic commit
         this.setState({
             disableAdd: true
         });
@@ -84,6 +85,8 @@ const AddDeck = React.createClass({
 
             return null;
         });
+
+        // TODO: error. restore add button
 
     },
 
@@ -183,7 +186,6 @@ const AddDeck = React.createClass({
                             showRender={this.state.showRender}
                             onSwitch={this.onSwitchTab}
                             showEditButton={false}
-                            isEditing
                         />
                     </div>
                 </div>
