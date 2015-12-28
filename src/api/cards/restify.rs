@@ -789,9 +789,14 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 Ok(count) => {
 
                     if count <= 0 {
+
+                        // deck has no cards, return empty array
+
                         let ref v: Vec<CardResponse> = vec![];
                         let response: String = json::encode(v).unwrap();
-                        return Ok(Response::with((status::Ok, response)));
+                        let content_type = "application/json".parse::<Mime>().unwrap();
+
+                        return Ok(Response::with((content_type, status::Ok, response)));
                     }
 
                     if page_query.offset >= count {
