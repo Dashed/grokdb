@@ -299,11 +299,11 @@ const Courier = function(inputSpec) {
                             // - component unmounted before promise was resolved
                             // - another promise after this one was resolved
                             // - another promise was created and invoked after this one
-                            return;
+                            return null;
                         }
 
                         if(this.state.pendingResult !== pendingResult) {
-                            return;
+                            return null;
                         }
 
                         this.setState({
@@ -313,10 +313,14 @@ const Courier = function(inputSpec) {
                             error: void 0
                         });
 
+                        return null;
+
                     }, (reason) => {
                         this.setState({
                             error: reason
                         });
+
+                        return null;
                     });
 
                 return;
