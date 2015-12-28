@@ -411,6 +411,8 @@ const Courier = function(inputSpec) {
                         pendingResult: void 0,
                         currentProps: assign({}, this.props, newProps)
                     });
+
+                    return null;
                 },
                 // rejection
                 (reason) => {
@@ -430,6 +432,7 @@ const Courier = function(inputSpec) {
                         error: reason
                     });
 
+                    return null;
                 });
 
         },
