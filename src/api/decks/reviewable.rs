@@ -21,46 +21,7 @@ impl ReviewableDeck {
 
         let ref grokdb = self.grokdb.deref();
 
-        let db_conn_guard = grokdb.decks.db.lock().unwrap();
-        let ref db_conn = *db_conn_guard;
-
-        let ref query = format!("
-            SELECT
-                COUNT(1)
-            FROM DecksClosure AS dc
-
-            INNER JOIN Cards AS c
-            ON c.deck = dc.descendent
-
-            WHERE
-                dc.ancestor = :deck_id
-            AND
-                c.card_id = :card_id
-            LIMIT 1;
-        ");
-
-        let params: &[(&str, &ToSql)] = &[
-            (":card_id", &card_id),
-            (":deck_id", &(self.deck_id))
-        ];
-
-        let deck_exists = db_conn.query_named_row(query, params, |row| -> bool {
-            let count: i64 = row.get(0);
-            return count >= 1;
-        });
-
-        match deck_exists {
-            Err(why) => {
-                let err = QueryError {
-                    sqlite_error: why,
-                    query: query.clone(),
-                };
-                return Err(err);
-            },
-            Ok(deck_exists) => {
-                return Ok(deck_exists);
-            }
-        };
+        return grokdb.cards.deck_has_card(self.deck_id, card_id);
 
     }
 

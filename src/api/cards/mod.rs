@@ -495,6 +495,51 @@ impl CardsAPI {
         return Ok(());
     }
 
+    pub fn deck_has_card(&self, deck_id: i64, card_id: i64) -> Result<bool, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                COUNT(1)
+            FROM DecksClosure AS dc
+
+            INNER JOIN Cards AS c
+            ON c.deck = dc.descendent
+
+            WHERE
+                dc.ancestor = :deck_id
+            AND
+                c.card_id = :card_id
+            LIMIT 1;
+        ");
+
+        let params: &[(&str, &ToSql)] = &[
+            (":card_id", &card_id),
+            (":deck_id", &deck_id)
+        ];
+
+        let deck_exists = db_conn.query_named_row(query, params, |row| -> bool {
+            let count: i64 = row.get(0);
+            return count >= 1;
+        });
+
+        match deck_exists {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(deck_exists) => {
+                return Ok(deck_exists);
+            }
+        };
+
+    }
+
     pub fn count_by_stash(&self, stash_id: i64) -> Result<i64, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
