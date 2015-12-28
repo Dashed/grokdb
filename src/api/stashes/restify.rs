@@ -23,6 +23,9 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
     let grokdb = Arc::new(grokdb);
 
+
+    // router.get("/stashes", {
+
     router.get("/stashes/:stash_id", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
@@ -390,7 +393,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
-    // remove card from stash
+    // remove a card from a stash
     router.delete("/cards/:card_id/stashes/:stash_id", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
@@ -477,7 +480,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
-    // remove all card from all stashes
+    // remove a specific card from all stashes
     router.delete("/cards/:card_id/stashes", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {

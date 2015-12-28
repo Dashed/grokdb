@@ -15,7 +15,7 @@ use std::ops::Deref;
 use std::error::Error;
 
 use ::api::{GrokDB, ErrorResponse};
-use ::api::cards::{CreateCard, UpdateCard, CardResponse, CardsPageRequest, SortBy, SortOrder};
+use ::api::cards::{CreateCard, CreateCardForDeck, UpdateCard, CardResponse, CardsPageRequest, SortBy, SortOrder};
 use ::api::decks::restify::deck_exists;
 use ::api::stashes::restify::stash_exists;
 use ::database::QueryError;
@@ -105,12 +105,133 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
+    router.post("/decks/:deck_id/cards", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            let create_card_request = req.get::<bodyparser::Struct<CreateCardForDeck>>();
+
+            // fetch and parse requested deck id
+
+            let deck_id: &str = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
+
+            let deck_id: i64 = match deck_id.parse::<u64>() {
+                Ok(deck_id) => deck_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // ensure deck exists; otherwise bail early
+            match deck_exists(grokdb, deck_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* noop; continue */}
+            }
+
+            // parse json input
+
+            let create_card_request: CreateCardForDeck = match create_card_request {
+
+                Ok(Some(create_card_request)) => {
+                    let create_card_request: CreateCardForDeck = create_card_request;
+                    create_card_request
+                },
+
+                Ok(None) => {
+
+                    let reason = "no JSON given";
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: reason,
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Err(err) => {
+
+                    let ref reason = format!("{:?}", err);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: err.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // ensure card title is non-empty string
+            let mut create_card_request = create_card_request;
+            create_card_request.title = create_card_request.title.trim().to_string();
+
+            if create_card_request.title.len() <= 0 {
+                let ref reason = format!("card title should be non-empty string");
+                let res_code = status::BadRequest;
+
+                let err_response = ErrorResponse {
+                    status: res_code,
+                    developerMessage: reason,
+                    userMessage: reason,
+                }.to_json();
+
+                return Ok(Response::with((res_code, err_response)));
+            }
+
+            let create_card_request = create_card_request;
+
+            // create card
+
+            let card_id: i64 = match grokdb.cards.create_for_deck(deck_id, &create_card_request) {
+                Err(why) => {
+                    // why: QueryError
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+                Ok(card_id) => {
+                    // card_id: i64
+                    /* card sucessfully created */
+                    card_id
+                },
+            };
+
+            return get_card_by_id(grokdb.clone(), card_id);
+
+        }
+    });
+
     router.post("/cards", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
             let ref grokdb = grokdb.deref();
 
-            // parse json
+            // parse json input
 
             let create_card_request = req.get::<bodyparser::Struct<CreateCard>>();
 

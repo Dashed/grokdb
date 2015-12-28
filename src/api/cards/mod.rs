@@ -47,6 +47,14 @@ pub struct CreateCard {
 }
 
 #[derive(Debug, Clone, RustcDecodable)]
+pub struct CreateCardForDeck {
+    title: String,
+    description: Option<String>,
+    front: String,
+    back: String
+}
+
+#[derive(Debug, Clone, RustcDecodable)]
 pub struct UpdateCard {
     title: Option<String>,
     description: Option<String>,
@@ -361,7 +369,7 @@ impl CardsAPI {
         };
     }
 
-    pub fn create(&self, create_card_request: &CreateCard) -> Result<i64, QueryError> {
+    pub fn create_for_deck(&self, deck_id: i64, create_card_request: &CreateCardForDeck) -> Result<i64, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
@@ -390,7 +398,7 @@ impl CardsAPI {
 
             (":back", &create_card_request.back),
 
-            (":deck", &create_card_request.deck)
+            (":deck", &deck_id)
         ];
 
         match db_conn.execute_named(query, params) {
@@ -407,6 +415,21 @@ impl CardsAPI {
         let rowid = db_conn.last_insert_rowid();
 
         return Ok(rowid);
+    }
+
+    pub fn create(&self, create_card_request: &CreateCard) -> Result<i64, QueryError> {
+
+        let deck_id = create_card_request.deck;
+
+        let ref create_card_request = CreateCardForDeck {
+            title: create_card_request.title.clone(),
+            description: create_card_request.description.clone(),
+            front: create_card_request.front.clone(),
+            back: create_card_request.back.clone()
+        };
+
+        return self.create_for_deck(deck_id, create_card_request);
+
     }
 
     pub fn update(&self, card_id: i64, update_card_request: &UpdateCard) -> Result<(), QueryError> {
