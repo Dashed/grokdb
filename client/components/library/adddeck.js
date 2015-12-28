@@ -11,9 +11,6 @@ const AddDeck = React.createClass({
         store: React.PropTypes.object.isRequired
     },
 
-    propTypes: {
-    },
-
     getInitialState() {
         return {
             disableAdd: false,
@@ -51,13 +48,6 @@ const AddDeck = React.createClass({
     backToDecksList(event) {
         event.preventDefault();
         event.stopPropagation();
-
-        if(String(this.state.name).trim().length > 0 || String(this.state.description).length > 0) {
-            const ret = window.confirm(this.confirmDiscard());
-            if(!ret) {
-                return;
-            }
-        }
 
         this.context.store.routes.toLibraryDecks();
     },
