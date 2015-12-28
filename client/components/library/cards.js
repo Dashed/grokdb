@@ -49,9 +49,9 @@ const CardsList = courier({
 
     component: DumbCardsList,
 
-    // watch(props, manual, context) {
-    //     return context.store.cards.watchCurrentCards();
-    // },
+    watch(props, manual, context) {
+        return context.store.decks.watchCurrentID();
+    },
 
     assignNewProps: function(props, context) {
 

@@ -365,6 +365,10 @@ const attachCurrentObserver = function(currentCursor, currentID, observer) {
     return currentUnsub;
 };
 
+Decks.prototype.watchCurrentID = function() {
+    return this._store.state().cursor(['deck', 'self']);
+};
+
 // sync
 Decks.prototype.watchCurrent = function() {
 
