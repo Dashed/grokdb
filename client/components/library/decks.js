@@ -1,5 +1,4 @@
 const React = require('react');
-const _ = require('lodash');
 const Immutable = require('immutable');
 
 const courier = require('courier');
