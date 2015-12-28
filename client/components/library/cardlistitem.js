@@ -18,9 +18,11 @@ const CardListItem = React.createClass({
         event.preventDefault();
         event.stopPropagation();
 
-        console.log('click');
+        // invariant: card belongs to current deck
 
-        // this.context.store.routes.toCard(this.props.cardID);
+        const currentDeckID = this.context.store.decks.currentID();
+
+        this.context.store.routes.toCard(this.props.cardID, currentDeckID);
     },
 
     render() {

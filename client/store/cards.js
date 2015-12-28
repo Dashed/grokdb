@@ -91,6 +91,63 @@ Cards.prototype.load = function(cardID = NOT_SET) {
 };
 
 // async
+Cards.prototype.loadByDeck = function(cardID = NOT_SET, deckID) {
+
+    if(cardID === NOT_SET) {
+        return Promise.resolve(void 0);
+    }
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .get(`/api/decks/${deckID}/cards/${cardID}`)
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    const card = Immutable.fromJS(response.body);
+                    cardID = Number(card.id);
+
+                    this._lookup.cursor(cardID).update(function() {
+                        return card;
+                    });
+
+                    return resolve(card);
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                }
+
+            });
+
+    });
+
+    return cardLoader.load(cardID)
+        .then((deck) => {
+
+            cardID = Number(cardID);
+
+            // cache onto lookup table
+
+            deck = Immutable.fromJS(deck);
+
+            this._lookup.cursor(cardID).update(function() {
+                return deck;
+            });
+
+            return deck;
+        });
+
+};
+
+// async
 Cards.prototype.get = function(cardID) {
 
     cardID = Number(cardID);
@@ -126,6 +183,27 @@ Cards.prototype.observable = function(cardID) {
             });
         }
     };
+};
+
+// fetch/set current card id from app state
+Cards.prototype.currentID = function(cardID = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['card', 'self']);
+
+    if(cardID !== NOT_SET) {
+
+        stage = stage.updateIn(['card', 'self'], function() {
+            return cardID;
+        });
+
+        this._store.stage(stage);
+
+        value = cardID;
+    }
+
+    return Number(value);
 };
 
 // async
