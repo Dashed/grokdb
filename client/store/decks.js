@@ -333,6 +333,9 @@ Decks.prototype.current = function() {
 };
 
 const attachCurrentObserver = function(currentCursor, currentID, observer) {
+
+    let snapshotCurrent = currentCursor.deref();
+
     const currentUnsub = currentCursor.observe(function(newCurrent, oldCurrent) {
 
         if(!Immutable.Map.isMap(newCurrent)) {
@@ -345,7 +348,10 @@ const attachCurrentObserver = function(currentCursor, currentID, observer) {
 
         const actualID = newCurrent.get('id');
 
-        if(actualID == currentID && newCurrent != oldCurrent) {
+        // Immutable.is is deep compare, but should prevent unnecessary DOM renders or network requests
+        if(actualID == currentID && newCurrent != oldCurrent && !Immutable.is(snapshotCurrent, newCurrent)) {
+
+            snapshotCurrent = newCurrent;
 
             observer.call(null);
             return;

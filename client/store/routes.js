@@ -47,6 +47,7 @@ const loadAppState = co.wrap(function *(store) {
 
     // clear caches
     store.decks.clearCache();
+    store.cards.clearCache();
 
     // fetch root deck
 
