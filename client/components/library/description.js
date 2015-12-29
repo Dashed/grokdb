@@ -223,11 +223,13 @@ const DeckDescription = React.createClass({
 
 module.exports = courier({
 
-    component: DeckDescription,
-
     contextTypes: {
         store: React.PropTypes.object.isRequired
     },
+
+    component: DeckDescription,
+
+    onlyWaitingOnMount: true,
 
     watch(props, manual, context) {
         return context.store.decks.watchCurrent();
