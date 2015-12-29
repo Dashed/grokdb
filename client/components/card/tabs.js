@@ -5,12 +5,13 @@ const FRONT = 'Front';
 const BACK = 'Back';
 const DESCRIPTION = 'Description';
 const STASHES = 'Stashes';
+const META = 'Meta';
 
 const CardTabs = React.createClass({
 
     propTypes: {
         onSwitch: React.PropTypes.func.isRequired,
-        currentTab: React.PropTypes.oneOf([FRONT, BACK, DESCRIPTION, STASHES])
+        currentTab: React.PropTypes.oneOf([FRONT, BACK, DESCRIPTION, STASHES, META])
     },
 
     getDefaultProps() {
@@ -33,6 +34,10 @@ const CardTabs = React.createClass({
         return (event) => {
             event.preventDefault();
             event.stopPropagation();
+
+            if(tabType == this.props.currentTab) {
+                return;
+            }
 
             const {onSwitch} = this.props;
 
@@ -71,8 +76,17 @@ const CardTabs = React.createClass({
                 <li className="nav-item">
                     <a
                         className={this.getStyle(STASHES)}
+                        onClick={this.onSwitchTab(STASHES)}
                         href="#">
                         {STASHES}
+                    </a>
+                </li>
+                <li className="nav-item">
+                    <a
+                        className={this.getStyle(META)}
+                        onClick={this.onSwitchTab(META)}
+                        href="#">
+                        {META}
                     </a>
                 </li>
             </ul>

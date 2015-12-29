@@ -128,6 +128,8 @@ const ROUTE = {
         }
     },
 
+    REVIEW: Symbol(),
+
     STASHES: Symbol(),
 
     SETTINGS: Symbol()
@@ -465,6 +467,26 @@ const boostrapRoutes = co.wrap(function *(store) {
                 next();
             }, postRouteLoad);
 
+    page('/deck/:deck_id/card/:card_id/view/stashes',
+            reloadAppState,
+            ensureValidDeckID,
+            ensureValidCardID,
+            ensureDeckIDExists,
+            ensureCardIDByDeckIDExists,
+            function(context, next) {
+
+                const deckID = context.deck_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.decks.currentID(deckID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.CARD.VIEW.STASHES);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
     // route not found; redirect to the root deck
     page('*', function(context, next) {
         console.error('not found', context);
@@ -475,7 +497,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
         // if a confirm callback is set, confirm to the user if they want to perform a
         // route change. (e.g. discard changes)
-        store.routes.shouldChangeRoute(function() {
+        store.routes.shouldChangeRoute(context, function() {
             next();
         });
 
@@ -542,12 +564,17 @@ Routes.prototype.removeConfirm = function() {
 // call this function to check if all pre-conditions are satisfied before a route
 // can be changed. if pre-conditions are satisfied, then callback is called.
 // otherwise, callback is not called.
-Routes.prototype.shouldChangeRoute = function(callback) {
+Routes.prototype.shouldChangeRoute = function(ctx, callback) {
 
     const confirm = this.confirm();
 
+    const context = !_.isFunction(ctx) ? ctx : void 0;
+
+    callback = _.isFunction(callback) ? callback :
+        _.isFunction(ctx) ? ctx : () => void 0;
+
     if(_.isFunction(confirm)) {
-        const message = confirm.call(null);
+        const message = confirm.call(null, context);
 
         if(_.isString(message)) {
             const ret = window.confirm(message);
@@ -702,18 +729,24 @@ Routes.prototype.toCardMeta = function(cardID, deckID) {
     });
 };
 
-Routes.prototype.toSettings = function() {
+Routes.prototype.toCardStashes = function(cardID, deckID) {
+
+    invariant(_.isNumber(filterID(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
 
     this.shouldChangeRoute(() => {
-        page(`/settings`);
+        page(`/deck/${deckID}/card/${cardID}/view/stashes`);
     });
+};
+
+
+Routes.prototype.toSettings = function() {
+
+    page(`/settings`);
 };
 
 Routes.prototype.toStashes = function() {
 
-    this.shouldChangeRoute(() => {
-        page(`/stashes`);
-    });
+    page(`/stashes`);
 };
 
 module.exports = {

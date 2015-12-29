@@ -401,6 +401,66 @@ Cards.prototype.currentCardsID = function() {
 
 };
 
+// async
+Cards.prototype.patch = function(cardID, patch) {
+
+    invariant(_.isPlainObject(patch), `Expected card patch to be plain object. Given: ${patch}`);
+
+    cardID = Number(cardID);
+
+    const oldCard = this._lookup.cursor(cardID).deref();
+
+    // optimistic update
+    this._lookup.cursor(cardID).update(function(__oldCard) {
+
+        patch = Immutable.fromJS(patch);
+
+        return __oldCard.mergeDeep(patch);
+    });
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .patch(`/api/cards/${cardID}`)
+            .send(patch)
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    const card = Immutable.fromJS(response.body);
+
+                    this._lookup.cursor(cardID).update(function() {
+                        return card;
+                    });
+
+                    return resolve(card);
+
+                default:
+
+                    // revert optimistic update
+                    this._lookup.cursor(cardID).update(function() {
+                        return oldCard;
+                    });
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                }
+            });
+
+    });
+
+};
+
+// async
+Cards.prototype.patchCurrent = function(patch) {
+    this.patch(this.currentID(), patch);
+};
+
 module.exports = {
     Cards
 };

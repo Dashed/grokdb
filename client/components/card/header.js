@@ -18,7 +18,7 @@ const CardHeader = React.createClass({
 
         return (
             <div>
-                <h4 className="m-b">
+                <h4>
                     <span className="text-muted lead">{`Card #${cardID}`}</span>
                     {' '}
                     <span>{cardTitle}</span>
@@ -34,7 +34,7 @@ const WaitingCardHeader = React.createClass({
 
         return (
             <div>
-                <h4 className="m-b">
+                <h4>
                     <span className="text-muted lead">{`Card #`}</span>
                     {' '}
                     <span style={{color: '#ffffff'}}>{'loading'}</span>
