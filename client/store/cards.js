@@ -231,7 +231,18 @@ const attachCurrentObserver = function(currentCursor, currentID, observer) {
         const actualID = newCurrent.get('id');
 
         // Immutable.is is deep compare, but should prevent unnecessary DOM renders or network requests
-        if(actualID == currentID && newCurrent != oldCurrent && !Immutable.is(snapshotCurrent, newCurrent)) {
+        if(actualID == currentID && newCurrent != oldCurrent) {
+
+            // There are cases when newCurrent and oldCurrent are effectively deeply equal.
+            // This can occur when doing something equivalent to:
+            // currentCursor.update(() => Immutable.fromJS(newCurrent.toJS()))
+            // Immutable.is is deep compare, but should prevent unnecessary DOM renders or network requests.
+            // Only do this if oldCurrent is still a Map.
+            // We still call observer for the case: void 0 --> card record
+            if(Immutable.Map.isMap(oldCurrent) && Immutable.is(snapshotCurrent, newCurrent)) {
+                snapshotCurrent = newCurrent;
+                return;
+            }
 
             snapshotCurrent = newCurrent;
 
