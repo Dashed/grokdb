@@ -25,7 +25,7 @@ const createRootDeck = function(store) {
 
     // create and set root deck
     return store.decks.create({
-        name: 'library'
+        name: 'Library'
     })
     .then(function(result) {
 
