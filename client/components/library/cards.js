@@ -82,18 +82,27 @@ const LibraryCards = React.createClass({
 
     },
 
+    toReview(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        console.log('toReview');
+
+    },
+
     render() {
         return (
             <div>
                 <div className="row m-b">
                     <div className="col-sm-12">
-                        <div className="btn-group btn-group-sm" role="group" aria-label="Basic example">
-                            <button
-                                type="button"
-                                className="btn btn-success"
+                        <a href="#"
+                            className="btn btn-sm btn-success m-r"
                                 onClick={this.toNewCard}
-                            >{'New Card'}</button>
-                        </div>
+                        >{'New Card'}</a>
+                        <a href="#"
+                            className="btn btn-sm btn-primary-outline"
+                            onClick={this.toReview}
+                        >{'Review this deck'}</a>
                     </div>
                 </div>
                 <div className="row">
