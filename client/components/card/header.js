@@ -34,10 +34,10 @@ const WaitingCardHeader = React.createClass({
 
         return (
             <div>
-                <h4 className="m-y">
+                <h4 className="m-b">
                     <span className="text-muted lead">{`Card #`}</span>
                     {' '}
-                    <span>{' '}</span>
+                    <span style={{color: '#ffffff'}}>{'loading'}</span>
                 </h4>
             </div>
         );
@@ -46,12 +46,14 @@ const WaitingCardHeader = React.createClass({
 
 module.exports = courier({
 
-    component: CardHeader,
-    waitingComponent: WaitingCardHeader,
-
     contextTypes: {
         store: React.PropTypes.object.isRequired
     },
+
+    component: CardHeader,
+    waitingComponent: WaitingCardHeader,
+
+    onlyWaitingOnMount: true,
 
     watch(props, manual, context) {
         return context.store.cards.watchCurrent();
