@@ -141,7 +141,7 @@ const Courier = function(inputSpec) {
         onError = ON_ERROR;
     }
 
-    /* create HoC */
+    /* create Higher-Order Component */
 
     const classSpec = {
 
@@ -362,8 +362,8 @@ const Courier = function(inputSpec) {
             // whenever it is called, the next render is no longer the initial render.
             this.afterInitialRender = true;
 
-            // optimistic HoC update if pending status differs,
-            // since this.state.currentProps == nextState.currentProps as
+            // optimistic HoC update if pending status differs;
+            // useful for case when shallowEqual(this.state.currentProps, nextState.currentProps) as
             // promise begin to resolve or is finishing resolving.
             return (this.state.pending !== nextState.pending ||
             // otherwise compare props
@@ -489,7 +489,10 @@ const Courier = function(inputSpec) {
             }
 
             // TODO: is this needed?
-            // Dec 25/15: probably not. but what if assert(shallowequal(this.props, nextProps))?
+            // Dec 25/15: probably not.
+            //
+            //
+            // but what if assert(shallowequal(this.props, nextProps))?
             // if(this.state.pending) {
             //     return;
             // }
