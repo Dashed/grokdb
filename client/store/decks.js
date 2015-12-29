@@ -352,8 +352,15 @@ const attachCurrentObserver = function(currentCursor, currentID, observer) {
 
         const actualID = newCurrent.get('id');
 
-        // Immutable.is is deep compare, but should prevent unnecessary DOM renders or network requests
-        if(actualID == currentID && newCurrent != oldCurrent && !Immutable.is(snapshotCurrent, newCurrent)) {
+        // invariant: Immutable.Map.isMap(oldCurrent)
+
+        if(actualID == currentID && newCurrent != oldCurrent) {
+
+            // Immutable.is is deep compare, but should prevent unnecessary DOM renders or network requests
+            if(Immutable.Map.isMap(oldCurrent) && Immutable.is(snapshotCurrent, newCurrent)) {
+                snapshotCurrent = newCurrent;
+                return;
+            }
 
             snapshotCurrent = newCurrent;
 
