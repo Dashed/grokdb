@@ -15,7 +15,19 @@ const DumbCardsList = React.createClass({
 
         const cardIDs = this.props.cardIDs;
 
-        return _.map(cardIDs, (cardID, index) => {
+        if(cardIDs.length <= 0) {
+            return (
+                <div className="card">
+                    <div className="card-block text-center">
+                        <p className="card-text text-muted">
+                            {'No cards to display. To get started, you should create your first card for this deck.'}
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        const items = _.map(cardIDs, (cardID, index) => {
 
             const key = '' + cardID + index;
 
@@ -25,15 +37,19 @@ const DumbCardsList = React.createClass({
 
         });
 
+        return (
+            <ul className="list-group">
+                {items}
+            </ul>
+        );
+
     },
 
     render() {
         return (
             <div className="row">
                 <div className="col-sm-12">
-                    <ul className="list-group">
-                        {this.cardsList()}
-                    </ul>
+                    {this.cardsList()}
                 </div>
             </div>
         );
@@ -97,7 +113,7 @@ const LibraryCards = React.createClass({
                     <div className="col-sm-12">
                         <a href="#"
                             className="btn btn-sm btn-success m-r"
-                                onClick={this.toNewCard}
+                            onClick={this.toNewCard}
                         >{'New Card'}</a>
                         <a href="#"
                             className="btn btn-sm btn-primary-outline"
