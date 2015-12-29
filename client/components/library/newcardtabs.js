@@ -1,6 +1,10 @@
 const React = require('react');
 const classnames = require('classnames');
 
+const STYLE = {
+    fontSize: '.875rem'
+};
+
 const FRONT = 'Front';
 const BACK = 'Back';
 const DESCRIPTION = 'Description';
@@ -43,7 +47,7 @@ const CardTabs = React.createClass({
 
     render() {
         return (
-            <ul className="nav nav-tabs">
+            <ul className="nav nav-tabs" style={STYLE} >
                 <li className="nav-item">
                     <a
                         className={this.getStyle(FRONT)}

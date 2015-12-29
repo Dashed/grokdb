@@ -5,7 +5,7 @@ const classnames = require('classnames');
 
 const MarkdownPreview = require('components/markdownpreview');
 const RenderSourceTabs = require('components/rendersourcetabs');
-const CardTabs = require('components/card/tabs');
+const NewCardTabs = require('./newcardtabs');
 
 const AddCard = React.createClass({
 
@@ -245,7 +245,7 @@ const AddCard = React.createClass({
                 </div>
                 <div className="row">
                     <div className="col-sm-12 m-b">
-                        <CardTabs
+                        <NewCardTabs
                             currentTab={this.state.currentTab}
                             onSwitch={this.onSwitchCurrentTab}
                         />

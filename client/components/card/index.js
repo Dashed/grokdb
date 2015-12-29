@@ -3,6 +3,7 @@ const React = require('react');
 const courier = require('courier');
 
 const CardHeader = require('./header');
+const CardTabs = require('./tabs');
 
 const CardDetail = React.createClass({
 
@@ -10,11 +11,46 @@ const CardDetail = React.createClass({
         store: React.PropTypes.object.isRequired
     },
 
+    getInitialState() {
+        return {
+
+            isEditing: false,
+            disableSave: false,
+
+            currentTab: 'Front',
+
+            newTitle: void 0,
+
+            front: {
+                showRender: false,
+                newSource: void 0
+            },
+
+            back: {
+                showRender: false,
+                newSource: void 0
+            },
+
+            description: {
+                showRender: false,
+                newSource: void 0
+            }
+        };
+    },
+
     backToCardsList(event) {
         event.preventDefault();
         event.stopPropagation();
 
         this.context.store.routes.toLibraryCards();
+    },
+
+    onSwitchCurrentTab(tabType) {
+
+        this.setState({
+            currentTab: tabType
+        });
+
     },
 
     render() {
@@ -37,6 +73,13 @@ const CardDetail = React.createClass({
                 <div className="row">
                     <div className="col-sm-12">
                         <CardHeader />
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-sm-12">
+                        <CardTabs
+                            currentTab={this.state.currentTab}
+                            onSwitch={this.onSwitchCurrentTab} />
                     </div>
                 </div>
             </div>
