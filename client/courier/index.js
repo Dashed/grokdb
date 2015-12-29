@@ -99,6 +99,10 @@ const SHOULD_REWATCH_OBSERVABLE = function() {
 
 const ON_ERROR = function(reason) {
     console.error('Error occured', reason);
+
+    if(console.trace) {
+        console.trace();
+    }
 };
 
 const Courier = function(inputSpec) {
@@ -276,7 +280,21 @@ const Courier = function(inputSpec) {
                 return;
             }
 
-            const pendingResult = this.assignNewProps(props, context);
+            let pendingResult;
+            try {
+                pendingResult = this.assignNewProps(props, context);
+            } catch(reason) {
+
+                if(onError) {
+                    onError.call(null, reason);
+                }
+
+                this.setState({
+                    pending: false,
+                    pendingResult: void 0,
+                    error: reason
+                });
+            }
 
             if(isPromise(pendingResult)) {
 
@@ -358,7 +376,21 @@ const Courier = function(inputSpec) {
             this.afterInitialRender = false;
 
             let pending = true;
-            let pendingResult = this.assignNewProps(this.props, this.context);
+
+            let pendingResult;
+            let err = void 0;
+            try {
+                pendingResult = this.assignNewProps(this.props, this.context);
+            } catch(reason) {
+
+                if(onError) {
+                    onError.call(null, reason);
+                }
+
+                err = reason;
+                pendingResult = {};
+            }
+
             let currentProps = void 0;
 
             if(isPromise(pendingResult)) {
@@ -378,7 +410,7 @@ const Courier = function(inputSpec) {
                 pending: pending,
                 pendingResult: pendingResult,
                 currentProps: currentProps,
-                error: void 0
+                error: err
             };
         },
 
@@ -427,7 +459,7 @@ const Courier = function(inputSpec) {
                     }
 
                     if(onError) {
-                        onError.call(null, this.state.error);
+                        onError.call(null, reason);
                     }
 
                     this.setState({
