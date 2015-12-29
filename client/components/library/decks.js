@@ -27,7 +27,19 @@ const LibraryDecks = React.createClass({
 
         const childrenID = this.props.childrenID;
 
-        return childrenID.map((deckID, index) => {
+        if(childrenID.size <= 0) {
+            return (
+                <div className="card">
+                    <div className="card-block text-center">
+                        <p className="card-text text-muted">
+                            {'No decks to display. To get started, you should create your first nested deck for this deck.'}
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        const items = childrenID.map((deckID, index) => {
 
             const key = '' + deckID + index;
 
@@ -35,6 +47,13 @@ const LibraryDecks = React.createClass({
                 <DeckListItem key={key} deckID={deckID} />
             );
         });
+
+        return (
+            <ul className="list-group">
+                {items}
+            </ul>
+        );
+
     },
 
     render() {
@@ -54,9 +73,7 @@ const LibraryDecks = React.createClass({
                 </div>
                 <div className="row">
                     <div className="col-sm-12">
-                        <ul className="list-group">
-                            {this.deckList()}
-                        </ul>
+                        {this.deckList()}
                     </div>
                 </div>
             </div>
