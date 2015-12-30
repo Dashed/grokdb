@@ -1089,7 +1089,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         _ => SortBy::UpdatedAt
                     };
 
-                    let order: SortOrder = match hashmap.contains_key("ordery_by") {
+                    let order: SortOrder = match hashmap.contains_key("order_by") {
                         true => {
                             let maybe_order_by: &Vec<String> = hashmap.get("order_by").unwrap();
 
