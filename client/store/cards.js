@@ -120,8 +120,8 @@ Cards.prototype.loadByDeck = function(cardID = NOT_SET, deckID) {
 
                 case 200:
 
+                    cardID = Number(response.body.id);
                     const card = Immutable.fromJS(response.body);
-                    cardID = Number(card.id);
 
                     this._lookup.cursor(cardID).update(function() {
                         return card;
@@ -344,8 +344,8 @@ Cards.prototype.create = function(deckID, createCard) {
 
                 case 200:
 
+                    const cardID = Number(response.body.id);
                     const card = Immutable.fromJS(response.body);
-                    const cardID = Number(card.id);
 
                     this._lookup.cursor(cardID).update(function() {
                         return card;
