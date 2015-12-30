@@ -30,11 +30,13 @@ const Header = React.createClass({
 
 module.exports = courier({
 
-    component: Header,
-
     contextTypes: {
         store: React.PropTypes.object.isRequired
     },
+
+    component: Header,
+
+    onlyWaitingOnMount: true,
 
     watch(props, manual, context) {
         return context.store.decks.watchCurrent();
