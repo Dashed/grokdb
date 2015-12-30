@@ -142,8 +142,8 @@ const toDeck = function(deckID) {
     page.redirect(`/deck/${deckID}/view/cards`);
 };
 
-const toCard = function(cardID) {
-    page.redirect(`/card/${cardID}/view/front`);
+const toCardOfDeck = function(cardID, deckID) {
+    page.redirect(`/deck/${deckID}/card/${cardID}/view/front`);
 };
 
 const boostrapRoutes = co.wrap(function *(store) {
@@ -227,7 +227,7 @@ const boostrapRoutes = co.wrap(function *(store) {
         // rejection
         function() {
 
-            // card doesn't exist
+            // card doesn't exist within given deck
 
             toDeck(context.deck_id);
             return null;
@@ -456,14 +456,139 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     page('/card', reloadAppState, toRootDeck);
 
-    page('/card/:card_id', reloadAppState, function(context) {
+    page('/card/:card_id', reloadAppState, ensureValidCardID, function(context) {
         const cardID = context.params.card_id;
-        toCard(cardID);
+
+        store.cards.get(cardID)
+            .then(function(card) {
+
+                if(!card) {
+                    toRootDeck();
+                    return null;
+                }
+
+
+                toCardOfDeck(card.get('id'), card.get('deck'));
+                return null;
+            });
+
     });
 
-    page('/card/:card_id/view', reloadAppState, function(context) {
+    page('/card/:card_id/view', reloadAppState, ensureValidCardID, function(context) {
         const cardID = context.params.card_id;
-        toCard(cardID);
+
+        store.cards.get(cardID)
+            .then(function(card) {
+
+                if(!card) {
+                    toRootDeck();
+                    return null;
+                }
+
+
+                toCardOfDeck(card.get('id'), card.get('deck'));
+                return null;
+            });
+    });
+
+    page('/card/:card_id/view/front',
+            reloadAppState,
+            ensureValidCardID,
+            function(context) {
+
+                const cardID = context.params.card_id;
+
+                store.cards.get(cardID)
+                    .then(function(card) {
+
+                        if(!card) {
+                            toRootDeck();
+                            return null;
+                        }
+
+                        page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/front`);
+                        return null;
+                    });
+            });
+
+    page('/card/:card_id/view/back',
+            reloadAppState,
+            ensureValidCardID,
+            function(context) {
+
+                const cardID = context.params.card_id;
+
+                store.cards.get(cardID)
+                    .then(function(card) {
+
+                        if(!card) {
+                            toRootDeck();
+                            return null;
+                        }
+
+                        page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/back`);
+                        return null;
+                    });
+            });
+
+    page('/card/:card_id/view/description',
+            reloadAppState,
+            ensureValidCardID,
+            function(context) {
+
+                const cardID = context.params.card_id;
+
+                store.cards.get(cardID)
+                    .then(function(card) {
+
+                        if(!card) {
+                            toRootDeck();
+                            return null;
+                        }
+
+                        page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/description`);
+                        return null;
+                    });
+            });
+
+    page('/card/:card_id/view/meta',
+            reloadAppState,
+            ensureValidCardID,
+            function(context) {
+
+                const cardID = context.params.card_id;
+
+                store.cards.get(cardID)
+                    .then(function(card) {
+
+                        if(!card) {
+                            toRootDeck();
+                            return null;
+                        }
+
+                        page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/meta`);
+                        return null;
+                    });
+            });
+
+    page('/card/:card_id/view/stashes',
+            reloadAppState,
+            ensureValidCardID,
+            function(context) {
+
+                const cardID = context.params.card_id;
+
+                store.cards.get(cardID)
+                    .then(function(card) {
+
+                        if(!card) {
+                            toRootDeck();
+                            return null;
+                        }
+
+                        page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/stashes`);
+                        return null;
+                    });
     });
 
     page('/deck/:deck_id/card/:card_id/view/front',
