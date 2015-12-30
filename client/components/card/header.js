@@ -1,32 +1,7 @@
 const React = require('react');
-const Immutable = require('immutable');
 
 const courier = require('courier');
-
-const CardHeader = React.createClass({
-
-    propTypes: {
-        currentCard: React.PropTypes.instanceOf(Immutable.Map).isRequired
-    },
-
-    render() {
-
-        const {currentCard} = this.props;
-
-        const cardTitle = currentCard.get('title');
-        const cardID = currentCard.get('id');
-
-        return (
-            <div>
-                <h4>
-                    <span className="text-muted lead">{`Card #${cardID}`}</span>
-                    {' '}
-                    <span>{cardTitle}</span>
-                </h4>
-            </div>
-        );
-    }
-});
+const DumbCardHeader = require('./dumbheader');
 
 const WaitingCardHeader = React.createClass({
 
@@ -50,7 +25,7 @@ module.exports = courier({
         store: React.PropTypes.object.isRequired
     },
 
-    component: CardHeader,
+    component: DumbCardHeader,
     waitingComponent: WaitingCardHeader,
 
     onlyWaitingOnMount: true,
@@ -65,7 +40,8 @@ module.exports = courier({
             .then(function(currentCard) {
 
                 return {
-                    currentCard: currentCard
+                    cardID: currentCard.get('id'),
+                    cardTitle: currentCard.get('title')
                 };
             });
     }
