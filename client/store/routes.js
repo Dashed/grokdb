@@ -2,15 +2,18 @@ const page = require('page');
 const co = require('co');
 const _ = require('lodash');
 const invariant = require('invariant');
+const qs = require('qs');
 
 const {NOT_FOUND, OK} = require('./response');
+
+const {pagination: cardPagination} = require('./cards');
 
 // sentinel values
 const NOT_SET = {};
 const NOT_ID = {};
 
 // based on: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt#A_stricter_parse_function
-const filterID = function (value, defaultValue) {
+const filterInteger = function (value, defaultValue) {
     if(/^(\-|\+)?([0-9]+|Infinity)$/.test(value)) {
         value = Number(value);
         return (value > 0) ? value : defaultValue;
@@ -29,7 +32,7 @@ const createRootDeck = function(store) {
     })
     .then(function(result) {
 
-        deckID = filterID(result.response.id);
+        deckID = filterInteger(result.response.id);
         return store.configs.set('root_deck', deckID);
     })
     .then(function(/*result*/) {
@@ -53,7 +56,7 @@ const loadAppState = co.wrap(function *(store) {
 
     const rootDeckID = yield co(function *() {
 
-        const maybeRootDeckID = filterID(store.decks.root(), NOT_ID);
+        const maybeRootDeckID = filterInteger(store.decks.root(), NOT_ID);
 
         if(maybeRootDeckID !== NOT_ID) {
 
@@ -73,7 +76,7 @@ const loadAppState = co.wrap(function *(store) {
 
             // ensure root deck exists; if not, create one
 
-            const deckID = filterID(configResult.response.value, NOT_ID);
+            const deckID = filterInteger(configResult.response.value, NOT_ID);
 
             if(deckID === NOT_ID) {
                 return createRootDeck(store);
@@ -152,7 +155,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     const ensureValidDeckID = function(context, next) {
 
-        const deckID = filterID(context.params.deck_id, NOT_ID);
+        const deckID = filterInteger(context.params.deck_id, NOT_ID);
 
         if(deckID === NOT_ID) {
             toRootDeck();
@@ -196,7 +199,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     const ensureValidCardID = function(context, next) {
 
-        const cardID = filterID(context.params.card_id, NOT_ID);
+        const cardID = filterInteger(context.params.card_id, NOT_ID);
 
         if(cardID === NOT_ID) {
             toDeck(context.deck_id);
@@ -312,11 +315,87 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     page('/deck/:deck_id/view/cards', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
 
+        const queries = qs.parse(context.querystring);
+
         const deckID = context.deck_id;
 
         store.resetStage();
         store.decks.currentID(deckID);
         store.routes.route(ROUTE.LIBRARY.VIEW.CARDS);
+
+        // pagination queries
+
+        let pageNum = 1;
+        if(_.has(queries, 'page')) {
+
+            pageNum = filterInteger(queries.page, NOT_SET);
+
+            if(pageNum === NOT_SET) {
+                pageNum = 1;
+            }
+        }
+        store.cards.page(pageNum);
+
+        if(_.has(queries, 'order_by')) {
+
+            let pageOrder = NOT_SET;
+
+            switch(String(queries.order_by).toLowerCase()) {
+
+            case 'descending':
+            case 'desc':
+                pageOrder = cardPagination.order.DESC;
+                break;
+
+            case 'ascending':
+            case 'asc':
+                pageOrder = cardPagination.order.ASC;
+                break;
+
+            default:
+                pageOrder = NOT_SET;
+            }
+
+            if(pageOrder !== NOT_SET) {
+                store.cards.order(pageOrder);
+            }
+        }
+
+        if(_.has(queries, 'sort_by')) {
+
+            let pageSort = NOT_SET;
+
+            switch(String(queries.sort_by).toLowerCase()) {
+
+            case 'reviewed_at':
+                pageSort = cardPagination.sort.REVIEWED_AT;
+                break;
+
+            case 'times_reviewed':
+                pageSort = cardPagination.sort.TIMES_REVIEWED;
+                break;
+
+            case 'title':
+                pageSort = cardPagination.sort.TITLE;
+                break;
+
+            case 'created_at':
+                pageSort = cardPagination.sort.CREATED_AT;
+                break;
+
+            case 'updated_at':
+                pageSort = cardPagination.sort.UPDATED_AT;
+                break;
+
+            default:
+                pageSort = NOT_SET;
+            }
+
+            if(pageSort !== NOT_SET) {
+                store.cards.sort(pageSort);
+            }
+        }
+
         store.commit();
 
         next();
@@ -593,14 +672,14 @@ Routes.prototype.shouldChangeRoute = function(ctx, callback) {
 
 Routes.prototype.toDeck = function(deckID) {
 
-    invariant(_.isNumber(filterID(deckID)) && deckID > 0, `Malformed deckID. Given ${deckID}`);
+    invariant(_.isNumber(filterInteger(deckID)) && deckID > 0, `Malformed deckID. Given ${deckID}`);
 
     this.shouldChangeRoute(() => {
         page(`/deck/${deckID}/view/cards`);
     });
 };
 
-Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID = NOT_SET) {
+Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID = NOT_SET, pageSort = NOT_SET, pageOrder = NOT_SET) {
 
     this.shouldChangeRoute(() => {
 
@@ -609,7 +688,55 @@ Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID
             toDeckID = this._store.decks.currentID();
         }
 
-        page(`/deck/${toDeckID}/view/cards`);
+        if(pageOrder === NOT_SET) {
+            pageOrder = this._store.cards.order();
+        }
+
+        switch(pageOrder) {
+
+        case cardPagination.order.DESC:
+            pageOrder = 'descending';
+            break;
+
+        case cardPagination.order.ASC:
+            pageOrder = 'ascending';
+            break;
+
+        default:
+            pageOrder = 'descending';
+        }
+
+        if(pageSort === NOT_SET) {
+            pageSort = this._store.cards.sort();
+        }
+
+        switch(pageSort) {
+
+        case cardPagination.sort.REVIEWED_AT:
+            pageSort = 'reviewed_at';
+            break;
+
+        case cardPagination.sort.TIMES_REVIEWED:
+            pageSort = 'times_reviewed';
+            break;
+
+        case cardPagination.sort.TITLE:
+            pageSort = 'title';
+            break;
+
+        case cardPagination.sort.CREATED_AT:
+            pageSort = 'created_at';
+            break;
+
+        case cardPagination.sort.UPDATED_AT:
+            pageSort = 'updated_at';
+            break;
+
+        default:
+            pageSort = 'updated_at';
+        }
+
+        page(`/deck/${toDeckID}/view/cards?order_by=${pageOrder}&sort_by=${pageSort}`);
     });
 
 };
@@ -686,7 +813,7 @@ Routes.prototype.toLibraryMeta = function(toDeckID = NOT_SET) {
 
 Routes.prototype.toCard = function(cardID, deckID) {
 
-    invariant(_.isNumber(filterID(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
 
     this.shouldChangeRoute(() => {
         page(`/deck/${deckID}/card/${cardID}/view/front`);
@@ -695,7 +822,7 @@ Routes.prototype.toCard = function(cardID, deckID) {
 
 Routes.prototype.toCardFront = function(cardID, deckID) {
 
-    invariant(_.isNumber(filterID(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
 
     this.shouldChangeRoute(() => {
         page(`/deck/${deckID}/card/${cardID}/view/front`);
@@ -704,7 +831,7 @@ Routes.prototype.toCardFront = function(cardID, deckID) {
 
 Routes.prototype.toCardBack = function(cardID, deckID) {
 
-    invariant(_.isNumber(filterID(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
 
     this.shouldChangeRoute(() => {
         page(`/deck/${deckID}/card/${cardID}/view/back`);
@@ -713,7 +840,7 @@ Routes.prototype.toCardBack = function(cardID, deckID) {
 
 Routes.prototype.toCardDescription = function(cardID, deckID) {
 
-    invariant(_.isNumber(filterID(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
 
     this.shouldChangeRoute(() => {
         page(`/deck/${deckID}/card/${cardID}/view/description`);
@@ -722,7 +849,7 @@ Routes.prototype.toCardDescription = function(cardID, deckID) {
 
 Routes.prototype.toCardMeta = function(cardID, deckID) {
 
-    invariant(_.isNumber(filterID(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
 
     this.shouldChangeRoute(() => {
         page(`/deck/${deckID}/card/${cardID}/view/meta`);
@@ -731,7 +858,7 @@ Routes.prototype.toCardMeta = function(cardID, deckID) {
 
 Routes.prototype.toCardStashes = function(cardID, deckID) {
 
-    invariant(_.isNumber(filterID(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
 
     this.shouldChangeRoute(() => {
         page(`/deck/${deckID}/card/${cardID}/view/stashes`);

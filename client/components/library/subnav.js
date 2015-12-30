@@ -22,6 +22,11 @@ const Subnav = React.createClass({
             event.preventDefault();
             event.stopPropagation();
 
+            // TODO: needed?
+            // if(routeID === this.props.route) {
+            //     return;
+            // }
+
             switch(routeID) {
             case ROUTES.LIBRARY.VIEW.CARDS:
             case ROUTES.LIBRARY.VIEW.ADD_CARD:

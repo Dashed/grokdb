@@ -4,6 +4,7 @@ const _ = require('lodash');
 const courier = require('courier');
 
 const CardListItem = require('./cardlistitem');
+const CardsFilter = require('./cardsfilter');
 
 const DumbCardsList = React.createClass({
 
@@ -66,7 +67,11 @@ const CardsList = courier({
     component: DumbCardsList,
 
     watch(props, manual, context) {
-        return context.store.decks.watchCurrentID();
+        return [
+            context.store.decks.watchCurrentID(),
+            context.store.cards.watchOrder(),
+            context.store.cards.watchSort()
+        ];
     },
 
     assignNewProps: function(props, context) {
@@ -79,7 +84,6 @@ const CardsList = courier({
                 };
 
             });
-
     }
 
 });
@@ -119,6 +123,10 @@ const LibraryCards = React.createClass({
                             className="btn btn-sm btn-primary-outline"
                             onClick={this.toReview}
                         >{'Review this deck'}</a>
+
+                        <div className="pull-right">
+                            <CardsFilter />
+                        </div>
                     </div>
                 </div>
                 <div className="row">

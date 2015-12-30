@@ -5,7 +5,7 @@ const bootstrap = require('./bootstrap');
 const {Configs} = require('./configs');
 const {Routes} = require('./routes');
 const {Decks} = require('./decks');
-const {Cards} = require('./cards');
+const {Cards, pagination} = require('./cards');
 
 
 // sentinel value
@@ -18,12 +18,21 @@ const SCHEMA = {
     deck: {
         root: null, // deck_id
         self: null, // deck_id
-        children: [], // List<deck_id>
-        cards: [] // List<card_id>
+
+        // TODO: not used; remove
+        // children: [], // List<deck_id>
+
+        // TODO: not used; remove
+        // cards: [] // List<card_id>
     },
 
     card: {
-        self: null
+        self: null,
+
+        // pagination / filtering for list of cards in a deck
+        sort: pagination.sort.UPDATED_AT,
+        order: pagination.order.DESC,
+        page: 1
     },
 
     // review:

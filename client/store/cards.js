@@ -10,6 +10,19 @@ const {Response, OK, INVALID} = require('./response');
 
 const NOT_SET = {};
 
+const SORT = {
+    REVIEWED_AT: Symbol(),
+    TIMES_REVIEWED: Symbol(),
+    TITLE: Symbol(),
+    CREATED_AT: Symbol(),
+    UPDATED_AT: Symbol()
+};
+
+const ORDER = {
+    ASC: Symbol(),
+    DESC: Symbol()
+};
+
 const cardLoader = new DataLoader(function(keys) {
 
     return new Promise(function(resolve, reject) {
@@ -361,8 +374,71 @@ Cards.prototype.currentCardsID = function() {
 
     return new Promise((resolve, reject) => {
 
+        const pageNum = this._store.cards.page();
+
+        invariant(_.isNumber(pageNum) && pageNum >= 1, `Given ${pageNum}`);
+
+        const pageSort = (() => {
+
+            switch(this._store.cards.sort()) {
+
+            case SORT.REVIEWED_AT:
+                return 'reviewed_at';
+                break;
+
+            case SORT.TIMES_REVIEWED:
+                return 'times_reviewed';
+                break;
+
+            case SORT.TITLE:
+                return 'title';
+                break;
+
+            case SORT.CREATED_AT:
+                return 'created_at';
+                break;
+
+            case SORT.UPDATED_AT:
+                return 'updated_at';
+                break;
+
+            default:
+                throw Error(`Unexpected sort. Given ${this._store.cards.sort()}`);
+            }
+
+        })();
+
+        const pageOrder = (() => {
+
+            switch(this._store.cards.order()) {
+
+            case ORDER.ASC:
+                return 'ascending';
+                break;
+
+            case ORDER.DESC:
+                return 'descending';
+                break;
+
+            default:
+                throw Error(`Unexpected order. Given ${this._store.cards.order()}`);
+            }
+
+        })();
+
         superhot
             .get(`/api/decks/${currentID}/cards`)
+            .query({
+                'page': pageNum
+            })
+            // TODO: needed?
+            // .query({ 'per_page': perPage })
+            .query({
+                'sort_by': pageSort
+            })
+            .query({
+                'order_by': pageOrder
+            })
             .end((err, response) => {
 
                 switch(response.status) {
@@ -461,6 +537,91 @@ Cards.prototype.patchCurrent = function(patch) {
     this.patch(this.currentID(), patch);
 };
 
+Cards.prototype.watchSort = function() {
+    return this._store.state().cursor(['card', 'sort']);
+};
+
+Cards.prototype.watchOrder = function() {
+    return this._store.state().cursor(['card', 'order']);
+};
+
+// sync
+Cards.prototype.sort = function(sort = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['card', 'sort']);
+
+    if(sort !== NOT_SET) {
+
+        stage = stage.updateIn(['card', 'sort'], function() {
+            return sort;
+        });
+
+        this._store.stage(stage);
+
+        value = sort;
+    }
+
+    return value;
+};
+
+// sync
+Cards.prototype.order = function(order = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['card', 'order']);
+
+    if(order !== NOT_SET) {
+
+        stage = stage.updateIn(['card', 'order'], function() {
+            return order;
+        });
+
+        this._store.stage(stage);
+
+        value = order;
+    }
+
+    return value;
+};
+
+// sync
+Cards.prototype.page = function(page = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['card', 'page']);
+
+    if(page !== NOT_SET && Number(page) >= 0) {
+
+        stage = stage.updateIn(['card', 'page'], function() {
+            return Number(page);
+        });
+
+        this._store.stage(stage);
+
+        value = page;
+    }
+
+    return Number(value);
+};
+
+// sync
+Cards.prototype.changeFilter = function(sort, order) {
+
+    const currentDeckID = this._store.decks.currentID();
+
+    this._store.routes.toLibraryCards(currentDeckID, sort, order);
+};
+
 module.exports = {
-    Cards
+
+    Cards,
+
+    pagination: {
+        sort: SORT,
+        order: ORDER
+    }
 };
