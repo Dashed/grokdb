@@ -1,5 +1,6 @@
 const React = require('react');
 const Immutable = require('immutable');
+const moment = require('moment');
 
 const courier = require('courier');
 
@@ -29,11 +30,37 @@ const CardListItem = React.createClass({
 
         const {card} = this.props;
 
+        // datetime of when last reviewed
+
+        const offset = new Date().getTimezoneOffset();
+        const lastReviewedDatetime = moment.unix(card.getIn(['review_stat', 'reviewed_at'])).utcOffset(-offset);;
+
+        const createdAt = moment.unix(card.get('created_at')).utcOffset(-offset);
+        const wasReviewed = Math.abs(lastReviewedDatetime.diff(createdAt)) <= 250 ? false : true;
+
+        const lastReviewed = wasReviewed ? `last reviewed ${lastReviewedDatetime.fromNow()}.` : `hasn't been reviewed yet.`;
+
+        const extraSummary = wasReviewed ? `Reviewed ${card.getIn(['review_stat', 'times_reviewed'])} times.` : '';
+
+        // TODO: get score
+        const score = `Performance score of ${100-card.getIn(['review_stat', 'score']).toPrecision(5)*100}%`;
+
         return (
             <li className="list-group-item">
-                <a href="#" onClick={this.onClick} >
-                    {card.get('title')}
-                </a>
+                <h6 className="list-group-item-heading m-y-0">
+                    <a href="#" onClick={this.onClick} >
+                        {card.get('title')}
+                    </a>
+                </h6>
+                <p className="list-group-item-text m-y-0">
+                    <small className="text-muted">
+                        {`Card #${card.get('id')} ${lastReviewed} ${extraSummary} ${score}`}
+                    </small>
+                    <br/>
+                    <small>
+                        {'deck path'}
+                    </small>
+                </p>
             </li>
         );
     }
