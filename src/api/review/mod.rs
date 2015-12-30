@@ -215,6 +215,7 @@ impl UpdateCardScore {
 pub struct ReviewResponse {
     success: i64,
     fail: i64,
+    score: f64,
     times_reviewed: i64,
     reviewed_at: i64 // unix timestamp
 }
@@ -240,9 +241,15 @@ impl ReviewAPI {
         ");
 
         let results = db_conn.query_named_row(query, &[(":card_id", &card_id)], |row| -> ReviewResponse {
+
+            let success: i64 = row.get(0);
+            let fail: i64 = row.get(1);
+            let total: i64 = success + fail;
+
             return ReviewResponse {
                 success: row.get(0),
                 fail: row.get(1),
+                score: (fail as f64 + 0.5f64) / (total as f64 + 1.0f64),
                 times_reviewed: row.get(2),
                 reviewed_at: row.get(3)
             };
