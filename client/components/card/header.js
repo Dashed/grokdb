@@ -2,22 +2,7 @@ const React = require('react');
 
 const courier = require('courier');
 const DumbCardHeader = require('./dumbheader');
-
-const WaitingCardHeader = React.createClass({
-
-    render() {
-
-        return (
-            <div>
-                <h4>
-                    <span className="text-muted lead">{`Card #`}</span>
-                    {' '}
-                    <span style={{color: '#ffffff'}}>{'loading'}</span>
-                </h4>
-            </div>
-        );
-    }
-});
+const DumbWaitingCardHeader = require('./dumbwaitingheader');
 
 module.exports = courier({
 
@@ -26,7 +11,7 @@ module.exports = courier({
     },
 
     component: DumbCardHeader,
-    waitingComponent: WaitingCardHeader,
+    waitingComponent: DumbWaitingCardHeader,
 
     onlyWaitingOnMount: true,
 
