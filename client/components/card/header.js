@@ -10,18 +10,27 @@ module.exports = courier({
         store: React.PropTypes.object.isRequired
     },
 
+    propTypes: {
+        cardID: React.PropTypes.number.isRequired
+    },
+
     component: DumbCardHeader,
     waitingComponent: DumbWaitingCardHeader,
 
     onlyWaitingOnMount: true,
 
     watch(props, manual, context) {
-        return context.store.cards.watchCurrent();
+
+        const {cardID} = props;
+
+        return context.store.cards.observable(cardID);
     },
 
     assignNewProps: function(props, context) {
 
-        return context.store.cards.current()
+        const {cardID} = props;
+
+        return context.store.cards.get(cardID)
             .then(function(currentCard) {
 
                 return {

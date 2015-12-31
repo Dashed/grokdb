@@ -545,7 +545,7 @@ const CardDetail = React.createClass({
                                 );
                             }
 
-                            return (<CardHeader />);
+                            return (<CardHeader cardID={this.props.currentCard.get('id')} />);
 
                         }).call(this)}
                     </div>
