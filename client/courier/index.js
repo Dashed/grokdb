@@ -419,6 +419,10 @@ const Courier = function(inputSpec) {
             this.mounted = true;
 
             // subscribe to observables
+            //
+            // On initial mount, this.assignNewProps(...) is called before observables
+            // are subscribed to prevent an extra render in case this.assignNewProps(...)
+            // triggers observables.
             this.watch(this.props, this.context);
 
             if(!this.state.pending) {
