@@ -515,6 +515,14 @@ const CardDetail = React.createClass({
 
     },
 
+    toReviewCard() {
+        event.preventDefault();
+        event.stopPropagation();
+
+        // TODO: implement
+        console.log('implement');
+    },
+
     render() {
         return (
             <div>
@@ -526,6 +534,11 @@ const CardDetail = React.createClass({
                             onClick={this.backToCardsList}
                         >{'Back to cards list'}</button>
                         {this.getEditCancelButton()}
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-primary-outline pull-right m-r"
+                            onClick={this.toReviewCard}
+                        >{'Review this Card'}</button>
                     </div>
                 </div>
                 <div className="row">
