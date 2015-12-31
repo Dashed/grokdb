@@ -4,6 +4,7 @@ const _ = require('lodash');
 const invariant = require('invariant');
 const qs = require('qs');
 
+const filterInteger = require('utils/filterinteger');
 const {NOT_FOUND, OK} = require('./response');
 
 const {pagination: cardPagination} = require('./cards');
@@ -12,17 +13,7 @@ const {pagination: cardPagination} = require('./cards');
 const NOT_SET = {};
 const NOT_ID = {};
 
-// based on: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt#A_stricter_parse_function
-const filterInteger = function (value, defaultValue) {
-    if(/^(\-|\+)?([0-9]+|Infinity)$/.test(value)) {
-        value = Number(value);
-        return (value > 0) ? value : defaultValue;
-    }
-    return defaultValue;
-};
-
 const createRootDeck = function(store) {
-
 
     let deckID;
 
