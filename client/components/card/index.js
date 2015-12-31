@@ -195,20 +195,15 @@ const CardDetail = React.createClass({
 
         switch(currentTab) {
         case 'front':
-            return currentCard.get('front');
-            break;
-
         case 'back':
-            return currentCard.get('back');
-            break;
-
         case 'description':
-            return currentCard.get('description');
             break;
 
         default:
             throw Error(`Unexpected currentTab. Given: ${currentTab}`);
         }
+
+        return currentCard.get(currentTab);
 
     },
 
