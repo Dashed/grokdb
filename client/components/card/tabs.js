@@ -11,13 +11,15 @@ const CardTabs = React.createClass({
 
     propTypes: {
         onSwitch: React.PropTypes.func.isRequired,
-        currentTab: React.PropTypes.oneOf([FRONT, BACK, DESCRIPTION, STASHES, META])
+        currentTab: React.PropTypes.oneOf([FRONT, BACK, DESCRIPTION, STASHES, META]),
+        hideBack: React.PropTypes.bool.isRequired
     },
 
     getDefaultProps() {
 
         return {
-            currentTab: FRONT
+            currentTab: FRONT,
+            hideBack: false
         };
     },
 
@@ -46,6 +48,25 @@ const CardTabs = React.createClass({
 
     },
 
+    getBack() {
+
+        if(this.props.hideBack) {
+            return null;
+        }
+
+        return (
+            <li className="nav-item">
+                <a
+                    className={this.getStyle(BACK)}
+                    onClick={this.onSwitchTab(BACK)}
+                    href="#">
+                    {BACK}
+                </a>
+            </li>
+        );
+
+    },
+
     render() {
         return (
             <ul className="nav nav-tabs">
@@ -57,14 +78,7 @@ const CardTabs = React.createClass({
                         {FRONT}
                     </a>
                 </li>
-                <li className="nav-item">
-                    <a
-                        className={this.getStyle(BACK)}
-                        onClick={this.onSwitchTab(BACK)}
-                        href="#">
-                        {BACK}
-                    </a>
-                </li>
+                {this.getBack()}
                 <li className="nav-item">
                     <a
                         className={this.getStyle(DESCRIPTION)}
