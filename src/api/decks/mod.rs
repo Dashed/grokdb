@@ -666,7 +666,8 @@ impl DecksAPI {
                 FROM DecksClosure
                 WHERE descendent = $1
                 AND ancestor != descendent
-            );
+            )
+            AND descendent != ancestor;
         ");
 
         let params: &[&ToSql] = &[
@@ -714,7 +715,8 @@ impl DecksAPI {
                 FROM DecksClosure
                 WHERE descendent = $1
                 AND ancestor != descendent
-            );
+            )
+            AND descendent != ancestor;
         ");
 
         let params: &[&ToSql] = &[
