@@ -754,6 +754,55 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
+    router.delete("/decks/:deck_id/parent", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested deck id
+
+            let deck_id = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
+
+            let deck_id: i64 = match deck_id.parse::<u64>() {
+                Ok(deck_id) => deck_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // delete deck
+
+            match grokdb.decks.remove_parent(deck_id) {
+                Err(why) => {
+                    // why: QueryError
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+                _ => {/* deck's parent sucessfully disconnected */},
+            };
+
+            return get_deck_by_id(grokdb.clone(), deck_id);
+        }
+    });
+
 }
 
 /* helpers */

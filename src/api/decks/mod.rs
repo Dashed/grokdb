@@ -640,6 +640,53 @@ impl DecksAPI {
         };
     }
 
+    pub fn remove_parent(&self, deck: i64) -> Result<(), QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        try!(DB::prepare_query(db_conn));
+
+        // delete any and all subtree connections between child (and its descendants)
+        // and the child's ancestors
+        let ref query_delete = format!("
+            DELETE FROM DecksClosure
+
+            /* select all descendents of child */
+            WHERE descendent IN (
+                SELECT descendent
+                FROM DecksClosure
+                WHERE ancestor = $1
+            )
+            AND
+
+            /* select all ancestors of child but not child itself */
+            ancestor IN (
+                SELECT ancestor
+                FROM DecksClosure
+                WHERE descendent = $1
+                AND ancestor != descendent
+            );
+        ");
+
+        let params: &[&ToSql] = &[
+            &deck, // $1
+        ];
+
+        match db_conn.execute(query_delete, params) {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query_delete.clone(),
+                };
+                return Err(err);
+            },
+            _ => {/* query sucessfully executed */},
+        }
+
+        return Ok(());
+    }
+
     pub fn connect_decks(&self, child: i64, parent: i64) -> Result<(), QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
