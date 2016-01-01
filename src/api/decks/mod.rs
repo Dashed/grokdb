@@ -90,7 +90,8 @@ struct DeckResponse {
     parent: i64,
     children: Vec<i64>,
     created_at: i64, // unix timestamp
-    updated_at: i64  // unix timestamp
+    updated_at: i64,  // unix timestamp
+    ancestors: Vec<i64> // Vec of deck ids
 }
 
 impl DeckResponse {
@@ -152,6 +153,14 @@ impl DecksAPI {
             Ok(children) => children,
         };
 
+        let ancestors: Vec<i64> = match self.ancestors(deck_id) {
+            Err(why) => {
+                // why: QueryError
+                return Err(why);
+            },
+            Ok(ancestors) => ancestors,
+        };
+
         let response = DeckResponse {
             id: deck.id,
             name: deck.name,
@@ -160,7 +169,8 @@ impl DecksAPI {
             parent: parent,
             children: children,
             created_at: deck.created_at, // unix timestamp
-            updated_at: deck.updated_at  // unix timestamp
+            updated_at: deck.updated_at,  // unix timestamp
+            ancestors: ancestors
         };
 
         return Ok(response);
