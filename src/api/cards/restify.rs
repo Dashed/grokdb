@@ -916,7 +916,6 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
             match card_id.to_lowercase().as_ref() {
                 "total" => {
-                    let res_code = status::Ok;
 
                     let totals = match grokdb.cards.count_by_deck(deck_id) {
                         Err(why) => {
@@ -939,11 +938,13 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         }
                     };
 
-                    let res = CardPaginationInfo {
+                    let content_type = "application/json".parse::<Mime>().unwrap();
+
+                    let response = CardPaginationInfo {
                         numOfCards: totals
                     }.to_json();
 
-                    return Ok(Response::with((res_code, res)));
+                    return Ok(Response::with((content_type, status::Ok, response)));
                 },
                 _ => {/* continue */}
             }
