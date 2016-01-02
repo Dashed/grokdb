@@ -14,8 +14,7 @@ const LibraryDetail = require('./detail');
 
 const CardDetail = require('components/card/index.js');
 
-
-const Library = React.createClass({
+const DumbLibrary = React.createClass({
 
     propTypes: {
         route: symbolPropType,
@@ -78,22 +77,15 @@ const Library = React.createClass({
     render() {
         return (
             <div>
-                <div className="row">
-                    <div className="col-sm-12">
-                        <Breadcrumb />
-                    </div>
-                </div>
-                <div>
                     {this.getComponents()}
                 </div>
-            </div>
         );
     }
 });
 
-module.exports = courier({
+const Library = courier({
 
-    component: Library,
+    component: DumbLibrary,
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
@@ -113,3 +105,21 @@ module.exports = courier({
 
     }
 });
+
+const LibraryWrapper = React.createClass({
+
+    render() {
+        return (
+            <div>
+                <div className="row">
+                    <div className="col-sm-12">
+                        <Breadcrumb />
+                    </div>
+                </div>
+                <Library />
+            </div>
+        );
+    }
+});
+
+module.exports = LibraryWrapper;
