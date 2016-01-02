@@ -91,6 +91,7 @@ pub struct UpdateCardScore {
     changelog: Option<String>
 }
 
+static DEFAULT_VALUE: i64 = 1;
 static DEFAULT_SUCCESS: i64 = 0;
 static DEFAULT_FAIL: i64 = 0;
 static FORGOT_FAIL: i64 = 2;
@@ -140,6 +141,23 @@ impl UpdateCardScore {
 
     }
 
+    pub fn get_value(&self) -> &i64 {
+
+        return match self.get_action() {
+            Action::Success | Action::Fail => {
+                match self.value {
+                    Some(ref value) => {
+                        return value;
+                    },
+                    None => {
+                        return &DEFAULT_VALUE;
+                    }
+                }
+            },
+            _ => unreachable!() // action should be already validated
+        }
+    }
+
     pub fn should_update(&self) -> bool {
         return self.is_valid_action() && self.is_valid_value();
     }
@@ -155,15 +173,19 @@ impl UpdateCardScore {
 
             Action::Success => {
 
+                let value: &i64 = self.value.as_ref().unwrap();
+
                 fields.push(format!("success = success + :success"));
-                let tuple: (&str, &ToSql) = (":success", self.value.as_ref().unwrap());
+                let tuple: (&str, &ToSql) = (":success", value);
                 values.push(tuple);
             },
 
             Action::Fail => {
 
+                let value: &i64 = self.value.as_ref().unwrap();
+
                 fields.push(format!("fail = fail + :fail"));
-                let tuple: (&str, &ToSql) = (":fail", self.value.as_ref().unwrap());
+                let tuple: (&str, &ToSql) = (":fail", value);
                 values.push(tuple);
             },
 
@@ -385,6 +407,8 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
                 Ok(num_cards) => num_cards
             };
 
+            assert!(num_cards > 0);
+
             let card_idx: i64 = match rng.gen_range(0f64, 1f64) {
 
                 pin if pin < 0.3 => {
@@ -395,6 +419,7 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
                 _ => { // 70% probability
                     // Random card from top 50% of highest rank score
                     let min_idx: i64 = ((num_cards as f64) / 2f64).ceil() as i64;
+                    assert!(min_idx > 0);
                     rng.gen_range(0, min_idx)
                 }
             };
@@ -455,6 +480,8 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
                         Ok(num_cards) => num_cards
                     };
 
+                    assert!(num_cards > 0);
+
                     (rng.gen_range(0, num_cards), true)
                 },
 
@@ -469,6 +496,8 @@ pub fn get_review_card<T>(selection: &T) -> Result<Option<i64>, QueryError>
                     };
 
                     let min_idx: i64 = ((num_cards as f64) / 2f64).ceil() as i64;
+
+                    assert!(min_idx > 0);
 
                     (rng.gen_range(0, min_idx), true)
                 },
@@ -527,45 +556,72 @@ fn choose_method<T>(selection: &T) -> Result<Method, QueryError>
     let mut max_pin: f64 = 1f64;
 
     // if there are no new cards, adjust pin to exclude 'new cards' method.
-    match selection.has_new_cards() {
+    let has_new_cards: bool = match selection.has_new_cards() {
         Err(why) => {
             return Err(why);
         },
         Ok(false) => {
             max_pin = max_pin - NEW_CARDS;
+            false
         },
-        _ => {}
-    }
+        Ok(true) => { true }
+    };
 
     // check if there are cards that haven't been reviewed for at least 3 hours
     // and have a minimum score of 0.
     //
     // if there are no such cards that meet the above criteria, then exclude
     // this method.
-    match selection.has_reviewable_cards(3, 0f64) {
+    let has_reviewable_cards: bool = match selection.has_reviewable_cards(3, 0f64) {
         Err(why) => {
             return Err(why);
         },
         Ok(false) => {
             max_pin = max_pin - OLD_ENOUGH;
+            false
         },
-        _ => {}
-    }
+        Ok(true) => { true }
+    };
+
 
     let max_pin = max_pin;
 
     // if there is only one method to choose from.
     // faster code path.
-    if max_pin <= LEAST_RECENT {
+    if !has_new_cards && !has_reviewable_cards {
         return Ok(Method::LeastRecentlyReviewed);
     }
 
+    // invariant: max_pin > LEAST_RECENT
+
     let mut rng = thread_rng();
+
+    assert!(max_pin > 0f64);
+
+    if !has_new_cards {
+
+        let method = match rng.gen_range(0f64, max_pin) {
+            pin if pin < LEAST_RECENT => Method::LeastRecentlyReviewed,
+            _ => Method::OldEnough
+        };
+
+        return Ok(method);
+    }
+
+    if !has_reviewable_cards {
+
+        let method = match rng.gen_range(0f64, max_pin) {
+            pin if pin < LEAST_RECENT => Method::LeastRecentlyReviewed,
+            _ => Method::NewCards
+        };
+
+        return Ok(method);
+    }
 
     let method = match rng.gen_range(0f64, max_pin) {
         pin if pin < LEAST_RECENT => Method::LeastRecentlyReviewed,
         pin if pin < (LEAST_RECENT + OLD_ENOUGH) => Method::OldEnough,
-        _ => Method::NewCards,
+        _ => Method::NewCards
     };
 
     return Ok(method);
