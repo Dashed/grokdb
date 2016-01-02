@@ -10,6 +10,7 @@ const isArray = _.isArray;
 const isPlainObject = _.isPlainObject;
 const isObject = _.isObject;
 const hasProp = _.has;
+const isBool = _.isBoolean;
 
 // TODO: overridable shouldComponentUpdate
 // TODO: add more more comment documentation
@@ -244,7 +245,8 @@ const Courier = function(inputSpec) {
                 }
             }
 
-            invariant(unsubs.length >= numberSubscribers, `Expected to have at least ${numberSubscribers} cleanup functions for observers. But only received ${unsubs.length} cleanup functions.`);
+            invariant(unsubs.length >= numberSubscribers,
+                `Expected to have at least ${numberSubscribers} cleanup functions for observers. But only received ${unsubs.length} cleanup functions.`);
 
             // NOTE: `render()` will see the updated state and will be executed
             // only once despite the state change.
@@ -356,18 +358,28 @@ const Courier = function(inputSpec) {
 
         displayName: `${Component.displayName}.OrwellContainer`,
 
-        shouldComponentUpdate(nextProps, nextState) {
+        shouldComponentUpdate(nextProps, nextState, nextContext) {
 
             // note: shouldComponentUpdate() is never called on initial render.
             // whenever it is called, the next render is no longer the initial render.
             this.afterInitialRender = true;
 
+            if(hasProp(inputSpec, 'shouldComponentUpdate')) {
+                const ctx = assign({}, this, {props: this.state.currentProps});
+                const result = inputSpec.shouldComponentUpdate.call(ctx, nextState.currentProps, nextState, nextContext);
+                if(isBool(result)) {
+                    return result;
+                }
+            }
+
             // optimistic HoC update if pending status differs;
             // useful for case when shallowEqual(this.state.currentProps, nextState.currentProps) as
             // promise begin to resolve or is finishing resolving.
-            return (this.state.pending !== nextState.pending ||
-            // otherwise compare props
-                !shallowEqual(this.state.currentProps, nextState.currentProps));
+            if(this.state.pending !== nextState.pending) {
+                return true;
+            }
+
+            return !shallowEqual(this.state.currentProps, nextState.currentProps);
         },
 
         getInitialState() {
@@ -492,12 +504,10 @@ const Courier = function(inputSpec) {
                 this.watch(nextProps, nextContext);
             }
 
-            // TODO: is this needed?
-            // Dec 25/15: probably not.
-            //
-            //
-            // but what if assert(shallowequal(this.props, nextProps))?
-            // if(this.state.pending) {
+            // TODO: remove
+            // // don't resolve a new promise if there is already a resolving promise
+            // // using previous props that is (shallowly) equal to the next props.
+            // if(this.state.pending && this.state.pendingWithProps !== NOT_SET && shallowEqual(this.state.pendingWithProps, nextProps)) {
             //     return;
             // }
 
