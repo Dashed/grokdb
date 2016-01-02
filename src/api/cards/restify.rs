@@ -902,6 +902,14 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
+            // ensure deck exists; otherwise bail early
+            match deck_exists(grokdb, deck_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* noop; continue */}
+            }
+
             // fetch and parse requested card id
 
             let card_id = req.extensions.get::<Router>().unwrap().find("card_id").unwrap();
