@@ -8,6 +8,7 @@ const filterInteger = require('utils/filterinteger');
 const {NOT_FOUND, OK} = require('./response');
 
 const {pagination: cardPagination} = require('./cards');
+const {perPage} = require('constants/cardspagination');
 
 // sentinel values
 const NOT_SET = {};
@@ -241,22 +242,29 @@ const boostrapRoutes = co.wrap(function *(store) {
         const deckID = context.deck_id;
 
         store.cards.loadByDeck(cardID, deckID)
-        .then(
-        // fulfillment
-        function() {
+            .then(
+            // fulfillment
+            function() {
 
-            next();
-            return null;
-        },
-        // rejection
-        function() {
+                next();
+                return null;
+            },
+            // rejection
+            function() {
 
-            // card doesn't exist within given deck
+                // card doesn't exist within given deck
 
-            toDeck(context.deck_id);
-            return null;
-        });
+                toDeck(context.deck_id);
+                return null;
+            });
 
+    };
+
+    const parseQueries = function(context, next) {
+
+        context.queries = qs.parse(context.querystring);
+
+        return next();
     };
 
     const reloadAppState = co.wrap(function *(context, next) {
@@ -337,94 +345,113 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     }, postRouteLoad);
 
-    page('/deck/:deck_id/view/cards', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+    page('/deck/:deck_id/view/cards',
+        reloadAppState,
+        ensureValidDeckID,
+        ensureDeckIDExists,
+        parseQueries,
+        function(context, next) {
 
-        const queries = qs.parse(context.querystring);
+            const {queries} = context;
 
-        const deckID = context.deck_id;
+            const deckID = context.deck_id;
 
-        store.resetStage();
-        store.decks.currentID(deckID);
-        store.routes.route(ROUTE.LIBRARY.VIEW.CARDS);
+            store.resetStage();
+            store.decks.currentID(deckID);
+            store.routes.route(ROUTE.LIBRARY.VIEW.CARDS);
 
-        // pagination queries
+            // pagination queries
 
-        let pageNum = 1;
-        if(_.has(queries, 'page')) {
+            let pageNum = 1;
+            if(_.has(queries, 'page')) {
 
-            pageNum = filterInteger(queries.page, NOT_SET);
+                pageNum = filterInteger(queries.page, NOT_SET);
 
-            if(pageNum === NOT_SET) {
-                pageNum = 1;
+                if(pageNum === NOT_SET) {
+                    pageNum = 1;
+                }
             }
-        }
-        store.cards.page(pageNum);
+            store.cards.page(pageNum);
 
-        if(_.has(queries, 'order_by')) {
+            if(_.has(queries, 'order_by')) {
 
-            let pageOrder = NOT_SET;
+                let pageOrder = NOT_SET;
 
-            switch(String(queries.order_by).toLowerCase()) {
+                switch(String(queries.order_by).toLowerCase()) {
 
-            case 'descending':
-            case 'desc':
-                pageOrder = cardPagination.order.DESC;
-                break;
+                case 'descending':
+                case 'desc':
+                    pageOrder = cardPagination.order.DESC;
+                    break;
 
-            case 'ascending':
-            case 'asc':
-                pageOrder = cardPagination.order.ASC;
-                break;
+                case 'ascending':
+                case 'asc':
+                    pageOrder = cardPagination.order.ASC;
+                    break;
 
-            default:
-                pageOrder = NOT_SET;
-            }
+                default:
+                    pageOrder = cardPagination.order.DESC;
+                }
 
-            if(pageOrder !== NOT_SET) {
                 store.cards.order(pageOrder);
             }
-        }
 
-        if(_.has(queries, 'sort_by')) {
+            if(_.has(queries, 'sort_by')) {
 
-            let pageSort = NOT_SET;
+                let pageSort = NOT_SET;
 
-            switch(String(queries.sort_by).toLowerCase()) {
+                switch(String(queries.sort_by).toLowerCase()) {
 
-            case 'reviewed_at':
-                pageSort = cardPagination.sort.REVIEWED_AT;
-                break;
+                case 'reviewed_at':
+                    pageSort = cardPagination.sort.REVIEWED_AT;
+                    break;
 
-            case 'times_reviewed':
-                pageSort = cardPagination.sort.TIMES_REVIEWED;
-                break;
+                case 'times_reviewed':
+                    pageSort = cardPagination.sort.TIMES_REVIEWED;
+                    break;
 
-            case 'title':
-                pageSort = cardPagination.sort.TITLE;
-                break;
+                case 'title':
+                    pageSort = cardPagination.sort.TITLE;
+                    break;
 
-            case 'created_at':
-                pageSort = cardPagination.sort.CREATED_AT;
-                break;
+                case 'created_at':
+                    pageSort = cardPagination.sort.CREATED_AT;
+                    break;
 
-            case 'updated_at':
-                pageSort = cardPagination.sort.UPDATED_AT;
-                break;
+                case 'updated_at':
+                    pageSort = cardPagination.sort.UPDATED_AT;
+                    break;
 
-            default:
-                pageSort = NOT_SET;
-            }
+                default:
+                    pageSort = cardPagination.sort.UPDATED_AT;
+                }
 
-            if(pageSort !== NOT_SET) {
                 store.cards.sort(pageSort);
             }
-        }
 
-        store.commit();
+            // ensure pageNum is within valid bounds
 
-        next();
+            store.cards.totalCards(deckID)
+                .then(
+                // fulfillment
+                function(totalCards) {
 
-    }, postRouteLoad);
+                    const numOfPages = Math.ceil(totalCards / perPage);
+                    const pageSort = store.cards.sort();
+                    const pageOrder = store.cards.order();
+
+                    if(pageNum > numOfPages || pageNum <= 0) {
+                        store.routes.toLibraryCards(deckID, pageSort, pageOrder, 1);
+                        return null;
+                    }
+
+                    store.commit();
+
+                    next();
+                    return null;
+                });
+
+        }, postRouteLoad);
 
     page('/deck/:deck_id/add/deck', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
 
@@ -918,7 +945,7 @@ Routes.prototype.toDeck = function(deckID) {
     });
 };
 
-Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID = NOT_SET, pageSort = NOT_SET, pageOrder = NOT_SET) {
+Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID = NOT_SET, pageSort = NOT_SET, pageOrder = NOT_SET, pageNum = NOT_SET) {
 
     this.shouldChangeRoute(() => {
 
@@ -929,6 +956,10 @@ Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID
 
         if(pageOrder === NOT_SET) {
             pageOrder = this._store.cards.order();
+        }
+
+        if(pageNum === NOT_SET) {
+            pageNum = this._store.cards.page();
         }
 
         switch(pageOrder) {
@@ -975,8 +1006,16 @@ Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID
             pageSort = 'updated_at';
         }
 
-        page(`/deck/${toDeckID}/view/cards?order_by=${pageOrder}&sort_by=${pageSort}`);
+        page(`/deck/${toDeckID}/view/cards?order_by=${pageOrder}&sort_by=${pageSort}&page=${pageNum}`);
     });
+
+};
+
+Routes.prototype.toLibraryCardsPage = function(requestedPage) {
+
+    requestedPage = filterInteger(requestedPage, 1);
+
+    this.toLibraryCards(void 0, void 0, void 0, requestedPage);
 
 };
 

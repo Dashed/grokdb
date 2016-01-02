@@ -7,6 +7,7 @@ const DataLoader = require('dataloader');
 const superhot = require('./superhot');
 
 const {Response, OK, INVALID} = require('./response');
+const {perPage} = require('constants/cardspagination');
 
 const NOT_SET = {};
 
@@ -25,12 +26,11 @@ const ORDER = {
 
 const cardLoader = new DataLoader(function(keys) {
 
-    return new Promise(function(resolve, reject) {
+    if(keys.length <= 0) {
+        return Promise.resolve([]);
+    }
 
-        if(keys.length <= 0) {
-            resolve([]);
-            return;
-        }
+    return new Promise(function(resolve, reject) {
 
         keys = keys.join(',');
 
@@ -60,6 +60,49 @@ const cardLoader = new DataLoader(function(keys) {
     });
 });
 
+const cardTotalsLoader = new DataLoader(function(keys) {
+
+    if(keys.length <= 0) {
+        return Promise.resolve([]);
+    }
+
+    const promiseArray = _.reduce(keys, (accumulator, deckID) => {
+
+        const prom = new Promise((resolve, reject) => {
+
+            superhot
+                .get(`/api/decks/${deckID}/cards/total`)
+                .end((err, response) => {
+
+                    switch(response.status) {
+
+                    case 200:
+
+                        const numOfCards = response.body.numOfCards >= 0 ? response.body.numOfCards : 0;
+
+                        return resolve(numOfCards);
+                        break;
+
+                    default:
+
+                        if (err) {
+                            return reject(err);
+                        }
+
+                        return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                    }
+
+                });
+
+        });
+
+        accumulator.push(prom);
+
+        return accumulator;
+    }, []);
+
+    return Promise.all(promiseArray);
+});
 
 function Cards(store) {
 
@@ -72,9 +115,16 @@ function Cards(store) {
 // sync
 Cards.prototype.clearCache = function() {
     cardLoader.clearAll();
+    cardTotalsLoader.clearAll();
     this._lookup.update(function() {
         return Immutable.Map();
     });
+};
+
+// get total number of cards within given deck
+// async
+Cards.prototype.totalCards = function(deckID) {
+    return cardTotalsLoader.load(deckID);
 };
 
 // load and cache card onto lookup table
@@ -188,7 +238,7 @@ Cards.prototype.observable = function(cardID) {
 
             return cursor.observe(function(newCard, oldCard) {
 
-                if(!newCard) {
+                if(!Immutable.Map.isMap(newCard)) {
                     return;
                 }
 
@@ -227,6 +277,7 @@ Cards.prototype.current = function() {
     return this.get(currentID);
 };
 
+// TODO: factor out into utils
 const attachCurrentObserver = function(currentCursor, currentID, observer) {
 
     let snapshotCurrent = currentCursor.deref();
@@ -429,10 +480,11 @@ Cards.prototype.currentCardsID = function() {
         superhot
             .get(`/api/decks/${currentID}/cards`)
             .query({
+                'per_page': perPage
+            })
+            .query({
                 'page': pageNum
             })
-            // TODO: needed?
-            // .query({ 'per_page': perPage })
             .query({
                 'sort_by': pageSort
             })
@@ -585,6 +637,11 @@ Cards.prototype.order = function(order = NOT_SET) {
     }
 
     return value;
+};
+
+// sync
+Cards.prototype.watchPage = function() {
+    return this._store.state().cursor(['card', 'page']);
 };
 
 // sync

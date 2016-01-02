@@ -4,8 +4,12 @@ const shallowEqual = require('shallowequal');
 
 const courier = require('courier');
 
+const {perPage} = require('constants/cardspagination');
+
 const CardListItem = require('./cardlistitem');
 const CardsFilter = require('./cardsfilter');
+const CardsPagination = require('./cardspagination');
+const WaitingCardListItem = require('./waitingcardlistitem');
 
 const DumbCardsList = React.createClass({
 
@@ -58,6 +62,39 @@ const DumbCardsList = React.createClass({
     }
 });
 
+const WaitingDumbCardsList = React.createClass({
+
+    cardsList() {
+
+        let items = [];
+
+        let n = perPage;
+
+        while(n-- > 0) {
+            items.push(
+                <WaitingCardListItem key={n} />
+            );
+        }
+
+        return (
+            <ul className="list-group">
+                {items}
+            </ul>
+        );
+    },
+
+    render() {
+        return (
+            <div className="row">
+                <div className="col-sm-12">
+                    {this.cardsList()}
+                </div>
+            </div>
+        );
+    }
+
+});
+
 
 const CardsList = courier({
 
@@ -66,11 +103,13 @@ const CardsList = courier({
     },
 
     component: DumbCardsList,
+    waitingComponent: WaitingDumbCardsList,
 
     onlyWaitingOnMount: true,
 
     watch(props, manual, context) {
         return [
+            context.store.cards.watchPage(),
             context.store.decks.watchCurrentID(),
             context.store.cards.watchOrder(),
             context.store.cards.watchSort()
@@ -120,6 +159,10 @@ const LibraryCards = React.createClass({
 
     },
 
+    onClickPage(requestedPageNum) {
+        this.context.store.routes.toLibraryCardsPage(requestedPageNum);
+    },
+
     render() {
         return (
             <div>
@@ -139,9 +182,16 @@ const LibraryCards = React.createClass({
                         </div>
                     </div>
                 </div>
-                <div className="row">
+                <div className="row m-b">
                     <div className="col-sm-12">
                         <CardsList />
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-sm-12">
+                        <CardsPagination
+                            onClickPage={this.onClickPage}
+                        />
                     </div>
                 </div>
             </div>

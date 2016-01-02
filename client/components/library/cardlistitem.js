@@ -4,6 +4,8 @@ const moment = require('moment');
 
 const courier = require('courier');
 
+const WaitingCardListItem = require('./waitingcardlistitem');
+
 const CardListItem = React.createClass({
 
     contextTypes: {
@@ -67,32 +69,12 @@ const CardListItem = React.createClass({
 
 });
 
-// this is a placeholder component on initial load/mount to occupy the space
-// that the component will cover in order to prevent any inducement of jank.
-const CardListItemWaiting = React.createClass({
-
-    onClick(event) {
-        event.preventDefault();
-        event.stopPropagation();
-
-    },
-
-    render() {
-
-        return (
-            <li className="list-group-item">
-                <a href="#" onClick={this.onClick} style={{color: '#ffffff'}} >
-                    {'loading'}
-                </a>
-            </li>
-        );
-    }
-});
-
 module.exports = courier({
 
     component: CardListItem,
-    waitingComponent: CardListItemWaiting,
+    waitingComponent: WaitingCardListItem,
+
+    onlyWaitingOnMount: true,
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
