@@ -1,5 +1,6 @@
 const React = require('react');
 const _ = require('lodash');
+const shallowEqual = require('shallowequal');
 
 const courier = require('courier');
 
@@ -66,12 +67,21 @@ const CardsList = courier({
 
     component: DumbCardsList,
 
+    onlyWaitingOnMount: true,
+
     watch(props, manual, context) {
         return [
             context.store.decks.watchCurrentID(),
             context.store.cards.watchOrder(),
             context.store.cards.watchSort()
         ];
+    },
+
+    shouldComponentUpdate(nextProps) {
+        // don't reload cards list when cardIDs are the same.
+        // when a new page is requested, wrapped component may be pinged to
+        // re-render on same cardIDs as new page resolves.
+        return !shallowEqual(nextProps.cardIDs, this.props.cardIDs);
     },
 
     assignNewProps: function(props, context) {
