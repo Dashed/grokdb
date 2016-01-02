@@ -436,6 +436,12 @@ const boostrapRoutes = co.wrap(function *(store) {
                 // fulfillment
                 function(totalCards) {
 
+                    if(totalCards <= 0) {
+                        store.commit();
+                        next();
+                        return null;
+                    }
+
                     const numOfPages = Math.ceil(totalCards / perPage);
                     const pageSort = store.cards.sort();
                     const pageOrder = store.cards.order();
