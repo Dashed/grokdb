@@ -61,6 +61,10 @@ const ReviewTabBar = React.createClass({
         event.preventDefault();
         event.stopPropagation();
 
+        if(this.props.difficulty === difficulty.none) {
+            return;
+        }
+
         this.props.onNext.call(null);
     },
 
@@ -168,7 +172,9 @@ const ReviewTabBar = React.createClass({
                         <button
                             type="button"
                             style={{width: '70%'}}
-                            className="btn btn-info-outline"
+                            className={classnames('btn', 'btn-info-outline', {
+                                'disabled': this.props.difficulty === difficulty.none
+                            })}
                             onClick={this.onNext}
                         >
                             {'Next'}
