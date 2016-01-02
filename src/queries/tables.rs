@@ -227,7 +227,12 @@ AFTER UPDATE OF
     success, fail
 ON CardsScore
 BEGIN
-    UPDATE CardsScore SET updated_at = strftime('%s', 'now') WHERE card = NEW.card;
+    UPDATE
+        CardsScore
+    SET
+        updated_at = strftime('%s', 'now'),
+        times_reviewed = times_reviewed + 1
+    WHERE card = NEW.card;
 END;
 ";
 
