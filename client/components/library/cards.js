@@ -106,7 +106,7 @@ const LibraryCards = React.createClass({
         event.preventDefault();
         event.stopPropagation();
 
-        console.log('toReview');
+        this.context.store.routes.toDeckReview();
 
     },
 

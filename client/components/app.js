@@ -130,11 +130,18 @@ const App = courier({
         case ROUTES.LIBRARY.VIEW.ADD_DECK:
         case ROUTES.LIBRARY.VIEW.DESCRIPTION:
         case ROUTES.LIBRARY.VIEW.META:
+
         case ROUTES.CARD.VIEW.FRONT:
         case ROUTES.CARD.VIEW.BACK:
         case ROUTES.CARD.VIEW.DESCRIPTION:
         case ROUTES.CARD.VIEW.META:
         case ROUTES.CARD.VIEW.STASHES:
+
+        case ROUTES.REVIEW.VIEW.FRONT:
+        case ROUTES.REVIEW.VIEW.BACK:
+        case ROUTES.REVIEW.VIEW.DESCRIPTION:
+        case ROUTES.REVIEW.VIEW.META:
+        case ROUTES.REVIEW.VIEW.STASHES:
             handler = Library;
             view = 'library';
             break;

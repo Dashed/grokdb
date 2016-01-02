@@ -13,6 +13,7 @@ const Subnav = require('./subnav');
 const LibraryDetail = require('./detail');
 
 const CardDetail = require('components/card/index.js');
+const Review = require('components/review');
 
 const DumbLibrary = React.createClass({
 
@@ -68,6 +69,21 @@ const DumbLibrary = React.createClass({
             );
             break;
 
+        case ROUTES.REVIEW.VIEW.FRONT:
+        case ROUTES.REVIEW.VIEW.BACK:
+        case ROUTES.REVIEW.VIEW.DESCRIPTION:
+        case ROUTES.REVIEW.VIEW.META:
+        case ROUTES.REVIEW.VIEW.STASHES:
+
+            return (
+                <div className="row">
+                    <div className="col-sm-12">
+                        <Review />
+                    </div>
+                </div>
+            );
+            break;
+
         default:
             invariant(false, `Unexpected route. Given: ${String(this.props.route)}`);
         }
@@ -77,8 +93,8 @@ const DumbLibrary = React.createClass({
     render() {
         return (
             <div>
-                    {this.getComponents()}
-                </div>
+                {this.getComponents()}
+            </div>
         );
     }
 });

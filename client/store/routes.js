@@ -42,6 +42,7 @@ const loadAppState = co.wrap(function *(store) {
     // clear caches
     store.decks.clearCache();
     store.cards.clearCache();
+    store.review.clearCache();
 
     // fetch root deck
 
@@ -113,6 +114,16 @@ const ROUTE = {
     },
 
     CARD: {
+
+        VIEW: {
+            FRONT: Symbol(),
+            BACK: Symbol(),
+            DESCRIPTION: Symbol(),
+            STASHES: Symbol(),
+            META: Symbol()
+        },
+
+        REVIEW: {
         VIEW: {
             FRONT: Symbol(),
             BACK: Symbol(),
@@ -120,11 +131,31 @@ const ROUTE = {
             STASHES: Symbol(),
             META: Symbol()
         }
+        }
     },
 
-    REVIEW: Symbol(),
+    // deck review
+    REVIEW: {
+        VIEW: {
+            FRONT: Symbol('review/view/front'),
+            BACK: Symbol('review/view/back'),
+            DESCRIPTION: Symbol(),
+            STASHES: Symbol(),
+            META: Symbol()
+        }
+    },
 
+    STASHES: {
+        REVIEW: {
+            VIEW: {
+                FRONT: Symbol(),
+                BACK: Symbol(),
+                DESCRIPTION: Symbol(),
     STASHES: Symbol(),
+                META: Symbol()
+            }
+        }
+    },
 
     SETTINGS: Symbol()
 };
@@ -439,6 +470,81 @@ const boostrapRoutes = co.wrap(function *(store) {
         store.resetStage();
         store.decks.currentID(deckID);
         store.routes.route(ROUTE.LIBRARY.VIEW.META);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/review', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context) {
+
+        const deckID = context.deck_id;
+
+        page.redirect(`/deck/${deckID}/review/view/front`);
+
+    });
+
+    page('/deck/:deck_id/review/view/front', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.REVIEW.VIEW.FRONT);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/review/view/back', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        // check if back side of card can be shown
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.REVIEW.VIEW.BACK);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/review/view/description', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.REVIEW.VIEW.DESCRIPTION);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/review/view/stashes', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.REVIEW.VIEW.STASHES);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/review/view/meta', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.REVIEW.VIEW.META);
         store.commit();
 
         next();
@@ -885,6 +991,65 @@ Routes.prototype.toLibraryDecks = function(toDeckID = NOT_SET) {
 
 };
 
+Routes.prototype.toDeckReview = function(toDeckID = NOT_SET) {
+
+    this.shouldChangeRoute(() => {
+
+        if(toDeckID === NOT_SET) {
+            this._store.resetStage();
+            toDeckID = this._store.decks.currentID();
+        }
+
+        page(`/deck/${toDeckID}/review/view/front`);
+    });
+
+};
+
+Routes.prototype.toDeckReviewCardFront = function(deckID) {
+
+    invariant(_.isNumber(filterInteger(deckID)) && deckID > 0, `Malformed deckID. Given ${deckID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/deck/${deckID}/review/view/front`);
+    });
+};
+
+Routes.prototype.toDeckReviewCardBack = function(deckID) {
+
+    invariant(_.isNumber(filterInteger(deckID)) && deckID > 0, `Malformed deckID. Given ${deckID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/deck/${deckID}/review/view/back`);
+    });
+};
+
+Routes.prototype.toDeckReviewCardDescription = function(deckID) {
+
+    invariant(_.isNumber(filterInteger(deckID)) && deckID > 0, `Malformed deckID. Given ${deckID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/deck/${deckID}/review/view/description`);
+    });
+};
+
+Routes.prototype.toDeckReviewCardMeta = function(deckID) {
+
+    invariant(_.isNumber(filterInteger(deckID)) && deckID > 0, `Malformed deckID. Given ${deckID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/deck/${deckID}/review/view/meta`);
+    });
+};
+
+Routes.prototype.toDeckReviewCardStashes = function(deckID) {
+
+    invariant(_.isNumber(filterInteger(deckID)) && deckID > 0, `Malformed deckID. Given ${deckID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/deck/${deckID}/review/view/stashes`);
+    });
+};
+
 Routes.prototype.toAddNewDeck = function(toDeckID = NOT_SET) {
 
     this.shouldChangeRoute(() => {
@@ -980,7 +1145,6 @@ Routes.prototype.toCardStashes = function(cardID, deckID) {
         page(`/deck/${deckID}/card/${cardID}/view/stashes`);
     });
 };
-
 
 Routes.prototype.toSettings = function() {
 

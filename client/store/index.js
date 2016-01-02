@@ -6,6 +6,7 @@ const {Configs} = require('./configs');
 const {Routes} = require('./routes');
 const {Decks} = require('./decks');
 const {Cards, pagination} = require('./cards');
+const {Review} = require('./review');
 
 
 // sentinel value
@@ -35,7 +36,8 @@ const SCHEMA = {
         page: 1
     },
 
-    // review:
+    // review: {
+    // },
 
     stashes: {
         self: null,
@@ -59,6 +61,7 @@ function Store() {
     this.decks = new Decks(this);
     this.cards = new Cards(this);
     this.configs = new Configs(this);
+    this.review = new Review(this);
 }
 
 Store.prototype.constructor = Store;
