@@ -124,13 +124,13 @@ const ROUTE = {
         },
 
         REVIEW: {
-        VIEW: {
-            FRONT: Symbol(),
-            BACK: Symbol(),
-            DESCRIPTION: Symbol(),
-            STASHES: Symbol(),
-            META: Symbol()
-        }
+            VIEW: {
+                FRONT: Symbol(),
+                BACK: Symbol(),
+                DESCRIPTION: Symbol(),
+                STASHES: Symbol(),
+                META: Symbol()
+            }
         }
     },
 
@@ -151,7 +151,7 @@ const ROUTE = {
                 FRONT: Symbol(),
                 BACK: Symbol(),
                 DESCRIPTION: Symbol(),
-    STASHES: Symbol(),
+                STASHES: Symbol(),
                 META: Symbol()
             }
         }
@@ -206,7 +206,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
                 if(!result.response) {
                     toRootDeck(context);
-                    return reject();
+                    return reject(Error('redirecting'));
                 }
 
                 resolve(store.decks.get(deckID));
@@ -214,6 +214,8 @@ const boostrapRoutes = co.wrap(function *(store) {
         })
         .then(function() {
             next();
+            return null;
+        }, function() {
             return null;
         });
 
@@ -686,7 +688,7 @@ const boostrapRoutes = co.wrap(function *(store) {
                         page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/stashes`);
                         return null;
                     });
-    });
+            });
 
     page('/deck/:deck_id/card/:card_id/view/front',
             reloadAppState,
@@ -839,7 +841,22 @@ Routes.prototype.route = function(routeID = NOT_SET) {
 };
 
 Routes.prototype.watchRoute = function() {
-    return this._store.state().cursor(['route']);
+
+    return {
+        observe: (observer) => {
+
+            const cursor = this._store.state().cursor(['route']);
+
+            return cursor.observe(function(newRoute, oldRoute) {
+                if(!newRoute) {
+                    return;
+                }
+
+                observer.call(null, newRoute, oldRoute);
+            });
+        }
+    };
+
 };
 
 Routes.prototype.confirm = function(callback) {

@@ -150,6 +150,8 @@ Decks.prototype.get = function(deckID) {
         return this.load(deckID)
             .then(() => {
                 return this._lookup.cursor(deckID).deref();
+            }, () => {
+                return null;
             });
     }
 
@@ -252,33 +254,41 @@ Decks.prototype.exists = function(deckID) {
 
     deckID = Number(deckID);
 
-    return new Promise(function(resolve, reject) {
+    return this.get(deckID)
+        .then((deck) => {
 
-        superhot
-            .head(`/api/decks/${deckID}`)
-            .end(function(err, response) {
+            const result = Immutable.Map.isMap(deck);
 
-                switch(response.status) {
+            return new Response(void 0, result ? OK : NOT_FOUND, result);
+        });
 
-                case 404:
+    // return new Promise(function(resolve, reject) {
 
-                    return resolve(new Response(void 0, NOT_FOUND, false));
+    //     superhot
+    //         .head(`/api/decks/${deckID}`)
+    //         .end(function(err, response) {
 
-                case 200:
+    //             switch(response.status) {
 
-                    return resolve(new Response(void 0, OK, true));
+    //             case 404:
 
-                default:
+    //                 return resolve(new Response(void 0, NOT_FOUND, false));
 
-                    if (err) {
-                        return reject(err);
-                    }
+    //             case 200:
 
-                    return resolve(new Response(err, INVALID, void 0));
-                }
+    //                 return resolve(new Response(void 0, OK, true));
 
-            });
-    });
+    //             default:
+
+    //                 if (err) {
+    //                     return reject(err);
+    //                 }
+
+    //                 return resolve(new Response(err, INVALID, void 0));
+    //             }
+
+    //         });
+    // });
 
 };
 
