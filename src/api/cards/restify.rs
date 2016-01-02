@@ -16,7 +16,7 @@ use std::ops::Deref;
 use std::error::Error;
 
 use ::api::{GrokDB, ErrorResponse};
-use ::api::cards::{CreateCard, CreateCardForDeck, UpdateCard, CardResponse, CardsPageRequest, SortBy, SortOrder};
+use ::api::cards::{CreateCard, CreateCardForDeck, UpdateCard, CardResponse, CardPaginationInfo, CardsPageRequest, SortBy, SortOrder};
 use ::api::decks::restify::deck_exists;
 use ::api::stashes::restify::stash_exists;
 use ::database::QueryError;
@@ -913,6 +913,40 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             // fetch and parse requested card id
 
             let card_id = req.extensions.get::<Router>().unwrap().find("card_id").unwrap();
+
+            match card_id.to_lowercase().as_ref() {
+                "total" => {
+                    let res_code = status::Ok;
+
+                    let totals = match grokdb.cards.count_by_deck(deck_id) {
+                        Err(why) => {
+                            // why: QueryError
+
+                            let ref reason = format!("{:?}", why);
+                            let res_code = status::InternalServerError;
+
+                            let err_response = ErrorResponse {
+                                status: res_code,
+                                developerMessage: reason,
+                                userMessage: why.description(),
+                            }.to_json();
+
+                            return Ok(Response::with((res_code, err_response)));
+                        },
+
+                        Ok(count) => {
+                            count
+                        }
+                    };
+
+                    let res = CardPaginationInfo {
+                        numOfCards: totals
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, res)));
+                },
+                _ => {/* continue */}
+            }
 
             let card_id: i64 = match card_id.parse::<u64>() {
                 Ok(card_id) => card_id as i64,

@@ -130,6 +130,18 @@ struct Card {
 }
 
 #[derive(Debug, RustcEncodable)]
+pub struct CardPaginationInfo {
+    numOfCards: i64
+}
+
+impl CardPaginationInfo {
+
+    pub fn to_json(&self) -> String {
+        return json::encode(self).unwrap();
+    }
+}
+
+#[derive(Debug, RustcEncodable)]
 struct CardResponse {
     id: i64,
     title: String,
