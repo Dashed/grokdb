@@ -5,13 +5,33 @@ const {perPage} = require('constants/cardspagination');
 
 const Pagination = require('components/pagination');
 
+const CardsPagination = React.createClass({
+
+    propTypes: {
+        numOfPages: React.PropTypes.number.isRequired,
+        currentPage: React.PropTypes.number.isRequired,
+
+        onClickCurrent: React.PropTypes.func,
+        onClickPage: React.PropTypes.func.isRequired
+    },
+
+    render() {
+
+        if(this.props.numOfPages > 1) {
+            return (<Pagination {...this.props} />);
+        }
+
+        return null;
+    }
+});
+
 module.exports = courier({
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
     },
 
-    component: Pagination,
+    component: CardsPagination,
 
     onlyWaitingOnMount: true,
 
