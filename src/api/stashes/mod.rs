@@ -163,6 +163,35 @@ impl StashesAPI {
         };
     }
 
+    pub fn count(&self) -> Result<i64, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                COUNT(1)
+            FROM Stashes;
+        ");
+
+        let maybe_count = db_conn.query_row(query, &[], |row| -> i64 {
+            return row.get(0);
+        });
+
+        match maybe_count {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(count) => {
+                return Ok(count);
+            }
+        };
+    }
+
     pub fn exists(&self, stash_id: i64) -> Result<bool, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
