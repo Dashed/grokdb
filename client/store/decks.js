@@ -450,34 +450,41 @@ Decks.prototype.childrenID = function() {
     return deck.get('children');
 };
 
+// get ancestors of a deck as array of deck ids
 // async
 Decks.prototype.ancestors = function(deckID) {
 
-    return new Promise(function(resolve, reject) {
+    return this.get(deckID)
+        .then((deck) => {
+            return deck.get('ancestors').toArray();
+        });
 
-        superhot
-            .get(`/api/decks/${deckID}/ancestors/id`)
-            .end(function(err, response) {
+    // TODO: remove/clean up
+    // return new Promise(function(resolve, reject) {
 
-                switch(response.status) {
+    //     superhot
+    //         .get(`/api/decks/${deckID}/ancestors/id`)
+    //         .end(function(err, response) {
 
-                case 200:
+    //             switch(response.status) {
 
-                    invariant(_.isArray(response.body), `Expected array. Given ${response.body}`);
+    //             case 200:
 
-                    return resolve(response.body);
+    //                 invariant(_.isArray(response.body), `Expected array. Given ${response.body}`);
 
-                default:
+    //                 return resolve(response.body);
 
-                    if (err) {
-                        return reject(err);
-                    }
+    //             default:
 
-                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
-                }
+    //                 if (err) {
+    //                     return reject(err);
+    //                 }
 
-            });
-    });
+    //                 return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+    //             }
+
+    //         });
+    // });
 };
 
 // async
