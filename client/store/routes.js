@@ -1210,12 +1210,16 @@ Routes.prototype.toCardStashes = function(cardID, deckID) {
 
 Routes.prototype.toSettings = function() {
 
+    this.shouldChangeRoute(() => {
     page(`/settings`);
+    });
 };
 
 Routes.prototype.toStashes = function() {
 
+    this.shouldChangeRoute(() => {
     page(`/stashes`);
+    });
 };
 
 module.exports = {
