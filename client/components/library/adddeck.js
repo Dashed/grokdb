@@ -170,6 +170,13 @@ const AddDeck = React.createClass({
                 </div>
                 <div className="row">
                     <div className="col-sm-12 m-b">
+                        <h5 className="m-y-0 p-y-0">
+                            {'Create New Deck'}
+                        </h5>
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-sm-12 m-b">
                         <input
                             ref="deck_name"
                             className="form-control"

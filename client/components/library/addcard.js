@@ -158,6 +158,7 @@ const AddCard = React.createClass({
         return (
             <TextareaAutosize
                 key="textarea"
+                ref="card_textarea"
                 useCacheForDOMMeasurements
                 minRows={6}
                 maxRows={10}
@@ -218,6 +219,10 @@ const AddCard = React.createClass({
 
     },
 
+    componentDidMount() {
+        this.refs.card_textarea.focus();
+    },
+
     render() {
 
         return (
@@ -229,6 +234,13 @@ const AddCard = React.createClass({
                             className="btn btn-sm btn-danger"
                             onClick={this.backToCardsList}
                         >{'Back to cards list'}</button>
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-sm-12 m-b">
+                        <h5 className="m-y-0 p-y-0">
+                            {'Create New Card'}
+                        </h5>
                     </div>
                 </div>
                 <div className="row">
