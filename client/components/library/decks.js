@@ -86,6 +86,8 @@ module.exports = courier({
 
     component: LibraryDecks,
 
+    // onlyWaitingOnMount: true,
+
     contextTypes: {
         store: React.PropTypes.object.isRequired
     },

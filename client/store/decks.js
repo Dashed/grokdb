@@ -182,7 +182,7 @@ Decks.prototype.observable = function(deckID) {
 
             return cursor.observe(function(newDeck, oldDeck) {
 
-                if(!newDeck) {
+                if(!Immutable.Map.isMap(newDeck)) {
                     return;
                 }
 
@@ -365,9 +365,9 @@ const attachCurrentObserver = function(currentCursor, currentID, observer) {
 
         const actualID = newCurrent.get('id');
 
-        // invariant: Immutable.Map.isMap(oldCurrent)
-
         if(actualID == currentID && newCurrent != oldCurrent) {
+
+            snapshotCurrent = newCurrent;
 
             // There are cases when newCurrent and oldCurrent are effectively deeply equal.
             // This can occur when doing something equivalent to:
@@ -375,12 +375,12 @@ const attachCurrentObserver = function(currentCursor, currentID, observer) {
             // Immutable.is is deep compare, but should prevent unnecessary DOM renders or network requests.
             // Only do this if oldCurrent is still a Map.
             // We still call observer for the case: void 0 --> deck record
-            if(Immutable.Map.isMap(oldCurrent) && Immutable.is(snapshotCurrent, newCurrent)) {
-                snapshotCurrent = newCurrent;
+
+            // TODO: clean up
+            // if(!Immutable.Map.isMap(oldCurrent) && Immutable.is(snapshotCurrent, newCurrent)) {
+            if(Immutable.is(snapshotCurrent, newCurrent)) {
                 return;
             }
-
-            snapshotCurrent = newCurrent;
 
             observer.call(null);
             return;
