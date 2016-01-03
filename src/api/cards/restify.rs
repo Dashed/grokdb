@@ -708,10 +708,8 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         _ => SortOrder::Descending
                     };
 
-                    let offset: i64 = (page - 1) * per_page;
-
                     CardsPageRequest {
-                        offset: offset,
+                        page: page,
                         per_page: per_page,
                         sort_by: sort_by,
                         order: order
@@ -720,7 +718,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
                 Err(UrlDecodingError::EmptyQuery) => {
                     CardsPageRequest {
-                        offset: 0,
+                        page: 1,
                         per_page: 25,
                         sort_by: SortBy::UpdatedAt,
                         order: SortOrder::Descending
@@ -800,7 +798,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         return Ok(Response::with((content_type, status::Ok, response)));
                     }
 
-                    if page_query.offset >= count {
+                    if page_query.get_offset() >= count {
                         let ref reason = format!("page out of bounds");
                         let res_code = status::BadRequest;
 
@@ -1155,10 +1153,8 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         _ => SortOrder::Descending
                     };
 
-                    let offset: i64 = (page - 1) * per_page;
-
                     CardsPageRequest {
-                        offset: offset,
+                        page: page,
                         per_page: per_page,
                         sort_by: sort_by,
                         order: order
@@ -1167,7 +1163,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
                 Err(UrlDecodingError::EmptyQuery) => {
                     CardsPageRequest {
-                        offset: 0,
+                        page: 1,
                         per_page: 25,
                         sort_by: SortBy::UpdatedAt,
                         order: SortOrder::Descending
@@ -1242,7 +1238,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         return Ok(Response::with((status::Ok, response)));
                     }
 
-                    if page_query.offset >= count {
+                    if page_query.get_offset() >= count {
                         let ref reason = format!("page out of bounds");
                         let res_code = status::BadRequest;
 

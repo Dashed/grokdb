@@ -31,10 +31,18 @@ pub enum SortOrder {
 }
 
 pub struct CardsPageRequest {
-    offset: i64,
+    page: i64,
     per_page: i64,
     sort_by: SortBy,
     order: SortOrder
+}
+
+impl CardsPageRequest {
+
+    pub fn get_offset(&self) -> i64 {
+        let offset: i64 = (self.page - 1) * self.per_page;
+        return offset;
+    }
 }
 
 #[derive(Debug, Clone, RustcDecodable)]
@@ -296,7 +304,7 @@ impl CardsAPI {
 
         let params: &[(&str, &ToSql)] = &[
             (":deck_id", &deck_id),
-            (":offset", &(page_query.offset)),
+            (":offset", &(page_query.get_offset())),
             (":per_page", &(page_query.per_page))
         ];
 
@@ -601,7 +609,7 @@ impl CardsAPI {
 
         let params: &[(&str, &ToSql)] = &[
             (":stash_id", &stash_id),
-            (":offset", &(page_query.offset)),
+            (":offset", &(page_query.get_offset())),
             (":per_page", &(page_query.per_page))
         ];
 
