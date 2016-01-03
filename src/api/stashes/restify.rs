@@ -9,6 +9,7 @@ use iron::mime::Mime;
 use router::Router;
 use urlencoded::{UrlEncodedQuery, QueryMap, UrlDecodingError};
 use rustc_serialize::json;
+use regex::Regex;
 
 use std::sync::Arc;
 use std::ops::Deref;
@@ -24,6 +25,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
     let grokdb = Arc::new(grokdb);
 
+    let stashes_list_re = Regex::new(r"^[1-9]\d*(,[1-9]\d*)*$").unwrap();
 
     router.get("/stashes", {
         let grokdb = grokdb.clone();
@@ -308,6 +310,109 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
                 }
             };
+
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
+        }
+    });
+
+    router.get("/stashes/bulk", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            let list_stash_ids: Vec<i64> = match req.get_ref::<UrlEncodedQuery>() {
+
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(ref hashmap) => {
+                    let hashmap: &QueryMap = hashmap;
+
+                    let stashes: Vec<i64> = match hashmap.contains_key("stashes") {
+                        true => {
+                            let maybe_stashes: &Vec<String> = hashmap.get("stashes").unwrap();
+
+                            if maybe_stashes.len() <= 0 {
+                                vec![]
+                            } else {
+
+                                let ref stashes_str: String = maybe_stashes[0];
+
+                                if stashes_list_re.is_match(stashes_str) {
+                                    let stashes = stashes_str.split(",").map(
+                                        |x: &str| -> i64 {
+                                            x.parse::<i64>().unwrap()
+                                    });
+
+                                    stashes.collect::<Vec<i64>>()
+                                } else {
+
+                                    let ref reason = format!("Invalid list of stashes ids");
+                                    let res_code = status::BadRequest;
+
+                                    let err_response = ErrorResponse {
+                                        status: res_code,
+                                        developerMessage: reason,
+                                        userMessage: reason,
+                                    }.to_json();
+
+                                    return Ok(Response::with((res_code, err_response)));
+                                }
+                            }
+                        },
+
+                        _ => vec![]
+                    };
+
+                    stashes
+                }
+            };
+
+            let mut stashes: Vec<StashResponse> = vec![];
+
+            for stash_id in list_stash_ids {
+
+                let maybe_stash: Result<StashResponse, QueryError> = grokdb.stashes.get_response(stash_id);
+
+                let stash: StashResponse = match maybe_stash {
+
+                    Err(why) => {
+                        // why: QueryError
+
+                        let ref reason = format!("{:?}", why);
+                        let res_code = status::NotFound;
+
+                        let err_response = ErrorResponse {
+                            status: res_code,
+                            developerMessage: reason,
+                            userMessage: why.description(),
+                        }.to_json();
+
+                        return Ok(Response::with((res_code, err_response)));
+                    },
+
+                    Ok(stash) => stash,
+                };
+
+                stashes.push(stash);
+            }
+
+            let ref stashes = stashes;
+
+            let response = json::encode(stashes).unwrap();
 
             let content_type = "application/json".parse::<Mime>().unwrap();
 
