@@ -433,7 +433,10 @@ const Review = React.createClass({
                 </div>
                 <div className="row">
                     <div className="col-sm-12 m-b">
-                        <CardHeader cardID={card.get('id')} />
+                        <CardHeader
+                            isReviewing
+                            cardID={card.get('id')}
+                        />
                     </div>
                 </div>
                 <div className="row">
