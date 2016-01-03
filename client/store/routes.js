@@ -303,16 +303,6 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     }, postRouteLoad);
 
-    page('/stashes', reloadAppState, function(context, next) {
-
-        store.resetStage();
-        store.routes.route(ROUTE.STASHES.VIEW.LIST);
-        store.commit();
-
-        next();
-
-    }, postRouteLoad);
-
     page('/deck', reloadAppState, toRootDeck);
 
     page('/deck/:deck_id', reloadAppState, function(context) {
@@ -829,6 +819,26 @@ const boostrapRoutes = co.wrap(function *(store) {
                 next();
             }, postRouteLoad);
 
+    page('/stashes', reloadAppState, function(context, next) {
+
+        store.resetStage();
+        store.routes.route(ROUTE.STASHES.VIEW.LIST);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/stashes/add', reloadAppState, function(context, next) {
+
+        store.resetStage();
+        store.routes.route(ROUTE.STASHES.VIEW.ADD);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
     // route not found; redirect to the root deck
     page('*', function(context, next) {
         console.error('not found', context);
@@ -1226,6 +1236,14 @@ Routes.prototype.toStashes = function() {
     this.shouldChangeRoute(() => {
         page(`/stashes`);
     });
+};
+
+Routes.prototype.toAddNewStash = function() {
+
+    this.shouldChangeRoute(() => {
+        page(`/stashes/add`);
+    });
+
 };
 
 module.exports = {
