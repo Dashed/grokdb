@@ -4,6 +4,7 @@ const invariant = require('invariant');
 const DataLoader = require('dataloader');
 const minitrue = require('minitrue');
 
+const filterInteger = require('utils/filterinteger');
 const superhot = require('./superhot');
 
 const {Response, NOT_FOUND, OK, INVALID} = require('./response');
@@ -331,7 +332,9 @@ Decks.prototype.currentID = function(deckID = NOT_SET) {
         value = deckID;
     }
 
-    return Number(value);
+    value = filterInteger(value, this.root());
+
+    return value;
 };
 
 // async
