@@ -263,6 +263,7 @@ Decks.prototype.exists = function(deckID) {
             return new Response(void 0, result ? OK : NOT_FOUND, result);
         });
 
+    // TODO: remove/clean up
     // return new Promise(function(resolve, reject) {
 
     //     superhot
