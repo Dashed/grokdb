@@ -175,6 +175,8 @@ impl UpdateCardScore {
 
                 let value: &i64 = self.value.as_ref().unwrap();
 
+                fields.push(format!("times_reviewed = times_reviewed + 1"));
+
                 fields.push(format!("success = success + :success"));
                 let tuple: (&str, &ToSql) = (":success", value);
                 values.push(tuple);
@@ -184,13 +186,14 @@ impl UpdateCardScore {
 
                 let value: &i64 = self.value.as_ref().unwrap();
 
+                fields.push(format!("times_reviewed = times_reviewed + 1"));
+
                 fields.push(format!("fail = fail + :fail"));
                 let tuple: (&str, &ToSql) = (":fail", value);
                 values.push(tuple);
             },
 
             Action::Reset => {
-
 
                 fields.push(format!("success = :success"));
                 let tuple: (&str, &ToSql) = (":success", &DEFAULT_SUCCESS);
@@ -202,6 +205,8 @@ impl UpdateCardScore {
             },
 
             Action::Forgot => {
+
+                fields.push(format!("times_reviewed = times_reviewed + 1"));
 
                 fields.push(format!("success = :success"));
                 let tuple: (&str, &ToSql) = (":success", &DEFAULT_SUCCESS);
@@ -216,6 +221,7 @@ impl UpdateCardScore {
             Action::Skip => {
 
                 // noop update (coerce trigger update to set update_at timestamp).
+                // see: CARDS_SCORE_ON_UPDATED_TRIGGER in tables.rs
                 // TODO: this seems too hacky
                 fields.push(format!("success = success"));
             },
@@ -239,6 +245,7 @@ pub struct ReviewResponse {
     fail: i64,
     score: f64,
     times_reviewed: i64,
+    times_seen: i64,
     reviewed_at: i64 // unix timestamp
 }
 
@@ -256,7 +263,7 @@ impl ReviewAPI {
 
         let ref query = format!("
             SELECT
-                success, fail, times_reviewed, updated_at
+                success, fail, times_reviewed, times_seen, updated_at
             FROM CardsScore
             WHERE card = :card_id
             LIMIT 1;
@@ -273,7 +280,8 @@ impl ReviewAPI {
                 fail: row.get(1),
                 score: (fail as f64 + 0.5f64) / (total as f64 + 1.0f64),
                 times_reviewed: row.get(2),
-                reviewed_at: row.get(3)
+                times_seen: row.get(3),
+                reviewed_at: row.get(4)
             };
         });
 

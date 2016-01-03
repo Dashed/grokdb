@@ -564,7 +564,9 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             let ref grokdb = grokdb.deref();
 
             let page_query: CardsPageRequest = match req.get_ref::<UrlEncodedQuery>() {
+
                 Ok(ref hashmap) => {
+
                     let hashmap: &QueryMap = hashmap;
 
                     let page: i64 = match hashmap.contains_key("page") {
