@@ -147,6 +147,12 @@ const ROUTE = {
     },
 
     STASHES: {
+
+        VIEW: {
+            LIST: Symbol(),
+            ADD: Symbol()
+        },
+
         REVIEW: {
             VIEW: {
                 FRONT: Symbol(),
@@ -300,7 +306,7 @@ const boostrapRoutes = co.wrap(function *(store) {
     page('/stashes', reloadAppState, function(context, next) {
 
         store.resetStage();
-        store.routes.route(ROUTE.STASHES);
+        store.routes.route(ROUTE.STASHES.VIEW.LIST);
         store.commit();
 
         next();
@@ -1211,14 +1217,14 @@ Routes.prototype.toCardStashes = function(cardID, deckID) {
 Routes.prototype.toSettings = function() {
 
     this.shouldChangeRoute(() => {
-    page(`/settings`);
+        page(`/settings`);
     });
 };
 
 Routes.prototype.toStashes = function() {
 
     this.shouldChangeRoute(() => {
-    page(`/stashes`);
+        page(`/stashes`);
     });
 };
 
