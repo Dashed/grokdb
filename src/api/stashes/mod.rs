@@ -13,6 +13,34 @@ use rustc_serialize::json;
 use ::database::{DB, QueryError};
 pub use self::restify::restify;
 
+pub enum SortBy {
+    CreatedAt,
+    UpdatedAt,
+    Name
+    // ReviewedDate, // when stash was last reviewed
+    // TimesReviewed // how many times a stash was reviewed
+}
+
+pub enum SortOrder {
+    Descending,
+    Ascending
+}
+
+pub struct StashesPageRequest {
+    page: i64, // page >= 1
+    per_page: i64, // per_page >= 0
+    sort_by: SortBy,
+    order: SortOrder
+}
+
+impl StashesPageRequest {
+
+    pub fn get_offset(&self) -> i64 {
+        let offset: i64 = (self.page - 1) * self.per_page;
+        return offset;
+    }
+}
+
 
 #[derive(Debug, Clone, RustcDecodable)]
 pub struct CreateStash {
@@ -125,6 +153,72 @@ impl StashesAPI {
         };
 
         return Ok(response);
+    }
+
+    pub fn get_list(&self, page_query: StashesPageRequest) -> Result<Vec<i64>, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref page_query = page_query;
+
+        let ref query = get_stashes_query(page_query);
+
+        let params: &[(&str, &ToSql)] = &[
+            (":offset", &(page_query.get_offset())),
+            (":per_page", &(page_query.per_page))
+        ];
+
+        let maybe_stmt = db_conn.prepare(query);
+
+        if maybe_stmt.is_err() {
+
+            let why = maybe_stmt.unwrap_err();
+
+            let err = QueryError {
+                sqlite_error: why,
+                query: query.clone(),
+            };
+            return Err(err);
+        }
+
+        let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+
+        let maybe_iter = stmt.query_named(params);
+
+        match maybe_iter {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(iter) => {
+
+                let mut vec_of_stash_id: Vec<i64> = Vec::new();
+
+                for result_row in iter {
+
+                    let stash_id: i64 = match result_row {
+                        Err(why) => {
+                            let err = QueryError {
+                                sqlite_error: why,
+                                query: query.clone(),
+                            };
+                            return Err(err);
+                        },
+                        Ok(row) => row.get(0)
+                    };
+
+                    vec_of_stash_id.push(stash_id);
+                }
+
+                let vec_of_stash_id = vec_of_stash_id;
+
+                return Ok(vec_of_stash_id);
+            }
+        };
     }
 
     pub fn get(&self, stash_id: i64) -> Result<Stash, QueryError> {
@@ -553,4 +647,91 @@ impl StashesAPI {
             }
         };
     }
+}
+
+/* helpers */
+
+fn get_stashes_query(page_query: &StashesPageRequest) -> String {
+
+    let sort_order: &str = match page_query.order {
+        SortOrder::Descending => "DESC",
+        SortOrder::Ascending => "ASC"
+    };
+
+    let query = match page_query.sort_by {
+
+        SortBy::CreatedAt => {
+
+            format!("
+                SELECT
+                    stash_id, name, description, created_at, updated_at
+                FROM
+                    Stashes
+                WHERE oid NOT IN (
+                    SELECT
+                        oid
+                    FROM
+                        Stashes
+                    ORDER BY
+                        created_at
+                    {sort_order}
+                    LIMIT :offset
+                )
+                ORDER BY
+                    created_at
+                {sort_order}
+                LIMIT :per_page;
+            ", sort_order = sort_order)
+        },
+
+        SortBy::UpdatedAt => {
+
+            format!("
+                SELECT
+                    stash_id, name, description, created_at, updated_at
+                FROM
+                    Stashes
+                WHERE oid NOT IN (
+                    SELECT
+                        oid
+                    FROM
+                        Stashes
+                    ORDER BY
+                        updated_at
+                    {sort_order}
+                    LIMIT :offset
+                )
+                ORDER BY
+                    updated_at
+                {sort_order}
+                LIMIT :per_page;
+            ", sort_order = sort_order)
+        },
+
+        SortBy::Name => {
+
+            format!("
+                SELECT
+                    stash_id, name, description, created_at, updated_at
+                FROM
+                    Stashes
+                WHERE oid NOT IN (
+                    SELECT
+                        oid
+                    FROM
+                        Stashes
+                    ORDER BY
+                        name
+                    {sort_order}
+                    LIMIT :offset
+                )
+                ORDER BY
+                    name
+                {sort_order}
+                LIMIT :per_page;
+            ", sort_order = sort_order)
+        }
+    };
+
+    return query;
 }
