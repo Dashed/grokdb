@@ -473,10 +473,42 @@ const Review = React.createClass({
 
 const NoReview = React.createClass({
 
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
+    backToCardsList(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.context.store.routes.toLibraryCards();
+    },
+
     render() {
         return (
             <div>
-                {'deck has no card to review'}
+                <div className="row">
+                    <div className="col-sm-12 m-y">
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-danger"
+                            onClick={this.backToCardsList}
+                        >
+                            {'Stop Reviewing Deck'}
+                        </button>
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-sm-12">
+                        <div className="card">
+                            <div className="card-block text-center">
+                                <p className="card-text text-muted">
+                                    {'This deck does not have any cards for review. Add or create new cards for this deck.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
