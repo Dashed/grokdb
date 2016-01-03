@@ -772,6 +772,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             }
 
             match grokdb.cards.count_by_deck(deck_id) {
+
                 Err(why) => {
                     // why: QueryError
 
@@ -816,6 +817,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             }
 
             let response: String = match grokdb.cards.get_by_deck(deck_id, page_query) {
+
                 Err(why) => {
                     // why: QueryError
 

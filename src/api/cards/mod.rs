@@ -296,8 +296,6 @@ impl CardsAPI {
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
 
-        // invariant: page_query.offset is legal
-
         let ref page_query = page_query;
 
         let ref query = get_by_deck_query(page_query);
@@ -352,6 +350,8 @@ impl CardsAPI {
 
                     vec_of_card_id.push(card_id);
                 }
+
+                let vec_of_card_id = vec_of_card_id;
 
                 return Ok(vec_of_card_id);
             }
