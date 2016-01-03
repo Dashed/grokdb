@@ -196,13 +196,18 @@ END;
 
 /* cards score */
 
+// changelog is internal for CardsScoreHistory to take snapshot of.
+// times_seen is number of times a card was put up for review.
+// times_reviewed is number of times a card was actually reviewed. skipping a card
+// is not actually reviewing the card.
 const CARDS_SCORE: &'static str = "
 CREATE TABLE IF NOT EXISTS CardsScore (
     success INTEGER NOT NULL DEFAULT 0,
     fail INTEGER NOT NULL DEFAULT 0,
     times_reviewed INT NOT NULL DEFAULT 0,
+    times_seen INT NOT NULL DEFAULT 0,
     updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
-    changelog TEXT NOT NULL DEFAULT '', /* internal for CardsScoreHistory to take snapshot of */
+    changelog TEXT NOT NULL DEFAULT '',
 
     card INTEGER NOT NULL,
 
@@ -231,7 +236,7 @@ BEGIN
         CardsScore
     SET
         updated_at = strftime('%s', 'now'),
-        times_reviewed = times_reviewed + 1
+        times_seen = times_seen + 1
     WHERE card = NEW.card;
 END;
 ";
