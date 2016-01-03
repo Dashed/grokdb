@@ -315,7 +315,7 @@ const boostrapRoutes = co.wrap(function *(store) {
         toDeck(deckID);
     });
 
-    page('/deck/:deck_id/add/deck', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+    page('/deck/:deck_id/new/deck', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
 
         const deckID = context.deck_id;
 
@@ -455,7 +455,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
         }, postRouteLoad);
 
-    page('/deck/:deck_id/add/deck', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+    page('/deck/:deck_id/new/deck', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
 
         const deckID = context.deck_id;
 
@@ -468,7 +468,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     }, postRouteLoad);
 
-    page('/deck/:deck_id/add/card', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+    page('/deck/:deck_id/new/card', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
 
         const deckID = context.deck_id;
 
@@ -829,7 +829,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     }, postRouteLoad);
 
-    page('/stashes/add', reloadAppState, function(context, next) {
+    page('/stashes/new', reloadAppState, function(context, next) {
 
         store.resetStage();
         store.routes.route(ROUTE.STASHES.VIEW.ADD);
@@ -1050,7 +1050,7 @@ Routes.prototype.toAddNewCard = function(toDeckID = NOT_SET) {
             toDeckID = this._store.decks.currentID();
         }
 
-        page(`/deck/${toDeckID}/add/card`);
+        page(`/deck/${toDeckID}/new/card`);
     });
 
 };
@@ -1137,7 +1137,7 @@ Routes.prototype.toAddNewDeck = function(toDeckID = NOT_SET) {
             toDeckID = this._store.decks.currentID();
         }
 
-        page(`/deck/${toDeckID}/add/deck`);
+        page(`/deck/${toDeckID}/new/deck`);
     });
 
 };
@@ -1241,7 +1241,7 @@ Routes.prototype.toStashes = function() {
 Routes.prototype.toAddNewStash = function() {
 
     this.shouldChangeRoute(() => {
-        page(`/stashes/add`);
+        page(`/stashes/new`);
     });
 
 };
