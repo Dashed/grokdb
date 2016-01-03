@@ -220,10 +220,9 @@ impl UpdateCardScore {
 
             Action::Skip => {
 
-                // noop update (coerce trigger update to set update_at timestamp).
-                // see: CARDS_SCORE_ON_UPDATED_TRIGGER in tables.rs
+                // prevents trigger CARDS_SCORE_ON_UPDATED_TRIGGER in tables.rs
                 // TODO: this seems too hacky
-                fields.push(format!("success = success"));
+                fields.push(format!("times_seen = times_seen"));
             },
 
             _ => unreachable!() // action should be already validated
@@ -233,6 +232,8 @@ impl UpdateCardScore {
             fields.push(format!("changelog = :changelog"));
             let tuple: (&str, &ToSql) = (":changelog", self.changelog.as_ref().unwrap());
             values.push(tuple);
+        } else {
+            fields.push(format!("changelog = ''"));
         }
 
         return (fields.join(", "), values);
