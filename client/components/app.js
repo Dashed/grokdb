@@ -61,7 +61,7 @@ const AppRouteHandler = React.createClass({
                                     className={classnames('nav-link', {'active': view == 'library'})}
                                     onClick={this.switchView('library')}
                                     href="#">
-                                    {'Library'}
+                                    {'Decks'}
                                 </a>
                             </li>
                             <li className="nav-item">

@@ -4,7 +4,6 @@ const invariant = require('invariant');
 const courier = require('courier');
 
 const {types: ROUTES} = require('store/routes');
-
 const {symbol: symbolPropType} = require('utils/proptype');
 
 const Breadcrumb = require('./breadcrumb');
