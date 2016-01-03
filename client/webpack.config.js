@@ -47,8 +47,8 @@ module.exports = {
             // 'slug',
             'markdown-it',
             'react-textarea-autosize',
-            // 'qs',
-            // 'moment',
+            'qs',
+            'moment',
             'react-prop-once', // TODO: remove if unused
             'scriptjs',
             'markdown-it-abbr',
