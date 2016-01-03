@@ -1,5 +1,9 @@
 const React = require('react');
 
+const STYLE = {
+    color: '#ffffff'
+};
+
 const DumbWaitingCardHeader = React.createClass({
 
     render() {
@@ -9,7 +13,7 @@ const DumbWaitingCardHeader = React.createClass({
                 <h4 className="m-y-0">
                     <span className="text-muted lead">{`Card #`}</span>
                     {' '}
-                    <span style={{color: '#ffffff'}}>{'loading'}</span>
+                    <span style={STYLE}>{'loading'}</span>
                 </h4>
             </div>
         );

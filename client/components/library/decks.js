@@ -62,7 +62,7 @@ const LibraryDecks = React.createClass({
             <div>
                 <div className="row m-b">
                     <div className="col-sm-12">
-                        <div className="btn-group btn-group-sm" role="group" aria-label="Basic example">
+                        <div className="btn-group btn-group-sm" role="group">
                             <button
                                 type="button"
                                 className="btn btn-success"
