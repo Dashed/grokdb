@@ -17,6 +17,7 @@ bootstrapStore
             const route = store.routes.route();
             if(isSymbol(route)) {
                 resolve(store);
+                return;
             }
 
             const cursor = store.state().cursor('route');
