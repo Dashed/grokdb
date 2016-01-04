@@ -139,7 +139,7 @@ struct Card {
 
 #[derive(Debug, RustcEncodable)]
 pub struct CardPaginationInfo {
-    numOfCards: i64
+    num_of_cards: i64
 }
 
 impl CardPaginationInfo {

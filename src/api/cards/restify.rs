@@ -943,7 +943,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                     let content_type = "application/json".parse::<Mime>().unwrap();
 
                     let response = CardPaginationInfo {
-                        numOfCards: totals
+                        num_of_cards: totals
                     }.to_json();
 
                     return Ok(Response::with((content_type, status::Ok, response)));

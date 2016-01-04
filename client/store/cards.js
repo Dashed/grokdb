@@ -78,7 +78,7 @@ const cardTotalsLoader = new DataLoader(function(keys) {
 
                     case 200:
 
-                        const numOfCards = response.body.numOfCards >= 0 ? response.body.numOfCards : 0;
+                        const numOfCards = response.body.num_of_cards >= 0 ? response.body.num_of_cards : 0;
 
                         return resolve(numOfCards);
                         break;
