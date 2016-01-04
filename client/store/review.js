@@ -127,12 +127,12 @@ Review.prototype.reviewCard = function(cardID, difficultyTag, skipCard = false) 
 
         case difficulty.fail:
             patch.value = 1;
-            patch.changelog = 'Answered card successfully.';
+            patch.changelog = 'Answered card unsuccessfully.';
             break;
 
         case difficulty.good:
             patch.value = 1;
-            patch.changelog = 'Answered card unsuccessfully.';
+            patch.changelog = 'Answered card successfully.';
             break;
 
         case difficulty.easy:
