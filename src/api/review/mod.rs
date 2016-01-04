@@ -155,7 +155,7 @@ impl UpdateCardScore {
                     }
                 }
             },
-            _ => unreachable!() // action should be already validated
+            _ => unreachable!() // action and value should be already validated
         }
     }
 
@@ -174,7 +174,7 @@ impl UpdateCardScore {
 
             Action::Success => {
 
-                let value: &i64 = self.value.as_ref().unwrap();
+                let value: &i64 = self.get_value();
 
                 fields.push(format!("times_reviewed = times_reviewed + 1"));
 
@@ -185,7 +185,7 @@ impl UpdateCardScore {
 
             Action::Fail => {
 
-                let value: &i64 = self.value.as_ref().unwrap();
+                let value: &i64 = self.get_value();
 
                 fields.push(format!("times_reviewed = times_reviewed + 1"));
 
