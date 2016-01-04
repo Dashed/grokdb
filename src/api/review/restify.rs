@@ -54,6 +54,14 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
+            // ensure card exists
+            match card_exists(grokdb, card_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* card exists; continue */}
+            }
+
             // parse json
 
             let update_card_score_request: UpdateCardScore = match update_card_score_request {
@@ -105,14 +113,6 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }.to_json();
 
                 return Ok(Response::with((res_code, err_response)));
-            }
-
-            // ensure card exists
-            match card_exists(grokdb, card_id) {
-                Err(response) => {
-                    return response;
-                },
-                _ => {/* card exists; continue */}
             }
 
             // update card score
