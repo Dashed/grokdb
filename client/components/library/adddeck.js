@@ -90,17 +90,17 @@ const AddDeck = React.createClass({
 
     },
 
-    onDescriptionChange(event) {
-
-        this.setState({
-            description: event.target.value
-        });
-    },
-
     onNameChange(event) {
 
         this.setState({
             name: String(event.target.value)
+        });
+    },
+
+    onDescriptionChange(event) {
+
+        this.setState({
+            description: event.target.value
         });
     },
 
@@ -120,7 +120,7 @@ const AddDeck = React.createClass({
                 maxRows={10}
                 className="form-control"
                 id="deck_description"
-                placeholder={'Description for new deck'}
+                placeholder={'Description for a new deck'}
                 onChange={this.onDescriptionChange}
                 value={this.state.description}
                 readOnly={false}
