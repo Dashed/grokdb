@@ -58,7 +58,7 @@ function Deck(inputs) {
         throw new Error('invalid inputs to Deck');
     }
 
-    this.id = inputs.id;
+    this.id = Number(inputs.id);
     this.name = inputs.name;
     this.description = String(inputs.description) || '';
     this.parent = Number(inputs.parent) || void 0;
@@ -223,7 +223,7 @@ Decks.prototype.create = function(createDeck) {
 
                 case 200:
 
-                    const deckID = Number(deck.id);
+                    const deckID = Number(response.body.id);
                     const deck = Immutable.fromJS(response.body);
 
                     this._lookup.cursor(deckID).update(function() {
