@@ -134,7 +134,15 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 _ => {/* card score updated */}
             }
 
-            // remove cached review card for any selection
+            // remove cached review card for any container type.
+            //
+            // rationale:
+            // If a card was reviewed, either in a deck or stash (or none),
+            // then if the card was cached for review in any other deck or stash,
+            // the user shouldn't expect to see that card again if he or she chooses to review
+            // another deck or stash (or the same deck/stash he or she was reviewing).
+            // However, the exception is that if the card is the only card within a deck or stash,
+            // then that same card will be shown for review.
             let deck_selection = ReviewableDeck {
                 deck_id: 0, // doesn't matter which deck
                 grokdb: grokdb_arc.clone()
