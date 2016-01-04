@@ -28,7 +28,6 @@ use clap::{Arg, App};
 // [begin] iron framework
 use iron::{Iron, Chain, AfterMiddleware, Response, Request, IronResult};
 use iron::error::{IronError};
-use iron::status;
 use mount::Mount;
 use router::{Router};
 use logger::Logger;
@@ -36,7 +35,7 @@ use staticfile::Static;
 use iron::middleware::Handler;
 // [end] iron framework
 
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 
 struct Custom404 {

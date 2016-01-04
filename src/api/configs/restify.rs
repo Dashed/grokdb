@@ -7,7 +7,6 @@ use iron::status;
 use iron::prelude::*;
 use iron::mime::Mime;
 use router::Router;
-use rustc_serialize::json;
 
 use std::sync::Arc;
 use std::ops::Deref;
