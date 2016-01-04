@@ -210,9 +210,7 @@ Decks.prototype.create = function(createDeck) {
         }
 
         if(_.has(createDeck, 'parent')) {
-
             request.parent = Number(createDeck.parent);
-
         }
 
         superhot
@@ -225,8 +223,8 @@ Decks.prototype.create = function(createDeck) {
 
                 case 200:
 
-                    const deck = Immutable.fromJS(response.body);
                     const deckID = Number(deck.id);
+                    const deck = Immutable.fromJS(response.body);
 
                     this._lookup.cursor(deckID).update(function() {
                         return deck;
