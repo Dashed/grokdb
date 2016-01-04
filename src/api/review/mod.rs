@@ -25,7 +25,8 @@ pub trait ReviewableSelection {
     fn get_cached_card(&self) -> Result<Option<i64>, QueryError>;
     fn remove_cache(&self) -> Result<(), QueryError>;
 
-    // remove any cached entry by card id regardless of selection
+    // remove any cached entry by card id, regardless of sub-selection,
+    // of container type (e.g. Decks or Stash)
     fn remove_cached_card(&self, card_id: i64) -> Result<(), QueryError>;
 
     /* new cards */

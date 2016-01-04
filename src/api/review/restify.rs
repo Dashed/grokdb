@@ -31,7 +31,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         move |req: &mut Request| -> IronResult<Response> {
             let ref grokdb = grokdb.deref();
 
-            // TODO: refactor
+            // TODO: refactor; prefer to capture :card_id first before parsing UpdateCardScore
             let update_card_score_request = req.get::<bodyparser::Struct<UpdateCardScore>>();
 
             // fetch and parse requested card id

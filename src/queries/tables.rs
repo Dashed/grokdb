@@ -77,6 +77,7 @@ pub const SETUP: [&'static str; 23] = [
 
 /* configs */
 
+// note: CHECK (setting <> '') ensures setting is non-empty string
 const CONFIGS: &'static str = "
 CREATE TABLE IF NOT EXISTS Configs (
     setting TEXT PRIMARY KEY NOT NULL,
@@ -85,7 +86,7 @@ CREATE TABLE IF NOT EXISTS Configs (
     created_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
     updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
 
-    CHECK (setting <> '') /* ensure not empty */
+    CHECK (setting <> '')
 );
 ";
 
@@ -101,6 +102,8 @@ END;
 
 /* decks */
 
+// note: updated_at is when the deck was modified, not when it was reviewed.
+// note: CHECK (name <> '') ensures name is non-empty string
 const DECKS: &'static str = "
 CREATE TABLE IF NOT EXISTS Decks (
     deck_id INTEGER PRIMARY KEY NOT NULL,
@@ -108,9 +111,10 @@ CREATE TABLE IF NOT EXISTS Decks (
     description TEXT NOT NULL DEFAULT '',
 
     created_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
-    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')), /* note: time when the deck was modified, not when it was reviewed. */
+    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+    reviewed_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
 
-    CHECK (name <> '') /* ensure not empty */
+    CHECK (name <> '')
 );
 ";
 
@@ -158,6 +162,8 @@ END;
 
 /* cards */
 
+// note: updated_at is when the card was modified. not when it was seen.
+// note: CHECK (title <> '') ensures title is non-empty string
 const CARDS: &'static str = "
 CREATE TABLE IF NOT EXISTS Cards (
     card_id INTEGER PRIMARY KEY NOT NULL,
@@ -170,11 +176,11 @@ CREATE TABLE IF NOT EXISTS Cards (
     back TEXT NOT NULL DEFAULT '',
 
     created_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
-    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')), /* note: time when the card was modified. not when it was seen. */
+    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
 
     deck INTEGER NOT NULL,
 
-    CHECK (title <> ''), /* ensure not empty */
+    CHECK (title <> ''),
     FOREIGN KEY (deck) REFERENCES Decks(deck_id) ON DELETE CASCADE
 );
 ";
@@ -248,13 +254,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS CARDS_SCORE_INDEX ON CardsScore (card);
 
 /* cards score history */
 
+// changelog is internal for CardsScoreHistory to take snapshot of
 const CARDS_SCORE_HISTORY: &'static str = "
 CREATE TABLE IF NOT EXISTS CardsScoreHistory (
 
     occured_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
     success INTEGER NOT NULL DEFAULT 0,
     fail INTEGER NOT NULL DEFAULT 0,
-    changelog TEXT NOT NULL DEFAULT '', /* internal for CardsScoreHistory to take snapshot of */
+    changelog TEXT NOT NULL DEFAULT '',
     card INTEGER NOT NULL,
 
     FOREIGN KEY (card) REFERENCES Cards(card_id) ON DELETE CASCADE
@@ -284,6 +291,8 @@ ON CardsScoreHistory (occured_at DESC);
 
 /* stashes */
 
+// note: updated_at is when the stash was modified, not when it was reviewed.
+// note: CHECK (name <> '') ensures name is non-empty string
 const STASHES: &'static str = "
 CREATE TABLE IF NOT EXISTS Stashes (
     stash_id INTEGER PRIMARY KEY NOT NULL,
@@ -292,9 +301,10 @@ CREATE TABLE IF NOT EXISTS Stashes (
     description TEXT NOT NULL DEFAULT '',
 
     created_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
-    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')), /* note: time when the stash was modified, not when it was reviewed. */
+    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+    reviewed_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
 
-    CHECK (name <> '') /* ensure not empty */
+    CHECK (name <> '')
 );
 ";
 
