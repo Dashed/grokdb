@@ -162,7 +162,7 @@ fn main() {
 
     /* start the server */
 
-    match Iron::new(log_chain).http("localhost:3030") {
+    match Iron::new(log_chain).http("0.0.0.0:3030") {
         Err(why) => panic!("{:?}", why),
         Ok(_) => println!("Listening on port 3030"),
     }
