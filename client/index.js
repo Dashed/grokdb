@@ -41,9 +41,9 @@ bootstrapStore
     })
     .then(function(store) {
 
-        console.log('====');
-        console.log(String(store.state()));
-        console.log('====');
+        // console.log('====');
+        // console.log(String(store.state()));
+        // console.log('====');
 
         // NOTE: As of react v0.13, contexts are an undocumented feature
         // NOTE: As of react v0.13, React.withContext() is deprecated.
