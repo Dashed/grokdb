@@ -1,5 +1,6 @@
 const React = require('react');
 const Immutable = require('immutable');
+const moment = require('moment');
 
 const courier = require('courier');
 
@@ -25,11 +26,31 @@ const DeckListItem = React.createClass({
 
         const {deck} = this.props;
 
+        // datetime of when last reviewed
+
+        const offset = new Date().getTimezoneOffset();
+        const lastReviewedDatetime = moment.unix(deck.get('reviewed_at')).utcOffset(-offset);
+
+        const wasReviewed = deck.get('has_reviewed');
+
+        // TODO: remove/clean up
+        // const createdAt = moment.unix(deck.get('created_at')).utcOffset(-offset);
+        // const wasReviewed = Math.abs(lastReviewedDatetime.diff(createdAt)) <= 250 ? false : true;
+
+        const lastReviewed = wasReviewed ? `last reviewed ${lastReviewedDatetime.fromNow()}.` : `hasn't been reviewed yet.`;
+
         return (
             <li className="list-group-item">
-                <a href="#" onClick={this.onClick} >
-                    {deck.get('name')}
-                </a>
+                <h6 className="list-group-item-heading m-y-0">
+                    <a href="#" onClick={this.onClick} >
+                        {deck.get('name')}
+                    </a>
+                </h6>
+                <p className="list-group-item-text m-y-0">
+                    <small>
+                        {`Deck #${deck.get('id')} ${lastReviewed}`}
+                    </small>
+                </p>
             </li>
         );
     }
