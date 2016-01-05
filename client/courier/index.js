@@ -108,6 +108,10 @@ const ON_ERROR = function(reason) {
 
 const Courier = function(inputSpec) {
 
+    if(!hasProp(inputSpec, 'component')) {
+        throw Error('Expected prop `component`.');
+    }
+
     const onlyWaitingOnMount = hasProp(inputSpec, 'onlyWaitingOnMount') ? inputSpec.onlyWaitingOnMount : false;
 
     const Component = inputSpec.component;
