@@ -503,10 +503,8 @@ Cards.prototype.currentCardsID = function() {
 
                         const cardID = card.id;
 
-                        card = Immutable.fromJS(card);
-
                         this._lookup.cursor(cardID).update(function() {
-                            return card;
+                            return Immutable.fromJS(card);
                         });
 
                         return cardID;
@@ -589,12 +587,9 @@ Cards.prototype.patchCurrent = function(patch) {
     this.patch(this.currentID(), patch);
 };
 
+// sync
 Cards.prototype.watchSort = function() {
     return this._store.state().cursor(['card', 'sort']);
-};
-
-Cards.prototype.watchOrder = function() {
-    return this._store.state().cursor(['card', 'order']);
 };
 
 // sync
@@ -616,6 +611,11 @@ Cards.prototype.sort = function(sort = NOT_SET) {
     }
 
     return value;
+};
+
+// sync
+Cards.prototype.watchOrder = function() {
+    return this._store.state().cursor(['card', 'order']);
 };
 
 // sync
