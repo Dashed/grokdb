@@ -89,7 +89,13 @@ pub struct UpdateCardScore {
     value: Option<i64>,
 
     // description of the action on the card being reviewed
-    changelog: Option<String>
+    changelog: Option<String>,
+
+    // denote which 'container' the card was reviewed in.
+    // either stash or deck is given (but not both),
+    // or neither stash nor deck is selected (case when reviewing the card individually)
+    stash: Option<i64>, // stash id
+    deck: Option<i64> // deck id
 }
 
 static DEFAULT_VALUE: i64 = 1;
@@ -160,7 +166,12 @@ impl UpdateCardScore {
     }
 
     pub fn should_update(&self) -> bool {
-        return self.is_valid_action() && self.is_valid_value();
+        return self.is_valid_action() && self.is_valid_value()
+            && (!self.stash.is_some() || !self.deck.is_some());
+            // long-form:
+            // ((self.stash.is_some() && !self.deck.is_some()) ||
+            //     (!self.stash.is_some() && self.deck.is_some()) ||
+            //     (!self.stash.is_some() && !self.deck.is_some()));
     }
 
     // get fields to update.
@@ -322,6 +333,22 @@ impl ReviewAPI {
             WHERE card = :card_id;
         ", fields = fields);
 
+        let tx = match db_conn.transaction() {
+
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: format!("creating transaction"),
+                };
+                return Err(err);
+            },
+
+            Ok(tx) => {
+                /* new transaction created */
+                tx
+            }
+        };
+
         match db_conn.execute_named(query_update, &values[..]) {
             Err(why) => {
                 let err = QueryError {
@@ -330,7 +357,63 @@ impl ReviewAPI {
                 };
                 return Err(err);
             },
-            _ => {/* query sucessfully executed */},
+            _ => {/* query sucessfully executed */}
+        }
+
+        if update_review_request.deck.is_some() {
+
+            let deck_id: i64 = update_review_request.deck.unwrap();
+
+            let ref query_update_deck = format!("
+                UPDATE Decks
+                SET
+                reviewed_at = strftime('%s', 'now')
+                WHERE deck_id = :deck_id;
+            ");
+
+            match db_conn.execute_named(query_update_deck, &[(":deck_id", &deck_id)]) {
+                Err(why) => {
+                    let err = QueryError {
+                        sqlite_error: why,
+                        query: query_update_deck.clone(),
+                    };
+                    return Err(err);
+                },
+                _ => {/* query sucessfully executed */}
+            }
+
+        } else if update_review_request.stash.is_some() {
+
+            let stash_id = update_review_request.stash.unwrap();
+
+            let ref query_update_stash = format!("
+                UPDATE Stashes
+                SET
+                reviewed_at = strftime('%s', 'now')
+                WHERE stash_id = :stash_id;
+            ");
+
+            match db_conn.execute_named(query_update_stash, &[(":stash_id", &stash_id)]) {
+                Err(why) => {
+                    let err = QueryError {
+                        sqlite_error: why,
+                        query: query_update_stash.clone(),
+                    };
+                    return Err(err);
+                },
+                _ => {/* query sucessfully executed */}
+            }
+        }
+
+        match tx.commit() {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: format!("committing transaction"),
+                };
+                return Err(err);
+            },
+            _ => {/* commit successful */}
         }
 
         return Ok(());

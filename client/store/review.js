@@ -59,6 +59,81 @@ const reviewDeckCardLoader = new DataLoader(function(keys) {
 
 });
 
+function ReviewPatch(cardID) {
+
+    this._cardID = cardID;
+    this._difficulty = void 0;
+    this._skipCard = false;
+    this._stashID = void 0;
+    this._deckID = void 0;
+}
+
+ReviewPatch.prototype.cardID = function(cardID = NOT_SET) {
+
+    if(cardID !== NOT_SET) {
+        this._cardID = cardID;
+    }
+
+    return this._cardID;
+
+};
+
+ReviewPatch.prototype.difficulty = function(difficultyTag = NOT_SET) {
+
+    if(difficultyTag !== NOT_SET) {
+
+        switch(difficultyTag) {
+
+        case difficulty.forgot:
+        case difficulty.hard:
+        case difficulty.fail:
+        case difficulty.good:
+        case difficulty.easy:
+            break;
+        default:
+            throw Error(`Unexpected difficultyTag. Given ${String(difficultyTag)}`);
+        }
+
+        this._difficulty = difficultyTag;
+    }
+
+    return this._difficulty;
+
+};
+
+ReviewPatch.prototype.skipCard = function(skipCard = NOT_SET) {
+
+    if(skipCard !== NOT_SET) {
+
+        if(!_.isBoolean(skipCard)) {
+            throw Error(`Expected skipCard to be boolean. Given: ${skipCard}`);
+        }
+
+        this._skipCard = skipCard;
+    }
+
+    return this._skipCard;
+};
+
+ReviewPatch.prototype.stash = function(stashID = NOT_SET) {
+
+    if(stashID !== NOT_SET) {
+        this._stashID = Number(stashID);
+    }
+
+    return this._stashID;
+};
+
+ReviewPatch.prototype.deck = function(deckID = NOT_SET) {
+
+    if(deckID !== NOT_SET) {
+        this._deckID = Number(deckID);
+    }
+
+    return this._deckID;
+};
+
+
 function Review(store) {
 
     this._store = store;
@@ -79,7 +154,16 @@ Review.prototype.clearCache = function() {
 };
 
 // async
-Review.prototype.reviewCard = function(cardID, difficultyTag, skipCard = false) {
+// Review.prototype.reviewCard = function(cardID, difficultyTag, skipCard = false) {
+Review.prototype.reviewCard = function(reviewPatch) {
+
+    if(!(reviewPatch instanceof ReviewPatch)) {
+        throw Error(`Unexpected action. Given: ${reviewPatch}`);
+    }
+
+    const cardID = reviewPatch.cardID();
+    const skipCard = reviewPatch.skipCard();
+    const difficultyTag = reviewPatch.difficulty();
 
     const action = (function() {
 
@@ -145,6 +229,15 @@ Review.prototype.reviewCard = function(cardID, difficultyTag, skipCard = false) 
         }
     } else {
         patch.changelog = 'Skipping card.';
+    }
+
+    if(filterInteger(reviewPatch.deck(), NOT_SET) !== NOT_SET) {
+
+        patch.deck = reviewPatch.deck();
+
+    } else if(filterInteger(reviewPatch.stash(), NOT_SET) !== NOT_SET) {
+
+        patch.stash = reviewPatch.stash();
     }
 
     return new Promise((resolve, reject) => {
@@ -353,7 +446,8 @@ Review.prototype.getReviewableCardForStash = function() {
 };
 
 module.exports = {
-    Review
+    Review,
+    ReviewPatch
 };
 
 /* helpers */

@@ -6,6 +6,7 @@ const TextareaAutosize = require('react-textarea-autosize');
 const _ = require('lodash');
 
 const {types: ROUTES} = require('store/routes');
+const {ReviewPatch} = require('store/review');
 
 const courier = require('courier');
 
@@ -372,11 +373,19 @@ const Review = React.createClass({
 
     onNext() {
 
+        const {currentDeckID} = this.props;
+
         const cardID = this.props.card.get('id');
 
         const currentDifficulty = this.state.difficulty;
 
-        this.context.store.review.reviewCard(cardID, currentDifficulty, false)
+        const patch = new ReviewPatch(cardID);
+
+        patch.difficulty(currentDifficulty);
+        patch.skipCard(false);
+        patch.deck(currentDeckID);
+
+        this.context.store.review.reviewCard(patch)
             .then(() => {
 
                 this.resetState();
@@ -388,11 +397,19 @@ const Review = React.createClass({
 
     onSkip() {
 
+        const {currentDeckID} = this.props;
+
         const cardID = this.props.card.get('id');
 
         const currentDifficulty = this.state.difficulty;
 
-        this.context.store.review.reviewCard(cardID, currentDifficulty, true)
+        const patch = new ReviewPatch(cardID);
+
+        patch.difficulty(currentDifficulty);
+        patch.skipCard(true);
+        patch.deck(currentDeckID);
+
+        this.context.store.review.reviewCard(patch)
             .then(() => {
 
                 this.resetState();
