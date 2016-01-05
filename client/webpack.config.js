@@ -45,14 +45,14 @@ module.exports = {
             'invariant',
             'is-promise',
             // 'slug',
-            'markdown-it',
             'react-textarea-autosize',
             'qs',
             'moment',
             'react-prop-once', // TODO: remove if unused
             'scriptjs',
-            'markdown-it-abbr',
-            'markdown-it-footnote',
+            'markdown-it',
+            // 'markdown-it-abbr', // TODO: blocking: https://github.com/markdown-it/markdown-it-abbr/issues/5
+            // 'markdown-it-footnote',
 
             // these break mathjax
             // 'markdown-it-sub',
