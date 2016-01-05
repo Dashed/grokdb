@@ -115,6 +115,28 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 return Ok(Response::with((res_code, err_response)));
             }
 
+            // if given deck, ensure it exists
+            if update_card_score_request.deck.is_some() {
+
+                match deck_exists(grokdb, update_card_score_request.deck.unwrap()) {
+                    Err(response) => {
+                        return response;
+                    },
+                    _ => {/* deck exists; continue */}
+                }
+            }
+
+            // if given stash, ensure it exists
+            if update_card_score_request.stash.is_some() {
+
+                match stash_exists(grokdb, update_card_score_request.stash.unwrap()) {
+                    Err(response) => {
+                        return response;
+                    },
+                    _ => {/* stash exists; continue */}
+                }
+            }
+
             // update card score
             match grokdb.review.update_reviewed_card(card_id, update_card_score_request) {
                 Err(why) => {
