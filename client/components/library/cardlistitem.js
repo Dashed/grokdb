@@ -35,7 +35,7 @@ const CardListItem = React.createClass({
         // datetime of when last reviewed
 
         const offset = new Date().getTimezoneOffset();
-        const lastReviewedDatetime = moment.unix(card.getIn(['review_stat', 'reviewed_at'])).utcOffset(-offset);;
+        const lastReviewedDatetime = moment.unix(card.getIn(['review_stat', 'reviewed_at'])).utcOffset(-offset);
 
         const createdAt = moment.unix(card.get('created_at')).utcOffset(-offset);
         const wasReviewed = Math.abs(lastReviewedDatetime.diff(createdAt)) <= 250 ? false : true;
