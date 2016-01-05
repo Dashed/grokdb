@@ -174,6 +174,23 @@ impl UpdateCardScore {
             //     (!self.stash.is_some() && !self.deck.is_some()));
     }
 
+    pub fn should_update_card_container(&self) -> bool {
+
+        if !self.stash.is_some() && !self.deck.is_some() {
+            return false;
+        }
+
+        match self.get_action() {
+            Action::Skip | Action::Reset | Action::Invalid => {
+                return false;
+            },
+
+            Action::Success | Action::Fail | Action::Forgot => {
+                return true;
+            }
+        }
+    }
+
     // get fields to update.
     // this is a helper to construct the sql update query
     pub fn sqlize(&self) -> (String, Vec<(&str, &ToSql)>) {
@@ -360,7 +377,7 @@ impl ReviewAPI {
             _ => {/* query sucessfully executed */}
         }
 
-        if update_review_request.deck.is_some() {
+        if update_review_request.should_update_card_container() && update_review_request.deck.is_some() {
 
             let deck_id: i64 = update_review_request.deck.unwrap();
 
@@ -382,7 +399,7 @@ impl ReviewAPI {
                 _ => {/* query sucessfully executed */}
             }
 
-        } else if update_review_request.stash.is_some() {
+        } else if update_review_request.should_update_card_container() && update_review_request.stash.is_some() {
 
             let stash_id = update_review_request.stash.unwrap();
 
