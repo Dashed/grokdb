@@ -78,7 +78,10 @@ struct Deck {
     name: String,
     description: String,
     created_at: i64, // unix timestamp
-    updated_at: i64  // unix timestamp
+    updated_at: i64,  // unix timestamp
+
+    reviewed_at: i64,  // unix timestamp
+    has_reviewed: bool // false if reviewed_at == created_at
 }
 
 #[derive(Debug, RustcEncodable)]
@@ -91,6 +94,8 @@ struct DeckResponse {
     children: Vec<i64>,
     created_at: i64, // unix timestamp
     updated_at: i64,  // unix timestamp
+    reviewed_at: i64,  // unix timestamp
+    has_reviewed: bool, // false if reviewed_at == created_at
     ancestors: Vec<i64> // Vec of deck ids
 }
 
@@ -170,6 +175,8 @@ impl DecksAPI {
             children: children,
             created_at: deck.created_at, // unix timestamp
             updated_at: deck.updated_at,  // unix timestamp
+            reviewed_at: deck.reviewed_at,  // unix timestamp
+            has_reviewed: deck.has_reviewed, // false if reviewed_at == created_at
             ancestors: ancestors
         };
 
@@ -183,18 +190,24 @@ impl DecksAPI {
 
         let ref query = format!("
             SELECT
-                deck_id, name, description, created_at, updated_at
+                deck_id, name, description, created_at, updated_at, reviewed_at
             FROM Decks
             WHERE deck_id = $1 LIMIT 1;
         ");
 
         let results = db_conn.query_row(query, &[&deck_id], |row| -> Deck {
+
+            let created_at: i64 = row.get(3);
+            let reviewed_at: i64 = row.get(5);
+
             return Deck {
                 id: row.get(0),
                 name: row.get(1),
                 description: row.get(2),
-                created_at: row.get(3),
-                updated_at: row.get(4)
+                created_at: created_at,
+                updated_at: row.get(4),
+                reviewed_at: reviewed_at,
+                has_reviewed: created_at != reviewed_at
             };
         });
 
