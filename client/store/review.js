@@ -89,6 +89,7 @@ ReviewPatch.prototype.difficulty = function(difficultyTag = NOT_SET) {
         case difficulty.fail:
         case difficulty.good:
         case difficulty.easy:
+        case difficulty.none:
             break;
         default:
             throw Error(`Unexpected difficultyTag. Given ${String(difficultyTag)}`);
@@ -188,7 +189,7 @@ Review.prototype.reviewCard = function(reviewPatch) {
             break;
 
         default:
-            throw Error(`Unexpected difficultyTag. Given ${difficultyTag}`);
+            throw Error(`Unexpected difficultyTag. Given ${String(difficultyTag)}`);
         }
 
     })();
