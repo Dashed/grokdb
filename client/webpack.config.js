@@ -51,7 +51,7 @@ module.exports = {
             'react-prop-once', // TODO: remove if unused
             'scriptjs',
             'markdown-it',
-            // 'markdown-it-abbr', // TODO: blocking: https://github.com/markdown-it/markdown-it-abbr/issues/5
+            'markdown-it-abbr',
             // 'markdown-it-footnote',
 
             // these break mathjax
