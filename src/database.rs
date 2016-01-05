@@ -1,6 +1,5 @@
 extern crate libc;
 extern crate rusqlite;
-extern crate libsqlite3_sys as ffi;
 
 use std::error;
 use std::fmt;
@@ -8,25 +7,24 @@ use std::ops::Deref;
 use std::sync::{Arc, Mutex, LockResult, MutexGuard};
 use libc::{c_int, c_double};
 
-use rusqlite::SqliteConnection;
-use rusqlite::SqliteError;
-use rusqlite::functions::{sqlite3_context, sqlite3_value, FromValue,ToResult};
+use rusqlite::{Connection, Error, Result as SqliteResult};
+use rusqlite::functions::{Context};
 
 use queries::tables;
 
 #[derive(Debug)]
 pub struct DB {
-    pub db_conn: Arc<Mutex<SqliteConnection>>
+    pub db_conn: Arc<Mutex<Connection>>
 }
 
 impl DB {
 
-    pub fn lock(&self) -> LockResult<MutexGuard<SqliteConnection>> {
+    pub fn lock(&self) -> LockResult<MutexGuard<Connection>> {
         let mutex = self.db_conn.deref();
         return mutex.lock();
     }
 
-    pub fn prepare_query(db_conn: &SqliteConnection) -> Result<(), QueryError> {
+    pub fn prepare_query(db_conn: &Connection) -> Result<(), QueryError> {
 
         // src: https://www.sqlite.org/pragma.html#pragma_foreign_keys
         // As of SQLite version 3.6.19, the default setting for foreign key enforcement is OFF.
@@ -59,7 +57,7 @@ impl DB {
 
 #[derive(Debug)]
 pub struct QueryError {
-    pub sqlite_error: SqliteError,
+    pub sqlite_error: Error,
     pub query: String,
 }
 
@@ -78,7 +76,7 @@ impl error::Error for QueryError {
 #[derive(Debug)]
 pub enum BootstrapError {
     Query(QueryError),
-    Sqlite(SqliteError),
+    Sqlite(Error),
 }
 
 impl fmt::Display for BootstrapError {
@@ -105,8 +103,8 @@ impl From<QueryError> for BootstrapError {
     }
 }
 
-impl From<SqliteError> for BootstrapError {
-    fn from(err: SqliteError) -> BootstrapError {
+impl From<Error> for BootstrapError {
+    fn from(err: Error) -> BootstrapError {
         return BootstrapError::Sqlite(err);
     }
 }
@@ -114,7 +112,7 @@ impl From<SqliteError> for BootstrapError {
 pub fn bootstrap(database_name: String) -> Result<DB, BootstrapError> {
 
     // open db connection
-    let db_conn = SqliteConnection::open(database_name);
+    let db_conn = Connection::open(database_name);
 
     return match db_conn {
         Err(why) => {
@@ -123,11 +121,13 @@ pub fn bootstrap(database_name: String) -> Result<DB, BootstrapError> {
         Ok(db_conn) => {
 
             // TODO: move this somewhere
-            match db_conn.create_scalar_function("rank_score", 4, true, Some(rank_score)) {
+            match db_conn.create_scalar_function("rank_score", 4, true, rank_score) {
                 Err(why) => {
                     return Err(BootstrapError::Sqlite(why));
                 },
                 _ => {
+
+                    // ensure custom scalar function was loaded
 
                     let ref query = format!("
                         SELECT rank_score(0, 0, 0, 0);
@@ -201,63 +201,23 @@ fn create_tables(db: &DB) -> Result<(), QueryError> {
 }
 
 // TODO: move this somewhere
-extern "C" fn rank_score(ctx: *mut sqlite3_context, _: c_int, argv: *mut *mut sqlite3_value) {
+fn rank_score(ctx: &Context) -> SqliteResult<c_double> {
 
     // rank_score(success: int, fail: int, age: int, times_reviewed: int) -> f64
+    assert!(ctx.len() == 4, "called with unexpected number of arguments");
 
-    unsafe {
+    let success = try!(ctx.get::<c_int>(0)) as c_double;
+    let fail = try!(ctx.get::<c_int>(1)) as c_double;
+    let age = try!(ctx.get::<c_int>(2)) as c_double;
+    let times_reviewed = try!(ctx.get::<c_int>(3)) as c_double;
 
-        let success = {
-            let _success = *argv.offset(0);
+    let total: c_double = success + fail;
 
-            if !c_int::parameter_has_valid_sqlite_type(_success) {
-                ffi::sqlite3_result_error_code(ctx, ffi::SQLITE_MISMATCH);
-                return;
-            }
+    let lidstone: c_double = (fail + 0.5f64) / (total + 1.0f64);
+    let bias_factor: c_double = (1.0f64 + fail) / ((total + 1.0f64) + success + times_reviewed / 3.0f64);
+    let base: c_double = lidstone + 1.0f64;
 
-            c_int::parameter_value(_success).unwrap() as c_double
-        };
+    let _rank_score: c_double = lidstone * (age * bias_factor + base).ln() / base.ln();
 
-        let fail = {
-            let _fail = *argv.offset(1);
-
-            if !c_int::parameter_has_valid_sqlite_type(_fail) {
-                ffi::sqlite3_result_error_code(ctx, ffi::SQLITE_MISMATCH);
-                return;
-            }
-
-            c_int::parameter_value(_fail).unwrap() as c_double
-        };
-
-        let age = {
-            let _age = *argv.offset(2);
-
-            if !c_int::parameter_has_valid_sqlite_type(_age) {
-                ffi::sqlite3_result_error_code(ctx, ffi::SQLITE_MISMATCH);
-                return;
-            }
-
-            c_int::parameter_value(_age).unwrap() as c_double
-        };
-
-        let times_reviewed = {
-            let _times_reviewed = *argv.offset(3);
-
-            if !c_int::parameter_has_valid_sqlite_type(_times_reviewed) {
-                ffi::sqlite3_result_error_code(ctx, ffi::SQLITE_MISMATCH);
-                return;
-            }
-
-            c_int::parameter_value(_times_reviewed).unwrap() as c_double
-        };
-
-        let total: c_double = success + fail;
-
-        let lidstone: c_double = (fail + 0.5f64) / (total + 1.0f64);
-        let bias_factor: c_double = (1.0f64 + fail) / ((total + 1.0f64) + success + times_reviewed / 3.0f64);
-        let base: c_double = lidstone + 1.0f64;
-
-        let _rank_score: c_double = lidstone * (age * bias_factor + base).ln() / base.ln();
-        _rank_score.set_result(ctx);
-    }
+    return Ok(_rank_score);
 }

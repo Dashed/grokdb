@@ -6,7 +6,7 @@ pub mod restify;
 use std::sync::Arc;
 
 use rusqlite::types::ToSql;
-use rusqlite::{SqliteStatement};
+use rusqlite::{Statement};
 use rustc_serialize::json;
 
 use ::api::{GrokDB};
@@ -226,7 +226,7 @@ impl CardsAPI {
             LIMIT 1;
         ");
 
-        let results = db_conn.query_named_row(query, &[(":card_id", &card_id)], |row| -> Card {
+        let results = db_conn.query_row_named(query, &[(":card_id", &card_id)], |row| -> Card {
             return Card {
                 id: row.get(0),
                 title: row.get(1),
@@ -273,7 +273,7 @@ impl CardsAPI {
             (":deck_id", &deck_id)
         ];
 
-        let maybe_count = db_conn.query_named_row(query, params, |row| -> i64 {
+        let maybe_count = db_conn.query_row_named(query, params, |row| -> i64 {
             return row.get(0);
         });
 
@@ -319,7 +319,7 @@ impl CardsAPI {
             return Err(err);
         }
 
-        let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+        let mut stmt: Statement = maybe_stmt.unwrap();
 
         let maybe_iter = stmt.query_named(params);
 
@@ -540,7 +540,7 @@ impl CardsAPI {
             (":deck_id", &deck_id)
         ];
 
-        let deck_exists = db_conn.query_named_row(query, params, |row| -> bool {
+        let deck_exists = db_conn.query_row_named(query, params, |row| -> bool {
             let count: i64 = row.get(0);
             return count >= 1;
         });
@@ -577,7 +577,7 @@ impl CardsAPI {
             (":stash_id", &stash_id)
         ];
 
-        let maybe_count = db_conn.query_named_row(query, params, |row| -> i64 {
+        let maybe_count = db_conn.query_row_named(query, params, |row| -> i64 {
             return row.get(0);
         });
 
@@ -626,7 +626,7 @@ impl CardsAPI {
             return Err(err);
         }
 
-        let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+        let mut stmt: Statement = maybe_stmt.unwrap();
 
         let maybe_iter = stmt.query_named(params);
 

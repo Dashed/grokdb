@@ -271,7 +271,7 @@ impl ReviewAPI {
             LIMIT 1;
         ");
 
-        let results = db_conn.query_named_row(query, &[(":card_id", &card_id)], |row| -> ReviewResponse {
+        let results = db_conn.query_row_named(query, &[(":card_id", &card_id)], |row| -> ReviewResponse {
 
             let success: i64 = row.get(0);
             let fail: i64 = row.get(1);

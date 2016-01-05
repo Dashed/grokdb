@@ -110,7 +110,7 @@ impl ConfigsAPI {
             (":setting", &config_name)
         ];
 
-        let results = db_conn.query_named_row(query, params, |row| -> ConfigResponse {
+        let results = db_conn.query_row_named(query, params, |row| -> ConfigResponse {
             return ConfigResponse {
                 setting: row.get(0),
                 value: row.get(1)

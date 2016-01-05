@@ -49,7 +49,7 @@ impl ReviewableDeck {
             LIMIT 1;
         ");
 
-        let has_entry = db_conn.query_named_row(query_count, params, |row| -> bool {
+        let has_entry = db_conn.query_row_named(query_count, params, |row| -> bool {
             let count: i64 = row.get(0);
             return count >= 1;
         });
@@ -78,7 +78,7 @@ impl ReviewableDeck {
             LIMIT 1;
         ");
 
-        let cached_card = db_conn.query_named_row(query, params, |row| -> i64 {
+        let cached_card = db_conn.query_row_named(query, params, |row| -> i64 {
             return row.get(1);
         });
 
@@ -298,7 +298,7 @@ impl ReviewableSelection for ReviewableDeck {
                 (c.created_at - cs.updated_at) = 0;
         ");
 
-        let maybe_count = db_conn.query_named_row(query, params, |row| -> i64 {
+        let maybe_count = db_conn.query_row_named(query, params, |row| -> i64 {
             return row.get(0);
         });
 
@@ -348,7 +348,7 @@ impl ReviewableSelection for ReviewableDeck {
             (":offset", &index),
         ];
 
-        let maybe_card_id = db_conn.query_named_row(query, params, |row| -> i64 {
+        let maybe_card_id = db_conn.query_row_named(query, params, |row| -> i64 {
             return row.get(0);
         });
 
@@ -412,7 +412,7 @@ impl ReviewableSelection for ReviewableDeck {
             (":deck_id", &(self.deck_id))
         ];
 
-        let maybe_count = db_conn.query_named_row(query, params, |row| -> i64 {
+        let maybe_count = db_conn.query_row_named(query, params, |row| -> i64 {
             return row.get(0);
         });
 
@@ -470,7 +470,7 @@ impl ReviewableSelection for ReviewableDeck {
             (":deck_id", &(self.deck_id))
         ];
 
-        let maybe_card_id = db_conn.query_named_row(query, params, |row| -> i64 {
+        let maybe_card_id = db_conn.query_row_named(query, params, |row| -> i64 {
             return row.get(0);
         });
 
@@ -547,7 +547,7 @@ impl ReviewableSelection for ReviewableDeck {
             (":deck_id", &(self.deck_id))
         ];
 
-        let maybe_count = db_conn.query_named_row(query, params, |row| -> i64 {
+        let maybe_count = db_conn.query_row_named(query, params, |row| -> i64 {
             return row.get(0);
         });
 
@@ -614,7 +614,7 @@ impl ReviewableSelection for ReviewableDeck {
             (":deck_id", &(self.deck_id))
         ];
 
-        let maybe_card_id = db_conn.query_named_row(query, params, |row| -> i64 {
+        let maybe_card_id = db_conn.query_row_named(query, params, |row| -> i64 {
             return row.get(0);
         });
 

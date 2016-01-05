@@ -9,6 +9,7 @@ use iron::status;
 use iron::prelude::*;
 use router::Router;
 use rustc_serialize::json;
+use rusqlite::DatabaseName;
 
 use std::sync::Arc;
 use std::ops::Deref;
@@ -135,7 +136,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
             let dest_path: String = backup_request.get_path(&grokdb.base_db_name);
 
-            match db_conn.backup("main", &dest_path) {
+            match db_conn.backup(DatabaseName::Main, &dest_path, None) {
                 Err(why) => {
 
                     let ref reason = format!("{:?}", why);

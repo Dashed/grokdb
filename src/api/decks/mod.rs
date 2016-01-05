@@ -9,7 +9,7 @@ pub mod reviewable;
 use std::sync::Arc;
 
 use rusqlite::types::ToSql;
-use rusqlite::{SqliteStatement, SqliteRow};
+use rusqlite::{Statement, Row};
 use rustc_serialize::json;
 
 use ::database::{DB, QueryError};
@@ -383,9 +383,9 @@ impl DecksAPI {
             return Err(err);
         }
 
-        let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+        let mut stmt: Statement = maybe_stmt.unwrap();
 
-        let maybe_iter = stmt.query_map(params, |row: SqliteRow| -> i64 {
+        let maybe_iter = stmt.query_map(params, |row: &Row| -> i64 {
             return row.get(0);
         });
 
@@ -458,9 +458,9 @@ impl DecksAPI {
             return Err(err);
         }
 
-        let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+        let mut stmt: Statement = maybe_stmt.unwrap();
 
-        let maybe_iter = stmt.query_map(params, |row: SqliteRow| -> String {
+        let maybe_iter = stmt.query_map(params, |row: &Row| -> String {
             return row.get(0);
         });
 
@@ -536,9 +536,9 @@ impl DecksAPI {
             return Err(err);
         }
 
-        let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+        let mut stmt: Statement = maybe_stmt.unwrap();
 
-        let maybe_iter = stmt.query_map(params, |row: SqliteRow| -> i64 {
+        let maybe_iter = stmt.query_map(params, |row: &Row| -> i64 {
             return row.get(0);
         });
 

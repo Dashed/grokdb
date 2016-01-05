@@ -564,7 +564,7 @@ impl StashesAPI {
             (":card_id", &card_id)
         ];
 
-        let maybe_count = db_conn.query_named_row(query, params, |row| -> i64 {
+        let maybe_count = db_conn.query_row_named(query, params, |row| -> i64 {
             return row.get(0);
         });
 

@@ -21,15 +21,8 @@ version = "0.2"
 version = "1.4"
 
 [dependencies.rusqlite]
-git = "https://github.com/Dashed/rusqlite"
-rev = "babbb29757bcf512b90385dcce8397585650cae8"
-features = ["named_params", "functions", "backup"]
-
-[dependencies.libsqlite3-sys]
-git = "https://github.com/Dashed/rusqlite"
-rev = "babbb29757bcf512b90385dcce8397585650cae8"
-path = "libsqlite3-sys"
-version = "0.2.0"
+version = "0.6"
+features = ["functions", "backup"]
 
 [dependencies.rustc-serialize]
 version = "0.3"
