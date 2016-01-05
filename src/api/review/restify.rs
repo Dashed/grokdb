@@ -124,6 +124,11 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                     },
                     _ => {/* deck exists; continue */}
                 }
+
+                // invariant: cached card implies it was once put for review
+
+                // check if cache exists
+                // TODO: is this necessary?
             }
 
             // if given stash, ensure it exists
@@ -135,6 +140,9 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                     },
                     _ => {/* stash exists; continue */}
                 }
+
+                // check if cache exists
+                // TODO: is this necessary?
             }
 
             // update card score
