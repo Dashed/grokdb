@@ -39,6 +39,12 @@ const DeckListItem = React.createClass({
 
         const lastReviewed = wasReviewed ? `last reviewed ${lastReviewedDatetime.fromNow()}.` : `hasn't been reviewed yet.`;
 
+        const deckChildren = deck.get('children');
+        const numDecks = deckChildren.size > 0 ?
+            deckChildren.size == 1 ?
+            'Has a deck.' : `Has ${deckChildren.size} decks.`
+            : 'Has no decks.';
+
         return (
             <li className="list-group-item">
                 <h6 className="list-group-item-heading m-y-0">
@@ -47,8 +53,8 @@ const DeckListItem = React.createClass({
                     </a>
                 </h6>
                 <p className="list-group-item-text m-y-0">
-                    <small>
-                        {`Deck #${deck.get('id')} ${lastReviewed}`}
+                    <small className="text-muted">
+                        {`Deck #${deck.get('id')} ${lastReviewed} ${numDecks}`}
                     </small>
                 </p>
             </li>
