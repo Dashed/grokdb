@@ -103,11 +103,11 @@ const Subnav = React.createClass({
 
 const SubnavOrwell = courier({
 
-    component: Subnav,
-
     contextTypes: {
         store: React.PropTypes.object.isRequired
     },
+
+    component: Subnav,
 
     watch(props, manual, context) {
         return context.store.routes.watchRoute();
