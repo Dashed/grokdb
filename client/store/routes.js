@@ -155,7 +155,8 @@ const ROUTE = {
 
         PROFILE: {
             CARDS: Symbol(),
-            DESCRIPTION: Symbol()
+            DESCRIPTION: Symbol(),
+            META: Symbol()
         },
 
         REVIEW: {
@@ -935,6 +936,23 @@ const boostrapRoutes = co.wrap(function *(store) {
 
         }, postRouteLoad);
 
+    page('/stash/:stash_id/meta',
+        reloadAppState,
+        ensureValidStashID,
+        ensureStashIDExists,
+        function(context, next) {
+
+            const stashID = context.stash_id;
+
+            store.resetStage();
+            store.stashes.currentID(stashID);
+            store.routes.route(ROUTE.STASHES.PROFILE.META);
+            store.commit();
+
+            next();
+
+        }, postRouteLoad);
+
     // route not found; redirect to the root deck
     page('*', function(context, next) {
         console.error('not found', context);
@@ -1267,12 +1285,7 @@ Routes.prototype.toLibraryMeta = function(toDeckID = NOT_SET) {
 };
 
 Routes.prototype.toCard = function(cardID, deckID) {
-
-    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
-
-    this.shouldChangeRoute(() => {
-        page(`/deck/${deckID}/card/${cardID}/view/front`);
-    });
+    this.toCardFront(cardID, deckID);
 };
 
 Routes.prototype.toCardFront = function(cardID, deckID) {
@@ -1343,13 +1356,54 @@ Routes.prototype.toAddNewStash = function() {
 };
 
 Routes.prototype.toStash = function(stashID) {
+    this.toStashCards(stashID);
+};
 
-    invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+Routes.prototype.toStashCards = function(stashID = NOT_SET) {
 
     this.shouldChangeRoute(() => {
+
+        if(stashID === NOT_SET) {
+            this._store.resetStage();
+            stashID = this._store.stashes.currentID();
+        }
+
+        invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
         page(`/stash/${stashID}/cards`);
     });
 };
+
+Routes.prototype.toStashDescription = function(stashID = NOT_SET) {
+
+    this.shouldChangeRoute(() => {
+
+        if(stashID === NOT_SET) {
+            this._store.resetStage();
+            stashID = this._store.stashes.currentID();
+        }
+
+        invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
+        page(`/stash/${stashID}/description`);
+    });
+};
+
+Routes.prototype.toStashMeta = function(stashID = NOT_SET) {
+
+    this.shouldChangeRoute(() => {
+
+        if(stashID === NOT_SET) {
+            this._store.resetStage();
+            stashID = this._store.stashes.currentID();
+        }
+
+        invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
+        page(`/stash/${stashID}/meta`);
+    });
+};
+
 
 module.exports = {
     bootstrap: boostrapRoutes,

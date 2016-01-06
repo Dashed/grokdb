@@ -121,6 +121,7 @@ const App = courier({
 
         case ROUTES.STASHES.PROFILE.CARDS:
         case ROUTES.STASHES.PROFILE.DESCRIPTION:
+        case ROUTES.STASHES.PROFILE.META:
         case ROUTES.STASHES.VIEW.LIST:
         case ROUTES.STASHES.VIEW.ADD:
         // TODO: complete

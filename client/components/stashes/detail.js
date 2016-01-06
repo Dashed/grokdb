@@ -3,6 +3,7 @@ const React = require('react');
 const courier = require('courier');
 
 const StashHeader = require('./header');
+const StashTabs = require('./tabs');
 
 const StashDetail = React.createClass({
 
@@ -37,8 +38,13 @@ const StashDetail = React.createClass({
                     </div>
                 </div>
                 <div className="row">
-                    <div className="col-sm-12">
+                    <div className="col-sm-12 m-b">
                         <StashHeader stashID={stashID} />
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-sm-12 m-b">
+                        <StashTabs />
                     </div>
                 </div>
             </div>

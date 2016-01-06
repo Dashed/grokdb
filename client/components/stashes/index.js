@@ -65,7 +65,7 @@ const Stashes = React.createClass({
 
         case ROUTES.STASHES.PROFILE.CARDS:
         case ROUTES.STASHES.PROFILE.DESCRIPTION:
-
+        case ROUTES.STASHES.PROFILE.META:
             return (
                 <StashDetail />
             );
