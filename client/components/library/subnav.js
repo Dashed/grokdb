@@ -59,7 +59,7 @@ const Subnav = React.createClass({
         const {route} = this.props;
 
         return (
-            <ul className="nav nav-tabs m-b">
+            <ul className="nav nav-tabs">
                 <li className="nav-item">
                     <a
                         className={classnames('nav-link', {
