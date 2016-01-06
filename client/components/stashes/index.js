@@ -8,6 +8,7 @@ const {symbol: symbolPropType} = require('utils/proptype');
 
 const CreateStash = require('./create');
 const StashesList = require('./list');
+const StashDetail = require('./detail');
 
 const Stashes = React.createClass({
 
@@ -62,14 +63,22 @@ const Stashes = React.createClass({
             );
             break;
 
-        case ROUTES.STASHES.REVIEW.VIEW.FRONT:
-        case ROUTES.STASHES.REVIEW.VIEW.BACK:
-        case ROUTES.STASHES.REVIEW.VIEW.DESCRIPTION:
-        case ROUTES.STASHES.REVIEW.VIEW.META:
-        case ROUTES.STASHES.REVIEW.VIEW.STASHES:
+        case ROUTES.STASHES.PROFILE.CARDS:
+        case ROUTES.STASHES.PROFILE.DESCRIPTION:
 
-            return null;
+            return (
+                <StashDetail />
+            );
             break;
+
+        // case ROUTES.STASHES.REVIEW.VIEW.FRONT:
+        // case ROUTES.STASHES.REVIEW.VIEW.BACK:
+        // case ROUTES.STASHES.REVIEW.VIEW.DESCRIPTION:
+        // case ROUTES.STASHES.REVIEW.VIEW.META:
+        // case ROUTES.STASHES.REVIEW.VIEW.STASHES:
+
+        //     return null;
+        //     break;
 
         default:
             invariant(false, `Unexpected route. Given: ${String(this.props.route)}`);

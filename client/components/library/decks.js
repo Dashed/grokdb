@@ -84,13 +84,13 @@ const LibraryDecks = React.createClass({
 
 module.exports = courier({
 
-    component: LibraryDecks,
-
-    // onlyWaitingOnMount: true,
-
     contextTypes: {
         store: React.PropTypes.object.isRequired
     },
+
+    component: LibraryDecks,
+
+    // onlyWaitingOnMount: true,
 
     watch(props, manual, context) {
         return context.store.decks.watchCurrent();

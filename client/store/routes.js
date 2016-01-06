@@ -153,6 +153,11 @@ const ROUTE = {
             ADD: Symbol()
         },
 
+        PROFILE: {
+            CARDS: Symbol(),
+            DESCRIPTION: Symbol()
+        },
+
         REVIEW: {
             VIEW: {
                 FRONT: Symbol(),
@@ -839,6 +844,97 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     }, postRouteLoad);
 
+    const toStash = function(stashID) {
+        page.redirect(`/stash/${stashID}`);
+    };
+
+    const toStashList = function() {
+        page.redirect(`/stashes`);
+    };
+
+    const ensureValidStashID = function(context, next) {
+
+        const stashID = filterInteger(context.params.stash_id, NOT_ID);
+
+        if(stashID === NOT_ID) {
+            toStashList();
+            return;
+        }
+
+        context.stash_id = stashID;
+
+        next();
+    };
+
+    const ensureStashIDExists = function(context, next) {
+
+        const stashID = context.stash_id;
+
+        store.stashes.exists(stashID)
+        .then(function(result) {
+
+            return new Promise(function(resolve, reject) {
+
+                if(!result.response) {
+                    toStashList();
+                    return reject(Error('redirecting'));
+                }
+
+                resolve(store.stashes.get(stashID));
+            });
+        })
+        .then(function() {
+            next();
+            return null;
+        }, function() {
+            return null;
+        });
+
+    };
+
+    page('/stash/:stash_id',
+        reloadAppState,
+        function(context) {
+
+            const stashID = context.params.stash_id;
+            toStash(stashID);
+
+        });
+
+    page('/stash/:stash_id/cards',
+        reloadAppState,
+        ensureValidStashID,
+        ensureStashIDExists,
+        function(context, next) {
+
+            const stashID = context.stash_id;
+
+            store.resetStage();
+            store.stashes.currentID(stashID);
+            store.routes.route(ROUTE.STASHES.PROFILE.CARDS);
+            store.commit();
+
+            next();
+
+        }, postRouteLoad);
+
+    page('/stash/:stash_id/description',
+        reloadAppState,
+        ensureValidStashID,
+        ensureStashIDExists,
+        function(context, next) {
+
+            const stashID = context.stash_id;
+
+            store.resetStage();
+            store.stashes.currentID(stashID);
+            store.routes.route(ROUTE.STASHES.PROFILE.DESCRIPTION);
+            store.commit();
+
+            next();
+
+        }, postRouteLoad);
+
     // route not found; redirect to the root deck
     page('*', function(context, next) {
         console.error('not found', context);
@@ -1244,6 +1340,15 @@ Routes.prototype.toAddNewStash = function() {
         page(`/stashes/new`);
     });
 
+};
+
+Routes.prototype.toStash = function(stashID) {
+
+    invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/cards`);
+    });
 };
 
 module.exports = {

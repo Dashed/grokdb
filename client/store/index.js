@@ -5,9 +5,9 @@ const bootstrap = require('./bootstrap');
 const {Configs} = require('./configs');
 const {Routes} = require('./routes');
 const {Decks} = require('./decks');
-const {Cards, pagination} = require('./cards');
+const {Cards, pagination: cardPagination} = require('./cards');
 const {Review} = require('./review');
-const {Stashes} = require('./stashes');
+const {Stashes, pagination: stashPagination} = require('./stashes');
 
 
 // sentinel value
@@ -32,18 +32,24 @@ const SCHEMA = {
         self: null,
 
         // pagination / filtering for list of cards in a deck
-        sort: pagination.sort.UPDATED_AT,
-        order: pagination.order.DESC,
+        sort: cardPagination.sort.UPDATED_AT,
+        order: cardPagination.order.DESC,
         page: 1
     },
 
     // review: {
     // },
 
+    stash: {
+        self: null // stash id
+    },
+
     stashes: {
-        self: null,
-        list: [],
-        cards: []
+
+        // pagination / filtering for list of stashes
+        sort: stashPagination.sort.UPDATED_AT,
+        order: stashPagination.order.DESC,
+        page: 1
     }
 };
 
