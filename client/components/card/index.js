@@ -634,7 +634,7 @@ module.exports = courier({
                     break;
 
                 default:
-                    invariant(false, `Unexpected route. Given: ${String(this.props.route)}`);
+                    invariant(false, `Unexpected route. Given: ${String(route)}`);
                 }
 
                 const currentDeckID = context.store.decks.currentID();
