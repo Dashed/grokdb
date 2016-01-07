@@ -400,16 +400,21 @@ impl StashesAPI {
                     FROM
                     StashCards
                         WHERE
-                    card = $2
+                    card = :card_id
                 ) AS sc
             ON
                 sc.stash = stash_id
             WHERE
-                stash_id = $1
+                stash_id = :stash_id
             LIMIT 1;
         ");
 
-        let results = db_conn.query_row(query, &[&stash_id, &card_id], |row| -> StashWithCard {
+        let params: &[(&str, &ToSql)] = &[
+            (":stash_id", &stash_id),
+            (":card_id", &card_id)
+        ];
+
+        let results = db_conn.query_row_named(query, params, |row| -> StashWithCard {
 
             let __has_card: i64 = row.get(5);
 
