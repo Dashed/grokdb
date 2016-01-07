@@ -878,6 +878,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
+    // GET /decks/:deck_id/cards/total
     router.get("/decks/:deck_id/cards/:card_id", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
@@ -916,6 +917,8 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
             let card_id = req.extensions.get::<Router>().unwrap().find("card_id").unwrap();
 
+            // GET /decks/:deck_id/cards/total
+            // number of cards in a deck
             match card_id.to_lowercase().as_ref() {
                 "total" => {
 
