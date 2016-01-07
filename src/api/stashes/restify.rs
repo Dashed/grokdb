@@ -1082,6 +1082,185 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         move |req: &mut Request| -> IronResult<Response> {
             let ref grokdb = grokdb.deref();
 
+            let page_query: StashesPageRequest = match req.get_ref::<UrlEncodedQuery>() {
+
+                Ok(ref hashmap) => {
+
+                    let hashmap: &QueryMap = hashmap;
+
+                    let page: i64 = match hashmap.contains_key("page") {
+                        true => {
+                            let maybe_page: &Vec<String> = hashmap.get("page").unwrap();
+
+                            if maybe_page.len() <= 0 {
+                                1
+                            } else {
+
+                                let ref page: String = maybe_page[0];
+
+                                match page.parse::<i64>() {
+                                    Ok(page) => {
+                                        let page: i64 = page;
+
+                                        if page <= 0 {
+                                            let ref reason = format!("page query should be at least 1");
+                                            let res_code = status::BadRequest;
+
+                                            let err_response = ErrorResponse {
+                                                status: res_code,
+                                                developerMessage: reason,
+                                                userMessage: reason,
+                                            }.to_json();
+
+                                            return Ok(Response::with((res_code, err_response)));
+                                        }
+
+                                        page
+                                    },
+                                    Err(why) => {
+                                        let ref reason = format!("invalid page query");
+                                        let res_code = status::BadRequest;
+
+                                        let err_response = ErrorResponse {
+                                            status: res_code,
+                                            developerMessage: why.description(),
+                                            userMessage: reason,
+                                        }.to_json();
+
+                                        return Ok(Response::with((res_code, err_response)));
+                                    }
+                                }
+                            }
+                        },
+                        _ => 1
+                    };
+
+                    let per_page: i64 = match hashmap.contains_key("per_page") {
+                        true => {
+                            let maybe_per_page: &Vec<String> = hashmap.get("per_page").unwrap();
+
+                            if maybe_per_page.len() <= 0 {
+                                25
+                            } else {
+
+                                let ref per_page: String = maybe_per_page[0];
+
+                                match per_page.parse::<i64>() {
+                                    Ok(per_page) => {
+                                        let per_page: i64 = per_page;
+
+                                        if per_page <= 0 {
+                                            let ref reason = format!("per_page query should be at least 1");
+                                            let res_code = status::BadRequest;
+
+                                            let err_response = ErrorResponse {
+                                                status: res_code,
+                                                developerMessage: reason,
+                                                userMessage: reason,
+                                            }.to_json();
+
+                                            return Ok(Response::with((res_code, err_response)));
+                                        }
+
+                                        per_page
+                                    },
+                                    Err(why) => {
+                                        let ref reason = format!("invalid per_page query");
+                                        let res_code = status::BadRequest;
+
+                                        let err_response = ErrorResponse {
+                                            status: res_code,
+                                            developerMessage: why.description(),
+                                            userMessage: reason,
+                                        }.to_json();
+
+                                        return Ok(Response::with((res_code, err_response)));
+                                    }
+                                }
+                            }
+                        },
+                        _ => 25
+                    };
+
+                    let sort_by: SortBy = match hashmap.contains_key("sort_by") {
+                        true => {
+                            let maybe_sort_by: &Vec<String> = hashmap.get("sort_by").unwrap();
+
+                            if maybe_sort_by.len() <= 0 {
+                                SortBy::UpdatedAt
+                            } else {
+
+                                let ref sort_by: String = maybe_sort_by[0];
+
+                                match sort_by.to_lowercase().as_ref() {
+                                    "created_at" => SortBy::CreatedAt,
+                                    "updated_at" => SortBy::UpdatedAt,
+                                    "name" => SortBy::Name,
+                                    // "reviewed_at" => SortBy::ReviewedDate,
+                                    // "times_reviewed" => SortBy::TimesReviewed,
+                                    _ => SortBy::UpdatedAt
+                                }
+                            }
+                        },
+                        _ => SortBy::UpdatedAt
+                    };
+
+                    let order: SortOrder = match hashmap.contains_key("order_by") {
+                        true => {
+                            let maybe_order_by: &Vec<String> = hashmap.get("order_by").unwrap();
+
+                            if maybe_order_by.len() <= 0 {
+                                SortOrder::Descending
+                            } else {
+
+                                let ref order_by: String = maybe_order_by[0];
+
+                                match order_by.to_lowercase().as_ref() {
+                                    "desc" => SortOrder::Descending,
+                                    "descending" => SortOrder::Descending,
+                                    "asc" => SortOrder::Ascending,
+                                    "ascending" => SortOrder::Ascending,
+                                    _ => SortOrder::Descending
+                                }
+                            }
+                        },
+                        _ => SortOrder::Descending
+                    };
+
+                    StashesPageRequest {
+                        page: page,
+                        per_page: per_page,
+                        sort_by: sort_by,
+                        order: order,
+                        card: None
+                    }
+                },
+
+                Err(UrlDecodingError::EmptyQuery) => {
+                    StashesPageRequest {
+                        page: 1,
+                        per_page: 25,
+                        sort_by: SortBy::UpdatedAt,
+                        order: SortOrder::Descending,
+                        card: None
+                    }
+                },
+
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
             // fetch and parse requested card id
 
             let card_id = req.extensions.get::<Router>().unwrap().find("card_id").unwrap();
@@ -1137,7 +1316,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             }
 
-            let response: String = match grokdb.stashes.get_by_card(card_id) {
+            let response: String = match grokdb.stashes.get_by_card(card_id, &page_query) {
                 Err(why) => {
                     // why: QueryError
 

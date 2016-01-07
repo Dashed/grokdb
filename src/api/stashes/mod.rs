@@ -762,20 +762,17 @@ impl StashesAPI {
         };
     }
 
-    pub fn get_by_card(&self, card_id: i64) -> Result<Vec<i64>, QueryError> {
+    pub fn get_by_card(&self, card_id: i64, page_query: &StashesPageRequest) -> Result<Vec<i64>, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
 
-        let ref query = format!("
-            SELECT
-                stash
-            FROM StashCards
-            WHERE card = :card_id;
-        ");
+        let ref query = get_stashes_query_by_card(card_id, page_query);
 
         let params: &[(&str, &ToSql)] = &[
-            (":card_id", &card_id)
+            (":card_id", &card_id),
+            (":offset", &(page_query.get_offset())),
+            (":per_page", &(page_query.per_page))
         ];
 
         let maybe_stmt = db_conn.prepare(query);
@@ -905,6 +902,118 @@ fn get_stashes_query(page_query: &StashesPageRequest) -> String {
                     {sort_order}
                     LIMIT :offset
                 )
+                ORDER BY
+                    name
+                {sort_order}
+                LIMIT :per_page;
+            ", sort_order = sort_order)
+        }
+    };
+
+    return query;
+}
+
+fn get_stashes_query_by_card(card_id: i64, page_query: &StashesPageRequest) -> String {
+
+    let sort_order: &str = match page_query.order {
+        SortOrder::Descending => "DESC",
+        SortOrder::Ascending => "ASC"
+    };
+
+    let query = match page_query.sort_by {
+
+        SortBy::CreatedAt => {
+
+            format!("
+                SELECT
+                    stash_id, name, description, created_at, updated_at
+                FROM
+                    Stashes
+                INNER JOIN
+                    StashCards
+                ON
+                    Stashes.stash_id = StashCards.stash
+                WHERE Stashes.oid NOT IN (
+                    SELECT
+                        Stashes.oid
+                    FROM
+                        Stashes
+                    INNER JOIN
+                        StashCards
+                    ON
+                        Stashes.stash_id = StashCards.stash
+                    ORDER BY
+                        created_at
+                    {sort_order}
+                    LIMIT :offset
+                )
+                AND StashCards.card = :card_id
+                ORDER BY
+                    created_at
+                {sort_order}
+                LIMIT :per_page;
+            ", sort_order = sort_order)
+        },
+
+        SortBy::UpdatedAt => {
+
+            format!("
+                SELECT
+                    stash_id, name, description, created_at, updated_at
+                FROM
+                    Stashes
+                INNER JOIN
+                    StashCards
+                ON
+                    Stashes.stash_id = StashCards.stash
+                WHERE Stashes.oid NOT IN (
+                    SELECT
+                        Stashes.oid
+                    FROM
+                        Stashes
+                    INNER JOIN
+                        StashCards
+                    ON
+                        Stashes.stash_id = StashCards.stash
+                    ORDER BY
+                        updated_at
+                    {sort_order}
+                    LIMIT :offset
+                )
+                AND StashCards.card = :card_id
+                ORDER BY
+                    updated_at
+                {sort_order}
+                LIMIT :per_page;
+            ", sort_order = sort_order)
+        },
+
+        SortBy::Name => {
+
+            format!("
+                SELECT
+                    stash_id, name, description, created_at, updated_at
+                FROM
+                    Stashes
+                INNER JOIN
+                    StashCards
+                ON
+                    Stashes.stash_id = StashCards.stash
+                WHERE Stashes.oid NOT IN (
+                    SELECT
+                        Stashes.oid
+                    FROM
+                        Stashes
+                    INNER JOIN
+                        StashCards
+                    ON
+                        Stashes.stash_id = StashCards.stash
+                    ORDER BY
+                        name
+                    {sort_order}
+                    LIMIT :offset
+                )
+                AND StashCards.card = :card_id
                 ORDER BY
                     name
                 {sort_order}
