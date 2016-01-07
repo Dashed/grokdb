@@ -1313,6 +1313,19 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         let response: String = json::encode(v).unwrap();
                         return Ok(Response::with((status::Ok, response)));
                     }
+
+                    if page_query.get_offset() >= count {
+                        let ref reason = format!("page out of bounds");
+                        let res_code = status::BadRequest;
+
+                        let err_response = ErrorResponse {
+                            status: res_code,
+                            developerMessage: reason,
+                            userMessage: reason,
+                        }.to_json();
+
+                        return Ok(Response::with((res_code, err_response)));
+                    }
                 }
             }
 
