@@ -17,7 +17,7 @@ use std::error::Error;
 
 use ::api::{GrokDB, ErrorResponse};
 use ::api::cards::restify::card_exists;
-use ::api::stashes::{StashesPageRequest, SortBy, SortOrder, CreateStash, StashResponse, UpdateStash};
+use ::api::stashes::{StashesPageRequest, SortBy, SortOrder, CreateStash, StashResponse, StashResponseHasCard, UpdateStash};
 use ::database::QueryError;
 
 // attach stashes REST endpoints to given router
@@ -177,11 +177,54 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         _ => SortOrder::Descending
                     };
 
+                    let card: Option<i64> = match hashmap.contains_key("card") {
+                        true => {
+                            let maybe_card: &Vec<String> = hashmap.get("card").unwrap();
+
+                            if maybe_card.len() <= 0 {
+                                None
+                            } else {
+
+                                let ref maybe_card: String = maybe_card[0];
+
+                                let card_id: i64 = match maybe_card.parse::<u64>() {
+                                    Ok(card_id) => card_id as i64,
+                                    Err(why) => {
+
+                                        let ref reason = format!("{:?}", why);
+                                        let res_code = status::BadRequest;
+
+                                        let err_response = ErrorResponse {
+                                            status: res_code,
+                                            developerMessage: reason,
+                                            userMessage: why.description(),
+                                        }.to_json();
+
+                                        return Ok(Response::with((res_code, err_response)));
+                                    }
+                                };
+
+                                // ensure card exists
+                                match card_exists(grokdb, card_id) {
+                                    Err(response) => {
+                                        return response;
+                                    },
+                                    _ => {/* card exists; continue */}
+                                }
+
+                                Some(card_id)
+                            }
+
+                        },
+                        _ => None
+                    };
+
                     StashesPageRequest {
                         page: page,
                         per_page: per_page,
                         sort_by: sort_by,
-                        order: order
+                        order: order,
+                        card: card
                     }
                 },
 
@@ -190,7 +233,8 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         page: 1,
                         per_page: 25,
                         sort_by: SortBy::UpdatedAt,
-                        order: SortOrder::Descending
+                        order: SortOrder::Descending,
+                        card: None
                     }
                 },
 
@@ -254,7 +298,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             }
 
-            let response: String = match grokdb.stashes.get_list(page_query) {
+            let response: String = match grokdb.stashes.get_list(&page_query) {
 
                 Err(why) => {
                     // why: QueryError
@@ -273,41 +317,83 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
                 Ok(list) => {
 
-                    let mut collected_list: Vec<StashResponse> = vec![];
+                    match page_query.card {
+                        None => {
 
-                    for stash_id in &list {
+                            let mut collected_list: Vec<StashResponse> = vec![];
 
-                        let stash_id: i64 = *stash_id;
+                            for stash_id in &list {
 
-                        let maybe_stash: Result<StashResponse, QueryError> = grokdb.stashes.get_response(stash_id);
+                                let stash_id: i64 = *stash_id;
 
-                        let stash: StashResponse = match maybe_stash {
+                                let maybe_stash: Result<StashResponse, QueryError> = grokdb.stashes.get_response(stash_id);
 
-                            Err(why) => {
-                                // why: QueryError
+                                let stash: StashResponse = match maybe_stash {
 
-                                let ref reason = format!("{:?}", why);
-                                let res_code = status::NotFound;
+                                    Err(why) => {
+                                        // why: QueryError
 
-                                let err_response = ErrorResponse {
-                                    status: res_code,
-                                    developerMessage: reason,
-                                    userMessage: why.description(),
-                                }.to_json();
+                                        let ref reason = format!("{:?}", why);
+                                        let res_code = status::NotFound;
 
-                                return Ok(Response::with((res_code, err_response)));
-                            },
+                                        let err_response = ErrorResponse {
+                                            status: res_code,
+                                            developerMessage: reason,
+                                            userMessage: why.description(),
+                                        }.to_json();
 
-                            Ok(stash) => stash,
-                        };
+                                        return Ok(Response::with((res_code, err_response)));
+                                    },
 
-                        collected_list.push(stash);
+                                    Ok(stash) => stash,
+                                };
+
+                                collected_list.push(stash);
+                            }
+
+                            let ref collected_list = collected_list;
+
+                            json::encode(collected_list).unwrap()
+                        },
+
+                        Some(card_id) => {
+
+                            let mut collected_list: Vec<StashResponseHasCard> = vec![];
+
+                            for stash_id in &list {
+
+                                let stash_id: i64 = *stash_id;
+
+                                let maybe_stash: Result<StashResponseHasCard, QueryError> = grokdb.stashes.get_response_with_card(stash_id, card_id);
+
+                                let stash: StashResponseHasCard = match maybe_stash {
+
+                                    Err(why) => {
+                                        // why: QueryError
+
+                                        let ref reason = format!("{:?}", why);
+                                        let res_code = status::NotFound;
+
+                                        let err_response = ErrorResponse {
+                                            status: res_code,
+                                            developerMessage: reason,
+                                            userMessage: why.description(),
+                                        }.to_json();
+
+                                        return Ok(Response::with((res_code, err_response)));
+                                    },
+
+                                    Ok(stash) => stash,
+                                };
+
+                                collected_list.push(stash);
+                            }
+
+                            let ref collected_list = collected_list;
+
+                            json::encode(collected_list).unwrap()
+                        }
                     }
-
-                    let ref collected_list = collected_list;
-
-                    json::encode(collected_list).unwrap()
-
                 }
             };
 

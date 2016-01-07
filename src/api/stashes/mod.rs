@@ -30,7 +30,8 @@ pub struct StashesPageRequest {
     page: i64, // page >= 1
     per_page: i64, // per_page >= 0
     sort_by: SortBy,
-    order: SortOrder
+    order: SortOrder,
+    card: Option<i64> // card id. mark any stash if it contains this card.
 }
 
 impl StashesPageRequest {
@@ -109,6 +110,16 @@ struct Stash {
 }
 
 #[derive(Debug, RustcEncodable)]
+struct StashWithCard {
+    id: i64,
+    name: String,
+    description: String,
+    created_at: i64, // unix timestamp
+    updated_at: i64,  // unix timestamp
+    has_card: bool
+}
+
+#[derive(Debug, RustcEncodable)]
 struct StashResponse {
     id: i64,
     name: String,
@@ -118,6 +129,23 @@ struct StashResponse {
 }
 
 impl StashResponse {
+
+    pub fn to_json(&self) -> String {
+        return json::encode(self).unwrap();
+    }
+}
+
+#[derive(Debug, RustcEncodable)]
+struct StashResponseHasCard {
+    id: i64,
+    name: String,
+    description: String,
+    created_at: i64, // unix timestamp
+    updated_at: i64,  // unix timestamp
+    has_card: bool
+}
+
+impl StashResponseHasCard {
 
     pub fn to_json(&self) -> String {
         return json::encode(self).unwrap();
@@ -155,12 +183,101 @@ impl StashesAPI {
         return Ok(response);
     }
 
-    pub fn get_list(&self, page_query: StashesPageRequest) -> Result<Vec<i64>, QueryError> {
+    pub fn get_response_with_card(&self, stash_id: i64, card_id: i64) -> Result<StashResponseHasCard, QueryError> {
+
+        // get props
+
+        let maybe_stash: Result<StashWithCard, QueryError> = self.get_with_card(stash_id, card_id);
+        let stash: StashWithCard = match maybe_stash {
+            Err(why) => {
+                // why: QueryError
+                return Err(why);
+            },
+            Ok(stash) => stash,
+        };
+
+        let response = StashResponseHasCard {
+            id: stash.id,
+            name: stash.name,
+            description: stash.description,
+            created_at: stash.created_at,
+            updated_at: stash.updated_at,
+            has_card: stash.has_card
+        };
+
+        return Ok(response);
+    }
+
+    // pub fn get_list_by_id(&self, page_query: StashesPageRequest) -> Result<Vec<i64>, QueryError> {
+
+    //     let db_conn_guard = self.db.lock().unwrap();
+    //     let ref db_conn = *db_conn_guard;
+
+    //     let ref page_query = page_query;
+
+    //     let ref query = get_stashes_query(page_query);
+
+    //     let params: &[(&str, &ToSql)] = &[
+    //         (":offset", &(page_query.get_offset())),
+    //         (":per_page", &(page_query.per_page))
+    //     ];
+
+    //     let maybe_stmt = db_conn.prepare(query);
+
+    //     if maybe_stmt.is_err() {
+
+    //         let why = maybe_stmt.unwrap_err();
+
+    //         let err = QueryError {
+    //             sqlite_error: why,
+    //             query: query.clone(),
+    //         };
+    //         return Err(err);
+    //     }
+
+    //     let mut stmt: SqliteStatement = maybe_stmt.unwrap();
+
+    //     let maybe_iter = stmt.query_named(params);
+
+    //     match maybe_iter {
+    //         Err(why) => {
+    //             let err = QueryError {
+    //                 sqlite_error: why,
+    //                 query: query.clone(),
+    //             };
+    //             return Err(err);
+    //         },
+    //         Ok(iter) => {
+
+    //             let mut vec_of_stash_id: Vec<i64> = Vec::new();
+
+    //             for result_row in iter {
+
+    //                 let stash_id: i64 = match result_row {
+    //                     Err(why) => {
+    //                         let err = QueryError {
+    //                             sqlite_error: why,
+    //                             query: query.clone(),
+    //                         };
+    //                         return Err(err);
+    //                     },
+    //                     Ok(row) => row.get(0)
+    //                 };
+
+    //                 vec_of_stash_id.push(stash_id);
+    //             }
+
+    //             let vec_of_stash_id = vec_of_stash_id;
+
+    //             return Ok(vec_of_stash_id);
+    //         }
+    //     };
+    // }
+
+    pub fn get_list(&self, page_query: &StashesPageRequest) -> Result<Vec<i64>, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
-
-        let ref page_query = page_query;
 
         let ref query = get_stashes_query(page_query);
 
@@ -240,6 +357,69 @@ impl StashesAPI {
                 description: row.get(2),
                 created_at: row.get(3),
                 updated_at: row.get(4)
+            };
+        });
+
+        match results {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(stash) => {
+                return Ok(stash);
+            }
+        };
+    }
+
+    pub fn get_with_card(&self, stash_id: i64, card_id: i64) -> Result<StashWithCard, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                stash_id,
+                name,
+                description,
+                created_at,
+                updated_at,
+                CASE WHEN
+                    sc.card
+                    IS NOT NULL
+                    THEN 1
+                    ELSE 0
+                END AS has_card
+            FROM Stashes
+            LEFT OUTER JOIN
+                (
+                    SELECT
+                        stash, card
+                    FROM
+                    StashCards
+                        WHERE
+                    card = $2
+                ) AS sc
+            ON
+                sc.stash = stash_id
+            WHERE
+                stash_id = $1
+            LIMIT 1;
+        ");
+
+        let results = db_conn.query_row(query, &[&stash_id, &card_id], |row| -> StashWithCard {
+
+            let __has_card: i64 = row.get(5);
+
+            return StashWithCard {
+                id: row.get(0),
+                name: row.get(1),
+                description: row.get(2),
+                created_at: row.get(3),
+                updated_at: row.get(4),
+                has_card: __has_card == 1
             };
         });
 
