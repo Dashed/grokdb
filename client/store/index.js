@@ -34,11 +34,25 @@ const SCHEMA = {
         // pagination / filtering for list of cards in a deck
         sort: cardPagination.sort.UPDATED_AT,
         order: cardPagination.order.DESC,
-        page: 1
-    },
+        page: 1,
 
-    // review: {
-    // },
+        stashes: {
+
+            all: {
+                // pagination / filtering for list of stashes
+                sort: stashPagination.sort.UPDATED_AT,
+                order: stashPagination.order.DESC,
+                page: 1
+            },
+
+            belongs_to: {
+                // pagination / filtering for list of stashes
+                sort: stashPagination.sort.UPDATED_AT,
+                order: stashPagination.order.DESC,
+                page: 1
+            }
+        }
+    },
 
     stash: {
         self: null // stash id
