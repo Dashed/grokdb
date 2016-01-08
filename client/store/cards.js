@@ -248,6 +248,10 @@ Cards.prototype.observable = function(cardID) {
     };
 };
 
+Cards.prototype.watchCurrentID = function() {
+    return this._store.state().cursor(['card', 'self']);
+};
+
 // fetch/set current card id from app state
 Cards.prototype.currentID = function(cardID = NOT_SET) {
 
