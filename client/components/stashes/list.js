@@ -20,7 +20,7 @@ const StashesList = React.createClass({
                 <div className="card">
                     <div className="card-block text-center">
                         <p className="card-text text-muted">
-                            {'No stashes to display. To get started, you should create your stash.'}
+                            {'No stashes to display. To get started, you should create your first stash.'}
                         </p>
                     </div>
                 </div>
