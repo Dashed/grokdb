@@ -19,7 +19,7 @@ const DeckListItem = React.createClass({
         event.preventDefault();
         event.stopPropagation();
 
-        this.context.store.routes.toDeck(this.props.deckID);
+        this.context.store.routes.toDeck(this.props.deckID, 1);
     },
 
     render() {

@@ -1161,12 +1161,20 @@ Routes.prototype.shouldChangeRoute = function(ctx, callback) {
 
 };
 
-Routes.prototype.toDeck = function(deckID) {
+Routes.prototype.toDeck = function(deckID, pageNum = NOT_SET) {
 
     invariant(_.isNumber(filterInteger(deckID)) && deckID > 0, `Malformed deckID. Given ${deckID}`);
 
+    if(pageNum !== NOT_SET) {
+        invariant(_.isNumber(filterInteger(pageNum)) && pageNum > 0, `Malformed pageNum. Given ${pageNum}`);
+
+        pageNum = `?page=${pageNum}`;
+    } else {
+        pageNum = '';
+    }
+
     this.shouldChangeRoute(() => {
-        page(`/deck/${deckID}/view/cards`);
+        page(`/deck/${deckID}/view/cards${pageNum}`);
     });
 };
 
