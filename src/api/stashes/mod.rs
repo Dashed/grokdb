@@ -152,6 +152,18 @@ impl StashResponseHasCard {
     }
 }
 
+#[derive(Debug, RustcEncodable)]
+pub struct StashPaginationInfo {
+    num_of_stashes: i64
+}
+
+impl StashPaginationInfo {
+
+    pub fn to_json(&self) -> String {
+        return json::encode(self).unwrap();
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct StashesAPI {
     pub db: Arc<DB>,

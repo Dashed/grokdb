@@ -17,7 +17,7 @@ use std::error::Error;
 
 use ::api::{GrokDB, ErrorResponse};
 use ::api::cards::restify::card_exists;
-use ::api::stashes::{StashesPageRequest, SortBy, SortOrder, CreateStash, StashResponse, StashResponseHasCard, UpdateStash};
+use ::api::stashes::{StashesPageRequest, SortBy, SortOrder, CreateStash, StashResponse, StashResponseHasCard, UpdateStash, StashPaginationInfo};
 use ::database::QueryError;
 
 // attach stashes REST endpoints to given router
@@ -501,6 +501,42 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             let response = json::encode(stashes).unwrap();
 
             let content_type = "application/json".parse::<Mime>().unwrap();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
+        }
+    });
+
+    router.get("/stashes/total", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            let totals = match grokdb.stashes.count() {
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(count) => {
+                    count
+                }
+            };
+
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            let response = StashPaginationInfo {
+                num_of_stashes: totals
+            }.to_json();
 
             return Ok(Response::with((content_type, status::Ok, response)));
         }
