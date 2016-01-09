@@ -8,6 +8,7 @@ const filterInteger = require('utils/filterinteger');
 const {NOT_FOUND, OK} = require('./response');
 
 const {pagination: cardPagination} = require('./cards');
+const {pagination: stashPagination} = require('./stashes');
 const {perPage} = require('constants/cardspagination');
 
 // sentinel values
@@ -826,13 +827,100 @@ const boostrapRoutes = co.wrap(function *(store) {
                 next();
             }, postRouteLoad);
 
-    page('/stashes', reloadAppState, function(context, next) {
+    page('/stashes', reloadAppState, parseQueries, function(context, next) {
+
+        const {queries} = context;
 
         store.resetStage();
         store.routes.route(ROUTE.STASHES.VIEW.LIST);
-        store.commit();
 
-        next();
+        // pagination queries
+        let pageNum = 1;
+        if(_.has(queries, 'page')) {
+
+            pageNum = filterInteger(queries.page, NOT_SET);
+
+            if(pageNum === NOT_SET) {
+                pageNum = 1;
+            }
+        }
+        store.stashes.page(pageNum);
+
+        if(_.has(queries, 'order_by')) {
+
+            let pageOrder = NOT_SET;
+
+            switch(String(queries.order_by).toLowerCase()) {
+
+            case 'descending':
+            case 'desc':
+                pageOrder = stashPagination.order.DESC;
+                break;
+
+            case 'ascending':
+            case 'asc':
+                pageOrder = stashPagination.order.ASC;
+                break;
+
+            default:
+                pageOrder = stashPagination.order.DESC;
+            }
+
+            store.stashes.order(pageOrder);
+        }
+
+        if(_.has(queries, 'sort_by')) {
+
+            let pageSort = NOT_SET;
+
+            switch(String(queries.sort_by).toLowerCase()) {
+
+            case 'name':
+                pageSort = stashPagination.sort.NAME;
+                break;
+
+            case 'created_at':
+                pageSort = stashPagination.sort.CREATED_AT;
+                break;
+
+            case 'updated_at':
+                pageSort = stashPagination.sort.UPDATED_AT;
+                break;
+
+            default:
+                pageSort = stashPagination.sort.UPDATED_AT;
+            }
+
+            store.stashes.sort(pageSort);
+        }
+
+        // ensure pageNum is within valid bounds
+
+        store.stashes.totalStashes()
+            .then(
+            // fulfillment
+            function(totalStashes) {
+
+                if(totalStashes <= 0) {
+                    store.commit();
+                    next();
+                    return null;
+                }
+
+                const numOfPages = Math.ceil(totalStashes / perPage);
+                const pageSort = store.stashes.sort();
+                const pageOrder = store.stashes.order();
+
+                if(pageNum > numOfPages || pageNum <= 0) {
+                    store.routes.toStashes(pageSort, pageOrder, 1);
+                    return null;
+                }
+
+                store.commit();
+
+                next();
+                return null;
+            });
 
     }, postRouteLoad);
 
@@ -1091,12 +1179,12 @@ Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID
             toDeckID = this._store.decks.currentID();
         }
 
-        if(pageOrder === NOT_SET) {
-            pageOrder = this._store.cards.order();
-        }
-
         if(pageNum === NOT_SET) {
             pageNum = this._store.cards.page();
+        }
+
+        if(pageOrder === NOT_SET) {
+            pageOrder = this._store.cards.order();
         }
 
         switch(pageOrder) {
@@ -1341,11 +1429,64 @@ Routes.prototype.toSettings = function() {
     });
 };
 
-Routes.prototype.toStashes = function() {
+Routes.prototype.toStashes = function(pageSort = NOT_SET, pageOrder = NOT_SET, pageNum = NOT_SET) {
 
     this.shouldChangeRoute(() => {
-        page(`/stashes`);
+
+        if(pageNum === NOT_SET) {
+            pageNum = this._store.stashes.page();
+        }
+
+        if(pageOrder === NOT_SET) {
+            pageOrder = this._store.stashes.order();
+        }
+
+        switch(pageOrder) {
+
+        case stashPagination.order.DESC:
+            pageOrder = 'descending';
+            break;
+
+        case stashPagination.order.ASC:
+            pageOrder = 'ascending';
+            break;
+
+        default:
+            pageOrder = 'descending';
+        }
+
+        if(pageSort === NOT_SET) {
+            pageSort = this._store.stashes.sort();
+        }
+
+        switch(pageSort) {
+
+        case stashPagination.sort.NAME:
+            pageSort = 'name';
+            break;
+
+        case stashPagination.sort.CREATED_AT:
+            pageSort = 'created_at';
+            break;
+
+        case stashPagination.sort.UPDATED_AT:
+            pageSort = 'updated_at';
+            break;
+
+        default:
+            pageSort = 'updated_at';
+        }
+
+
+        page(`/stashes?order_by=${pageOrder}&sort_by=${pageSort}&page=${pageNum}`);
     });
+};
+
+Routes.prototype.toStashesPage = function(requestedPage) {
+
+    requestedPage = filterInteger(requestedPage, 1);
+
+    this.toStashes(void 0, void 0, requestedPage);
 };
 
 Routes.prototype.toAddNewStash = function() {

@@ -9,6 +9,7 @@ const {symbol: symbolPropType} = require('utils/proptype');
 const CreateStash = require('./create');
 const StashesList = require('./list');
 const StashDetail = require('./detail');
+const StashesPagination = require('./pagination');
 
 const Stashes = React.createClass({
 
@@ -25,6 +26,10 @@ const Stashes = React.createClass({
         event.stopPropagation();
 
         this.context.store.routes.toAddNewStash();
+    },
+
+    onClickPage(requestedPageNum) {
+        return this.context.store.routes.toStashesPage(requestedPageNum);
     },
 
     render() {
@@ -49,6 +54,13 @@ const Stashes = React.createClass({
                     <div className="row m-b">
                         <div className="col-sm-12">
                             <StashesList />
+                        </div>
+                    </div>
+                    <div className="row m-b">
+                        <div className="col-sm-12">
+                            <StashesPagination
+                                onClickPage={this.onClickPage}
+                            />
                         </div>
                     </div>
                 </div>
