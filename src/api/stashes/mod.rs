@@ -959,6 +959,7 @@ fn get_stashes_query_by_card(card_id: i64, page_query: &StashesPageRequest) -> S
                         StashCards
                     ON
                         Stashes.stash_id = StashCards.stash
+                    AND StashCards.card = :card_id
                     ORDER BY
                         created_at
                     {sort_order}
@@ -992,6 +993,7 @@ fn get_stashes_query_by_card(card_id: i64, page_query: &StashesPageRequest) -> S
                         StashCards
                     ON
                         Stashes.stash_id = StashCards.stash
+                    AND StashCards.card = :card_id
                     ORDER BY
                         updated_at
                     {sort_order}
@@ -1025,6 +1027,7 @@ fn get_stashes_query_by_card(card_id: i64, page_query: &StashesPageRequest) -> S
                         StashCards
                     ON
                         Stashes.stash_id = StashCards.stash
+                    AND StashCards.card = :card_id
                     ORDER BY
                         name
                     {sort_order}
