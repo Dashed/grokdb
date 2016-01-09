@@ -83,6 +83,10 @@ function Stashes(store) {
     this._store = store;
     this._lookup = minitrue({}); // Map<stash_id<int>, Stash<Immutable.Map>>
 
+    // lookup table that defines the relationship between a stash and a card
+    // i.e. if a card is within a stash
+    this._lookupRelationship = minitrue({}); // Map<[stash_id<int>, card_id<int>], bool>
+
 }
 
 Stashes.prototype.constructor = Stashes;
@@ -96,6 +100,57 @@ Stashes.prototype.clearCache = function() {
     this._lookup.update(function() {
         return Immutable.Map();
     });
+
+    this._lookupRelationship.update(function() {
+        return Immutable.Map();
+    });
+};
+
+// returns true/false
+// sync
+Stashes.prototype.stashHasCard = function(stashID, cardID) {
+
+    invariant(filterInteger(stashID, NOT_SET) !== NOT_SET, `Unexpected stashID. Given ${stashID}`);
+    invariant(filterInteger(cardID, NOT_SET) !== NOT_SET, `Unexpected cardID. Given ${cardID}`);
+
+    return this._lookupRelationship.cursor([stashID, cardID]).deref(false);
+
+};
+
+Stashes.prototype.setStashCardRelationship = function(stashID, cardID, relationshipStatus) {
+
+    invariant(filterInteger(stashID, NOT_SET) !== NOT_SET, `Unexpected stashID. Given ${stashID}`);
+    invariant(filterInteger(cardID, NOT_SET) !== NOT_SET, `Unexpected cardID. Given ${cardID}`);
+    invariant(_.isBoolean(relationshipStatus), `Unexpected relationshipStatus. Given ${relationshipStatus}`);
+
+    this._lookupRelationship.cursor([stashID, cardID]).update(function() {
+        return relationshipStatus;
+    });
+
+    return relationshipStatus;
+};
+
+Stashes.prototype.watchStashCardRelationship = function(stashID, cardID) {
+
+    invariant(filterInteger(stashID, NOT_SET) !== NOT_SET, `Unexpected stashID. Given ${stashID}`);
+    invariant(filterInteger(cardID, NOT_SET) !== NOT_SET, `Unexpected cardID. Given ${cardID}`);
+
+    return {
+        observe: (observer) => {
+
+            const cursor = this._lookupRelationship.cursor([stashID, cardID]);
+
+            return cursor.observe(function(newRelationship, oldRelationship) {
+
+                if(!_.isBoolean(newRelationship)) {
+                    return;
+                }
+
+                observer.call(null, newRelationship, oldRelationship);
+            });
+
+        }
+    };
 
 };
 
