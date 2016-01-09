@@ -53,7 +53,7 @@ module.exports = courier({
                 const numOfPages = Math.ceil(totalStashes / perPage);
 
                 if(currentPage > numOfPages) {
-                    currentPage = numOfPages;
+                    currentPage = numOfPages || 1;
                     context.store.stashes.pageOfCardBelongsTo(currentPage);
                 }
 

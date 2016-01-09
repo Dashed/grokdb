@@ -52,6 +52,11 @@ const CardDetail = React.createClass({
         };
     },
 
+    componentWillMount() {
+        this.context.store.stashes.pageAll(1);
+        this.context.store.stashes.pageOfCardBelongsTo(1);
+    },
+
     backToCardsList(event) {
         event.preventDefault();
         event.stopPropagation();
