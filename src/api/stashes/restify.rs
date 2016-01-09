@@ -1112,6 +1112,71 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
+    router.get("/cards/:card_id/stashes/total", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested card id
+
+            let card_id = req.extensions.get::<Router>().unwrap().find("card_id").unwrap();
+
+            let card_id: i64 = match card_id.parse::<u64>() {
+                Ok(card_id) => card_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // ensure card exists
+            match card_exists(grokdb, card_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* card exists; continue */}
+            }
+
+            let totals = match grokdb.stashes.count_by_card(card_id) {
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(count) => {
+                    count
+                }
+            };
+
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            let response = StashPaginationInfo {
+                num_of_stashes: totals
+            }.to_json();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
+        }
+    });
+
     // get list of stashes this card belongs to
     router.get("/cards/:card_id/stashes", {
         let grokdb = grokdb.clone();
