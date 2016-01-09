@@ -678,6 +678,40 @@ Stashes.prototype.orderOfCardBelongsTo = function(order = NOT_SET) {
     return value;
 };
 
+// get total number of stashes
+// async
+Stashes.prototype.totalStashesByCard = function(cardID) {
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .get(`/api/cards/${cardID}/stashes/total`)
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    const numOfStashes = response.body.num_of_stashes >= 0 ? response.body.num_of_stashes : 0;
+
+                    return resolve(numOfStashes);
+                    break;
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                }
+
+            });
+
+    });
+};
+
+
 // async
 Stashes.prototype.listOfCardBelongsTo = function(cardID, page = NOT_SET, __pageSort = NOT_SET, __pageOrder = NOT_SET) {
 
@@ -878,39 +912,6 @@ Stashes.prototype.orderOfCardAll = function(order = NOT_SET) {
     }
 
     return value;
-};
-
-// get total number of stashes
-// async
-Stashes.prototype.totalStashesByCard = function(cardID) {
-
-    return new Promise((resolve, reject) => {
-
-        superhot
-            .get(`/api/cards/${cardID}/stashes/total`)
-            .end((err, response) => {
-
-                switch(response.status) {
-
-                case 200:
-
-                    const numOfStashes = response.body.num_of_stashes >= 0 ? response.body.num_of_stashes : 0;
-
-                    return resolve(numOfStashes);
-                    break;
-
-                default:
-
-                    if (err) {
-                        return reject(err);
-                    }
-
-                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
-                }
-
-            });
-
-    });
 };
 
 // async
