@@ -111,6 +111,8 @@ function Cards(store) {
 
 }
 
+Cards.prototype.constructor = Cards;
+
 // clear lookup table
 // sync
 Cards.prototype.clearCache = function() {
