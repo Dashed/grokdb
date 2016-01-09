@@ -1,24 +1,20 @@
 const React = require('react');
 const classnames = require('classnames');
 
-const FRONT = 'Front';
-const BACK = 'Back';
-const DESCRIPTION = 'Description';
-const STASHES = 'Stashes';
-const META = 'Meta';
+const {tabs} = require('constants/cardprofile');
 
 const CardTabs = React.createClass({
 
     propTypes: {
         onSwitch: React.PropTypes.func.isRequired,
-        currentTab: React.PropTypes.oneOf([FRONT, BACK, DESCRIPTION, STASHES, META]),
+        currentTab: React.PropTypes.oneOf([tabs.front, tabs.back, tabs.description, tabs.stashes, tabs.meta]),
         hideBack: React.PropTypes.bool.isRequired
     },
 
     getDefaultProps() {
 
         return {
-            currentTab: FRONT,
+            currentTab: tabs.front,
             hideBack: false
         };
     },
@@ -57,10 +53,10 @@ const CardTabs = React.createClass({
         return (
             <li className="nav-item">
                 <a
-                    className={this.getStyle(BACK)}
-                    onClick={this.onSwitchTab(BACK)}
+                    className={this.getStyle(tabs.back)}
+                    onClick={this.onSwitchTab(tabs.back)}
                     href="#">
-                    {BACK}
+                    {'Back'}
                 </a>
             </li>
         );
@@ -72,35 +68,35 @@ const CardTabs = React.createClass({
             <ul className="nav nav-tabs">
                 <li className="nav-item">
                     <a
-                        className={this.getStyle(FRONT)}
-                        onClick={this.onSwitchTab(FRONT)}
+                        className={this.getStyle(tabs.front)}
+                        onClick={this.onSwitchTab(tabs.front)}
                         href="#">
-                        {FRONT}
+                        {'Front'}
                     </a>
                 </li>
                 {this.getBack()}
                 <li className="nav-item">
                     <a
-                        className={this.getStyle(DESCRIPTION)}
-                        onClick={this.onSwitchTab(DESCRIPTION)}
+                        className={this.getStyle(tabs.description)}
+                        onClick={this.onSwitchTab(tabs.description)}
                         href="#">
-                        {DESCRIPTION}
+                        {'Description'}
                     </a>
                 </li>
                 <li className="nav-item">
                     <a
-                        className={this.getStyle(STASHES)}
-                        onClick={this.onSwitchTab(STASHES)}
+                        className={this.getStyle(tabs.stashes)}
+                        onClick={this.onSwitchTab(tabs.stashes)}
                         href="#">
-                        {STASHES}
+                        {'Stashes'}
                     </a>
                 </li>
                 <li className="nav-item">
                     <a
-                        className={this.getStyle(META)}
-                        onClick={this.onSwitchTab(META)}
+                        className={this.getStyle(tabs.meta)}
+                        onClick={this.onSwitchTab(tabs.meta)}
                         href="#">
-                        {META}
+                        {'Meta'}
                     </a>
                 </li>
             </ul>

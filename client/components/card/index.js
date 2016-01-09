@@ -5,9 +5,8 @@ const invariant = require('invariant');
 const TextareaAutosize = require('react-textarea-autosize');
 const classnames = require('classnames');
 
-const {types: ROUTES} = require('store/routes');
+const {tabs} = require('constants/cardprofile');
 
-const courier = require('courier');
 const RenderSourceTabs = require('components/rendersourcetabs');
 const MarkdownPreview = require('components/markdownpreview');
 
@@ -15,23 +14,31 @@ const CardHeader = require('./header');
 const CardTabs = require('./tabs');
 const CardStashes = require('./stashes');
 
-const CardDetail = React.createClass({
+const DumbCardDetail = React.createClass({
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
     },
 
     propTypes: {
-        currentDeckID: React.PropTypes.number.isRequired,
-        currentTab: React.PropTypes.oneOf(['Front', 'Back', 'Description', 'Stashes', 'Meta']),
-        currentCard: React.PropTypes.instanceOf(Immutable.Map).isRequired
+        currentTab: React.PropTypes.oneOf([tabs.front, tabs.back, tabs.description, tabs.stashes, tabs.meta]),
+        currentCard: React.PropTypes.instanceOf(Immutable.Map).isRequired,
+
+        isEditing: React.PropTypes.bool.isRequired,
+        disableSave: React.PropTypes.bool.isRequired,
+
+        backButtonLabel: React.PropTypes.string.isRequired,
+        onClickBackButton: React.PropTypes.func.isRequired,
+
+        onSwitchCurrentTab: React.PropTypes.func.isRequired,
+
+        onCardSave: React.PropTypes.func.isRequired,
+        editCard: React.PropTypes.func.isRequired,
+        onCancelEdit: React.PropTypes.func.isRequired
     },
 
     getInitialState() {
         return {
-
-            isEditing: false,
-            disableSave: false,
 
             newTitle: void 0,
 
@@ -52,54 +59,31 @@ const CardDetail = React.createClass({
         };
     },
 
-    componentWillMount() {
-        this.context.store.stashes.pageAll(1);
-        this.context.store.stashes.pageOfCardBelongsTo(1);
-    },
-
-    backToCardsList(event) {
+    onClickBackButton(event) {
         event.preventDefault();
         event.stopPropagation();
 
-        this.context.store.routes.toLibraryCards();
+        this.props.onClickBackButton.call(void 0);
     },
 
     onSwitchCurrentTab(tabType) {
 
-        const cardID = this.props.currentCard.get('id');
-        const deckID = this.props.currentDeckID;
-
+        // validation
         switch(tabType) {
 
-        case 'Front':
-
-            this.context.store.routes.toCardFront(cardID, deckID);
-            break;
-
-        case 'Back':
-
-            this.context.store.routes.toCardBack(cardID, deckID);
-            break;
-
-        case 'Description':
-
-            this.context.store.routes.toCardDescription(cardID, deckID);
-            break;
-
-        case 'Meta':
-
-            this.context.store.routes.toCardMeta(cardID, deckID);
-            break;
-
-        case 'Stashes':
-
-            this.context.store.routes.toCardStashes(cardID, deckID);
+        case tabs.front:
+        case tabs.back:
+        case tabs.description:
+        case tabs.meta:
+        case tabs.stashes:
             break;
 
         default:
             invariant(false, `Unexpected tabType. Given: ${String(tabType)}`);
 
         }
+
+        this.props.onSwitchCurrentTab.call(void 0, tabType);
 
     },
 
@@ -109,28 +93,28 @@ const CardDetail = React.createClass({
 
         switch(this.props.currentTab) {
 
-        case 'Front':
+        case tabs.front:
             key = 'front';
             break;
 
-        case 'Back':
+        case tabs.back:
             key = 'back';
             break;
 
-        case 'Description':
+        case tabs.description:
             key = 'description';
             break;
 
-        case 'Stashes':
+        case tabs.stashes:
             key = 'stashes';
             break;
 
-        case 'Meta':
+        case tabs.meta:
             key = 'meta';
             break;
 
         default:
-            throw Error(`Unexpected currentTab value. Given: ${this.state.currentTab}`);
+            throw Error(`Unexpected currentTab value. Given: ${String(this.props.currentTab)}`);
         }
 
         return key;
@@ -243,7 +227,7 @@ const CardDetail = React.createClass({
 
         const placeholder = (() => {
 
-            if(!this.state.isEditing) {
+            if(!this.props.isEditing) {
                 return '';
             }
 
@@ -278,7 +262,7 @@ const CardDetail = React.createClass({
                 placeholder={placeholder}
                 onChange={this.onSourceChange}
                 value={source}
-                readOnly={!this.state.isEditing}
+                readOnly={!this.props.isEditing}
             />
         );
 
@@ -351,58 +335,21 @@ const CardDetail = React.createClass({
         event.preventDefault();
         event.stopPropagation();
 
-        this.setState({
-            isEditing: true,
+        this.props.editCard.call(void 0);
 
-            newTitle: void 0,
-
-            front: {
-                showRender: false,
-                newSource: void 0
-            },
-
-            back: {
-                showRender: false,
-                newSource: void 0
-            },
-
-            description: {
-                showRender: false,
-                newSource: void 0
-            }
-        });
     },
 
     onCancelEdit(event) {
         event.preventDefault();
         event.stopPropagation();
 
-        this.setState({
-            isEditing: false,
+        this.props.onCancelEdit.call(void 0);
 
-            // discard any changes
-            newTitle: void 0,
-
-            front: {
-                showRender: true,
-                newSource: void 0
-            },
-
-            back: {
-                showRender: true,
-                newSource: void 0
-            },
-
-            description: {
-                showRender: true,
-                newSource: void 0
-            }
-        });
     },
 
     getEditCancelButton() {
 
-        if(!this.state.isEditing) {
+        if(!this.props.isEditing) {
 
             return (
                 <button
@@ -427,11 +374,11 @@ const CardDetail = React.createClass({
 
         const newTitle = this.state.newTitle;
 
-        if(_.isString(newTitle) && newTitle.length <= 0) {
-            return false;
+        if(_.isString(newTitle) && newTitle.length > 0) {
+            return true;
         }
 
-        return true;
+        return false;
     },
 
     onCardSave(event) {
@@ -441,24 +388,6 @@ const CardDetail = React.createClass({
         if(!this.shouldSaveCard()) {
             return;
         }
-
-        this.setState(_.assign({}, this.state, {
-            isEditing: false,
-
-            front: {
-                showRender: true
-            },
-
-            back: {
-                showRender: true
-            },
-
-            description: {
-                showRender: true
-            }
-
-            // note: leave newSources alone for optimistic update
-        }));
 
         let hasChanges = false;
         let patch = {};
@@ -487,12 +416,29 @@ const CardDetail = React.createClass({
             return;
         }
 
-        this.context.store.cards.patchCurrent(patch);
+        this.setState(_.assign({}, this.state, {
+
+            front: {
+                showRender: true
+            },
+
+            back: {
+                showRender: true
+            },
+
+            description: {
+                showRender: true
+            }
+
+            // note: leave newSources alone for optimistic update
+        }));
+
+        this.props.onCardSave.call(void 0, patch);
     },
 
     getSaveComponent() {
 
-        if(!this.state.isEditing) {
+        if(!this.props.isEditing) {
             return null;
         }
 
@@ -524,6 +470,57 @@ const CardDetail = React.createClass({
         console.log('implement');
     },
 
+    componentWillReceiveProps(nextProps) {
+
+        if(nextProps.isEditing && !this.props.isEditing) {
+
+            this.setState({
+
+                newTitle: void 0,
+
+                front: {
+                    showRender: false,
+                    newSource: void 0
+                },
+
+                back: {
+                    showRender: false,
+                    newSource: void 0
+                },
+
+                description: {
+                    showRender: false,
+                    newSource: void 0
+                }
+            });
+
+        } else if(!nextProps.isEditing && this.props.isEditing) {
+
+            this.setState({
+
+                // discard any changes
+                newTitle: void 0,
+
+                front: {
+                    showRender: true,
+                    newSource: void 0
+                },
+
+                back: {
+                    showRender: true,
+                    newSource: void 0
+                },
+
+                description: {
+                    showRender: true,
+                    newSource: void 0
+                }
+            });
+
+        }
+
+    },
+
     render() {
         return (
             <div>
@@ -532,8 +529,8 @@ const CardDetail = React.createClass({
                         <button
                             type="button"
                             className="btn btn-sm btn-danger"
-                            onClick={this.backToCardsList}
-                        >{'Back to cards list'}</button>
+                            onClick={this.onClickBackButton}
+                        >{this.props.backButtonLabel}</button>
                         {this.getEditCancelButton()}
                         <button
                             type="button"
@@ -546,7 +543,7 @@ const CardDetail = React.createClass({
                     <div className="col-sm-12 m-b">
                         {(function() {
 
-                            if(this.state.isEditing) {
+                            if(this.props.isEditing) {
                                 return (
                                     <input
                                         ref="card_title"
@@ -584,73 +581,4 @@ const CardDetail = React.createClass({
     }
 });
 
-module.exports = courier({
-
-    contextTypes: {
-        store: React.PropTypes.object.isRequired
-    },
-
-    component: CardDetail,
-
-    // this is true so that CardDetail doesn't re-mount whenever Promise returned
-    // from assignNewProps resolves.
-    onlyWaitingOnMount: true,
-
-    watch(props, manual, context) {
-        return [
-            context.store.routes.watchRoute(),
-            context.store.cards.watchCurrent()
-        ];
-    },
-
-    assignNewProps: function(props, context) {
-
-        return context.store.cards.current()
-            .then(function(currentCard) {
-
-                const route = context.store.routes.route();
-
-                let currentTab;
-
-                switch(route) {
-
-                case ROUTES.CARD.VIEW.FRONT:
-
-                    currentTab = 'Front';
-                    break;
-
-                case ROUTES.CARD.VIEW.BACK:
-
-                    currentTab = 'Back';
-                    break;
-
-                case ROUTES.CARD.VIEW.DESCRIPTION:
-
-                    currentTab = 'Description';
-                    break;
-
-                case ROUTES.CARD.VIEW.META:
-
-                    currentTab = 'Meta';
-                    break;
-
-                case ROUTES.CARD.VIEW.STASHES:
-
-                    currentTab = 'Stashes';
-                    break;
-
-                default:
-                    invariant(false, `Unexpected route. Given: ${String(route)}`);
-                }
-
-                const currentDeckID = context.store.decks.currentID();
-
-                return {
-                    currentDeckID: currentDeckID,
-                    currentCard: currentCard,
-                    currentTab
-                };
-            });
-    }
-
-});
+module.exports = DumbCardDetail;

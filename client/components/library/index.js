@@ -11,7 +11,7 @@ const Header = require('./header');
 const Subnav = require('./subnav');
 const LibraryDetail = require('./detail');
 
-const CardDetail = require('components/card/index.js');
+const CardProfile = require('./cardprofile');
 const Review = require('components/review');
 
 const DumbLibrary = React.createClass({
@@ -62,7 +62,7 @@ const DumbLibrary = React.createClass({
             return (
                 <div className="row">
                     <div className="col-sm-12">
-                        <CardDetail />
+                        <CardProfile />
                     </div>
                 </div>
             );
