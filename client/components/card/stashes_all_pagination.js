@@ -44,10 +44,17 @@ module.exports = courier({
         return context.store.stashes.totalStashes()
             .then(function(totalStashes) {
 
-                const currentPage = context.store.stashes.pageAll();
+                let currentPage = context.store.stashes.pageAll();
+
+                const numOfPages = Math.ceil(totalStashes / perPage);
+
+                if(currentPage > numOfPages) {
+                    currentPage = numOfPages;
+                    context.store.stashes.pageAll(currentPage);
+                }
 
                 return {
-                    numOfPages: Math.ceil(totalStashes / perPage),
+                    numOfPages,
                     currentPage: currentPage
                 };
 
