@@ -85,7 +85,7 @@ function Stashes(store) {
 
     // lookup table that defines the relationship between a stash and a card
     // i.e. if a card is within a stash
-    this._lookupRelationship = minitrue({}); // Map<[stash_id<int>, card_id<int>], bool>
+    this._lookupRelationshipStashCard = minitrue({}); // Map<[stash_id<int>, card_id<int>], bool>
 
 }
 
@@ -101,7 +101,7 @@ Stashes.prototype.clearCache = function() {
         return Immutable.Map();
     });
 
-    this._lookupRelationship.update(function() {
+    this._lookupRelationshipStashCard.update(function() {
         return Immutable.Map();
     });
 };
@@ -113,7 +113,7 @@ Stashes.prototype.stashHasCard = function(stashID, cardID) {
     invariant(filterInteger(stashID, NOT_SET) !== NOT_SET, `Unexpected stashID. Given ${stashID}`);
     invariant(filterInteger(cardID, NOT_SET) !== NOT_SET, `Unexpected cardID. Given ${cardID}`);
 
-    return this._lookupRelationship.cursor([stashID, cardID]).deref(false);
+    return this._lookupRelationshipStashCard.cursor([stashID, cardID]).deref(false);
 
 };
 
@@ -123,7 +123,7 @@ Stashes.prototype.setStashCardRelationship = function(stashID, cardID, relations
     invariant(filterInteger(cardID, NOT_SET) !== NOT_SET, `Unexpected cardID. Given ${cardID}`);
     invariant(_.isBoolean(relationshipStatus), `Unexpected relationshipStatus. Given ${relationshipStatus}`);
 
-    this._lookupRelationship.cursor([stashID, cardID]).update(function() {
+    this._lookupRelationshipStashCard.cursor([stashID, cardID]).update(function() {
         return relationshipStatus;
     });
 
@@ -135,10 +135,10 @@ Stashes.prototype.watchStashCardRelationship = function(stashID, cardID) {
     invariant(filterInteger(stashID, NOT_SET) !== NOT_SET, `Unexpected stashID. Given ${stashID}`);
     invariant(filterInteger(cardID, NOT_SET) !== NOT_SET, `Unexpected cardID. Given ${cardID}`);
 
+    const cursor = this._lookupRelationshipStashCard.cursor([stashID, cardID]);
+
     return {
         observe: (observer) => {
-
-            const cursor = this._lookupRelationship.cursor([stashID, cardID]);
 
             return cursor.observe(function(newRelationship, oldRelationship) {
 
@@ -151,6 +151,71 @@ Stashes.prototype.watchStashCardRelationship = function(stashID, cardID) {
 
         }
     };
+
+};
+
+Stashes.prototype.toggleRelationship = function(stashID, cardID, newRelationship) {
+
+    invariant(filterInteger(stashID, NOT_SET) !== NOT_SET, `Unexpected stashID. Given ${stashID}`);
+    invariant(filterInteger(cardID, NOT_SET) !== NOT_SET, `Unexpected cardID. Given ${cardID}`);
+    invariant(_.isBoolean(newRelationship), `Unexpected newRelationship. Given ${newRelationship}`);
+
+    // optimistic update
+    this.setStashCardRelationship(stashID, cardID, newRelationship);
+
+    return new Promise((resolve, reject) => {
+
+        if(newRelationship) {
+
+            superhot
+                .put(`/api/cards/${cardID}/stashes/${stashID}`)
+                .end((err, response) => {
+
+                    switch(response.status) {
+                    case 200:
+
+                        return resolve(true);
+
+                    default:
+
+                        // revert optimistic update
+                        this.setStashCardRelationship(stashID, cardID, !newRelationship);
+
+                        if (err) {
+                            return reject(err);
+                        }
+
+                        return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                    }
+                });
+
+        } else {
+
+            superhot
+                .delete(`/api/cards/${cardID}/stashes/${stashID}`)
+                .end((err, response) => {
+
+                    switch(response.status) {
+                    case 200:
+
+                        return resolve(true);
+
+                    default:
+
+                        // revert optimistic update
+                        this.setStashCardRelationship(stashID, cardID, !newRelationship);
+
+                        if (err) {
+                            return reject(err);
+                        }
+
+                        return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                    }
+                });
+
+        }
+
+    });
 
 };
 

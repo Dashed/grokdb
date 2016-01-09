@@ -10,8 +10,13 @@ const courier = require('courier');
 
 const StashListItem = React.createClass({
 
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
     propTypes: {
         stashID: React.PropTypes.number.isRequired,
+        cardID: React.PropTypes.number.isRequired,
         hasCard: React.PropTypes.bool.isRequired,
         shouldShadeHasCard: React.PropTypes.bool.isRequired,
         stash: React.PropTypes.instanceOf(Immutable.Map).isRequired
@@ -25,15 +30,34 @@ const StashListItem = React.createClass({
 
     },
 
+    toggleRelationship(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const {stashID, cardID, hasCard} = this.props;
+
+        this.context.store.stashes.toggleRelationship(stashID, cardID, !hasCard);
+    },
+
+    toStash(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.context.store.routes.toStash(this.props.stashID);
+    },
+
     getButton() {
 
         const {hasCard} = this.props;
 
         return (
-            <button type="button" className={classnames('btn', 'btn-sm', 'pull-right', {
-                'btn-success': !hasCard,
-                'btn-danger': hasCard
-            })}>
+            <button
+                type="button"
+                onClick={this.toggleRelationship}
+                className={classnames('btn', 'btn-sm', 'pull-right', {
+                    'btn-success': !hasCard,
+                    'btn-danger': hasCard
+                })}>
                 { hasCard ? 'Remove' : 'Add' }
             </button>
         );
@@ -52,7 +76,7 @@ const StashListItem = React.createClass({
             <li className={classnames('list-group-item', activeStyle)}>
                 {this.getButton()}
                 <h6 className="list-group-item-heading m-y-0">
-                    <a href="#" onClick={this.onClick}>
+                    <a href="#" onClick={this.toStash}>
                         {stash.get('name')}
                     </a>
                 </h6>

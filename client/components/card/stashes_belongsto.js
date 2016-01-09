@@ -21,7 +21,7 @@ const StashesBelongsTo = React.createClass({
                 <div className="card">
                     <div className="card-block text-center">
                         <p className="card-text text-muted">
-                            {'No stashes to display. To get started, you should create your first stash.'}
+                            {'This card does not belong in any stashes. To get started, assign this card to a stash.'}
                         </p>
                     </div>
                 </div>
@@ -59,9 +59,16 @@ module.exports = courier({
         store: React.PropTypes.object.isRequired
     },
 
+    propTypes: {
+        cardID: React.PropTypes.number.isRequired
+    },
+
     component: StashesBelongsTo,
 
     watch(props, manual, context) {
+
+        const {cardID} = props;
+
         return [
             context.store.stashes.watchPageOfCardBelongsTo(),
             context.store.stashes.watchOrderOfCardBelongsTo(),
@@ -71,7 +78,9 @@ module.exports = courier({
 
     assignNewProps: function(props, context) {
 
-        return context.store.stashes.listOfCardBelongsTo(props.cardID)
+        const {cardID} = props;
+
+        return context.store.stashes.listOfCardBelongsTo(cardID)
             .then((stashesByID) => {
 
                 return {

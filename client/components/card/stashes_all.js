@@ -7,6 +7,10 @@ const StashListItem = require('./stashlistitem');
 
 const StashesAll = React.createClass({
 
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
     propTypes: {
         cardID: React.PropTypes.number.isRequired,
         stashesByID: React.PropTypes.array.isRequired
