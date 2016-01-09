@@ -44,6 +44,7 @@ const loadAppState = co.wrap(function *(store) {
     store.decks.clearCache();
     store.cards.clearCache();
     store.review.clearCache();
+    store.stashes.clearCache();
 
     // fetch root deck
 

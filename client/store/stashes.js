@@ -87,6 +87,18 @@ function Stashes(store) {
 
 Stashes.prototype.constructor = Stashes;
 
+// clear lookup table
+// sync
+Stashes.prototype.clearCache = function() {
+
+    stashLoader.clearAll();
+
+    this._lookup.update(function() {
+        return Immutable.Map();
+    });
+
+};
+
 // load and cache stash onto lookup table
 // async
 Stashes.prototype.load = function(stashID = NOT_SET) {
