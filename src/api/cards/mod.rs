@@ -952,34 +952,66 @@ fn get_by_stash_query(page_query: &CardsPageRequest) -> String {
 
         SortBy::ReviewedDate => {
             format!("
-                SELECT
-                    c.card_id, c.title, c.description, c.front, c.back, c.deck, c.created_at, c.updated_at
-                FROM StashCards AS sc
-
-                INNER JOIN Cards AS c
-                ON c.card_id = sc.card
-
-                INNER JOIN CardsScore AS cs
-                ON cs.card = c.card_id
-
-                WHERE
-                c.oid NOT IN (
-                    SELECT
-                        c.oid
-                    FROM StashCards AS sc
-
-                    INNER JOIN Cards AS c
-                    ON c.card_id = sc.card
-
-                    INNER JOIN CardsScore AS cs
-                    ON cs.card = c.card_id
-
-                    WHERE sc.stash = :stash_id
-                    ORDER BY cs.updated_at {sort_order} LIMIT :offset
-                )
-                AND
-                sc.stash = :stash_id
-                ORDER BY cs.updated_at {sort_order} LIMIT :per_page;
+SELECT *
+FROM   (SELECT *
+        FROM   (SELECT c.card_id,
+                       c.title,
+                       c.description,
+                       c.front,
+                       c.back,
+                       c.deck,
+                       c.created_at,
+                       c.updated_at
+                FROM   StashCards AS sc
+                       INNER JOIN cards AS c
+                               ON c.card_id = sc.card
+                       INNER JOIN cardsscore AS cs
+                               ON cs.card = c.card_id
+                WHERE  sc.stash = :stash_id
+                       AND cs.times_reviewed > 0
+                ORDER  BY cs.updated_at {sort_order})
+        UNION ALL
+        SELECT *
+        FROM   (SELECT c.card_id,
+                       c.title,
+                       c.description,
+                       c.front,
+                       c.back,
+                       c.deck,
+                       c.created_at,
+                       c.updated_at
+                FROM   StashCards AS sc
+                       INNER JOIN cards AS c
+                               ON c.card_id = sc.card
+                       INNER JOIN cardsscore AS cs
+                               ON cs.card = c.card_id
+                WHERE  sc.stash = :stash_id
+                       AND cs.times_reviewed = 0
+                ORDER  BY cs.updated_at {sort_order})) AS res
+WHERE  res.card_id NOT IN (SELECT *
+                           FROM   (SELECT c.oid
+                                   FROM   StashCards AS sc
+                                          INNER JOIN cards AS c
+                                                  ON c.card_id = sc.card
+                                          INNER JOIN cardsscore AS cs
+                                                  ON cs.card = c.card_id
+                                   WHERE  sc.stash = :stash_id
+                                          AND cs.times_reviewed > 0
+                                   ORDER  BY cs.updated_at {sort_order})
+                           UNION ALL
+                           SELECT *
+                           FROM   (SELECT c.oid
+                                   FROM   StashCards AS sc
+                                          INNER JOIN cards AS c
+                                                  ON c.card_id = sc.card
+                                          INNER JOIN cardsscore AS cs
+                                                  ON cs.card = c.card_id
+                                   WHERE  sc.stash = :stash_id
+                                          AND cs.times_reviewed = 0
+                                   ORDER  BY cs.updated_at {sort_order})
+                           LIMIT
+                           :offset)
+LIMIT  :per_page;
             ", sort_order = sort_order)
         },
 
