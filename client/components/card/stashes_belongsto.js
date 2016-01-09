@@ -2,6 +2,7 @@ const React = require('react');
 const _ = require('lodash');
 
 const courier = require('courier');
+const Pagination = require('components/pagination');
 const StashListItem = require('./stashlistitem');
 
 

@@ -3,7 +3,7 @@ const _ = require('lodash');
 
 const courier = require('courier');
 const StashListItem = require('./stashlistitem');
-
+const StashesAllPagination = require('./stashes_all_pagination');
 
 const StashesAll = React.createClass({
 
@@ -14,6 +14,10 @@ const StashesAll = React.createClass({
     propTypes: {
         cardID: React.PropTypes.number.isRequired,
         stashesByID: React.PropTypes.array.isRequired
+    },
+
+    onClickPage(requestedPageNum) {
+        return this.context.store.stashes.pageAll(requestedPageNum);
     },
 
     render() {
@@ -48,9 +52,22 @@ const StashesAll = React.createClass({
         });
 
         return (
-            <ul className="list-group">
-                {items}
-            </ul>
+            <div>
+                <div className="row m-b">
+                    <div className="col-sm-12">
+                        <ul className="list-group">
+                            {items}
+                        </ul>
+                    </div>
+                </div>
+                <div className="row m-b">
+                    <div className="col-sm-12">
+                        <StashesAllPagination
+                            onClickPage={this.onClickPage}
+                        />
+                    </div>
+                </div>
+            </div>
         );
 
     }
