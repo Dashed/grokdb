@@ -495,6 +495,407 @@ Stashes.prototype.list = function(page = NOT_SET, __pageSort = NOT_SET, __pageOr
 
 };
 
+// sync
+Stashes.prototype.watchPageOfCardBelongsTo = function() {
+    return this._store.state().cursor(['card', 'stashes', 'belongs_to', 'page']);
+};
+
+// sync
+Stashes.prototype.pageOfCardBelongsTo = function(page = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['card', 'stashes', 'belongs_to', 'page']);
+
+    if(page !== NOT_SET && Number(page) >= 0) {
+
+        stage = stage.updateIn(['card', 'stashes', 'belongs_to', 'page'], function() {
+            return Number(page);
+        });
+
+        this._store.stage(stage);
+
+        value = page;
+    }
+
+    return Number(value);
+};
+
+// sync
+Stashes.prototype.watchSortOfCardBelongsTo = function() {
+    return this._store.state().cursor(['card', 'stashes', 'belongs_to', 'sort']);
+};
+
+// sync
+Stashes.prototype.sortOfCardBelongsTo = function(sort = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['card', 'stashes', 'belongs_to', 'sort']);
+
+    if(sort !== NOT_SET) {
+
+        stage = stage.updateIn(['card', 'stashes', 'belongs_to', 'sort'], function() {
+            return sort;
+        });
+
+        this._store.stage(stage);
+
+        value = sort;
+    }
+
+    return value;
+};
+
+// sync
+Stashes.prototype.watchOrderOfCardBelongsTo = function() {
+    return this._store.state().cursor(['card', 'stashes', 'belongs_to', 'order']);
+};
+
+// sync
+Stashes.prototype.orderOfCardBelongsTo = function(order = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['card', 'stashes', 'belongs_to', 'order']);
+
+    if(order !== NOT_SET) {
+
+        stage = stage.updateIn(['card', 'stashes', 'belongs_to', 'order'], function() {
+            return order;
+        });
+
+        this._store.stage(stage);
+
+        value = order;
+    }
+
+    return value;
+};
+
+// async
+Stashes.prototype.listOfCardBelongsTo = function(cardID, page = NOT_SET, __pageSort = NOT_SET, __pageOrder = NOT_SET) {
+
+    cardID = filterInteger(cardID, NOT_SET);
+
+    invariant(cardID !== NOT_SET, `Expected cardID to be number. Given ${cardID}`);
+
+    const pageNum = (function() {
+
+        if(page === NOT_SET) {
+            return this._store.stashes.pageOfCardBelongsTo();
+        }
+
+        return Number(page);
+
+    }).call(this);
+
+    invariant(_.isNumber(pageNum) && pageNum >= 1, `Given ${pageNum}`);
+
+    const pageSort = (() => {
+
+        let sort = __pageSort !== NOT_SET ? __pageSort : this._store.stashes.sortOfCardBelongsTo();
+
+        switch(sort) {
+
+        case SORT.NAME:
+            return 'name';
+            break;
+
+        case SORT.CREATED_AT:
+            return 'created_at';
+            break;
+
+        case SORT.UPDATED_AT:
+            return 'updated_at';
+            break;
+
+        default:
+            throw Error(`Unexpected sort. Given ${sort}`);
+        }
+
+    })();
+
+    const pageOrder = (() => {
+
+        let order = __pageOrder !== NOT_SET ? __pageOrder : this._store.stashes.orderOfCardBelongsTo();
+
+        switch(order) {
+
+        case ORDER.ASC:
+            return 'ascending';
+            break;
+
+        case ORDER.DESC:
+            return 'descending';
+            break;
+
+        default:
+            throw Error(`Unexpected order. Given ${order}`);
+        }
+
+    })();
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .get(`/api/cards/${cardID}/stashes`)
+            .query({
+                'per_page': perPage
+            })
+            .query({
+                'page': pageNum
+            })
+            .query({
+                'sort_by': pageSort
+            })
+            .query({
+                'order_by': pageOrder
+            })
+            .query({
+                'card': cardID
+            })
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    invariant(_.isArray(response.body), `Expected array. Given ${response.body}`);
+
+                    const result = _.map(response.body, (stash) => {
+
+                        const stashID = stash.id;
+
+                        this.setStashCardRelationship(stashID, cardID, true);
+
+                        this._lookup.cursor(stashID).update(function() {
+
+                            return Immutable.fromJS(stash);
+                        });
+
+                        return stashID;
+                    });
+
+                    return resolve(result);
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+
+                }
+
+            });
+
+    });
+};
+
+// sync
+Stashes.prototype.watchPageAll = function() {
+    return this._store.state().cursor(['card', 'stashes', 'all', 'page']);
+};
+
+// sync
+Stashes.prototype.pageAll = function(page = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['card', 'stashes', 'all', 'page']);
+
+    if(page !== NOT_SET && Number(page) >= 0) {
+
+        stage = stage.updateIn(['card', 'stashes', 'all', 'page'], function() {
+            return Number(page);
+        });
+
+        this._store.stage(stage);
+
+        value = page;
+    }
+
+    return Number(value);
+};
+
+// sync
+Stashes.prototype.watchSortOfCardAll = function() {
+    return this._store.state().cursor(['card', 'stashes', 'all', 'sort']);
+};
+
+// sync
+Stashes.prototype.sortOfCardAll = function(sort = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['card', 'stashes', 'all', 'sort']);
+
+    if(sort !== NOT_SET) {
+
+        stage = stage.updateIn(['card', 'stashes', 'all', 'sort'], function() {
+            return sort;
+        });
+
+        this._store.stage(stage);
+
+        value = sort;
+    }
+
+    return value;
+};
+
+// sync
+Stashes.prototype.watchOrderOfCardAll = function() {
+    return this._store.state().cursor(['card', 'stashes', 'all', 'order']);
+};
+
+// sync
+Stashes.prototype.orderOfCardAll = function(order = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['card', 'stashes', 'all', 'order']);
+
+    if(order !== NOT_SET) {
+
+        stage = stage.updateIn(['card', 'stashes', 'all', 'order'], function() {
+            return order;
+        });
+
+        this._store.stage(stage);
+
+        value = order;
+    }
+
+    return value;
+};
+
+// async
+Stashes.prototype.listOfCardAll = function(cardID, page = NOT_SET, __pageSort = NOT_SET, __pageOrder = NOT_SET) {
+
+    cardID = filterInteger(cardID, NOT_SET);
+
+    invariant(cardID !== NOT_SET, `Expected cardID to be number. Given ${cardID}`);
+
+    const pageNum = (function() {
+
+        if(page === NOT_SET) {
+            return this._store.stashes.pageAll();
+        }
+
+        return Number(page);
+
+    }).call(this);
+
+    invariant(_.isNumber(pageNum) && pageNum >= 1, `Given ${pageNum}`);
+
+    const pageSort = (() => {
+
+        let sort = __pageSort !== NOT_SET ? __pageSort : this._store.stashes.sortOfCardAll();
+
+        switch(sort) {
+
+        case SORT.NAME:
+            return 'name';
+            break;
+
+        case SORT.CREATED_AT:
+            return 'created_at';
+            break;
+
+        case SORT.UPDATED_AT:
+            return 'updated_at';
+            break;
+
+        default:
+            throw Error(`Unexpected sort. Given ${sort}`);
+        }
+
+    })();
+
+    const pageOrder = (() => {
+
+        let order = __pageOrder !== NOT_SET ? __pageOrder : this._store.stashes.orderOfCardAll();
+
+        switch(order) {
+
+        case ORDER.ASC:
+            return 'ascending';
+            break;
+
+        case ORDER.DESC:
+            return 'descending';
+            break;
+
+        default:
+            throw Error(`Unexpected order. Given ${order}`);
+        }
+
+    })();
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .get(`/api/stashes`)
+            .query({
+                'per_page': perPage
+            })
+            .query({
+                'page': pageNum
+            })
+            .query({
+                'sort_by': pageSort
+            })
+            .query({
+                'order_by': pageOrder
+            })
+            .query({
+                'card': cardID
+            })
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    invariant(_.isArray(response.body), `Expected array. Given ${response.body}`);
+
+                    const result = _.map(response.body, (stash) => {
+
+                        const stashID = stash.id;
+
+                        this.setStashCardRelationship(stashID, cardID, !!stash.has_card);
+
+                        this._lookup.cursor(stashID).update(function() {
+
+                            const stashAlt = _.assign({}, stash);
+                            delete stashAlt.hasCard;
+
+                            return Immutable.fromJS(stashAlt);
+                        });
+
+                        return stashID;
+                    });
+
+                    return resolve(result);
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+
+                }
+
+            });
+
+    });
+};
+
 module.exports = {
     Stashes,
 

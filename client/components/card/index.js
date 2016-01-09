@@ -13,6 +13,7 @@ const MarkdownPreview = require('components/markdownpreview');
 
 const CardHeader = require('./header');
 const CardTabs = require('./tabs');
+const CardStashes = require('./stashes');
 
 const CardDetail = React.createClass({
 
@@ -314,7 +315,7 @@ const CardDetail = React.createClass({
                 <div>
                     <div className="row">
                         <div className="col-sm-12">
-                            {'stashes'}
+                            <CardStashes />
                         </div>
                     </div>
                 </div>
