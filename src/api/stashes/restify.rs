@@ -1310,8 +1310,11 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
                     if count <= 0 {
                         let ref v: Vec<StashResponse> = vec![];
+
                         let response: String = json::encode(v).unwrap();
-                        return Ok(Response::with((status::Ok, response)));
+                        let content_type = "application/json".parse::<Mime>().unwrap();
+
+                        return Ok(Response::with((content_type, status::Ok, response)));
                     }
 
                     if page_query.get_offset() >= count {
