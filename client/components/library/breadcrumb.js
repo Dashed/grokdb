@@ -19,7 +19,7 @@ const Breadcrumb = React.createClass({
             event.preventDefault();
             event.stopPropagation();
 
-            this.context.store.routes.toDeck(deckID);
+            this.context.store.routes.toDeck(deckID, 1);
         };
     },
 
