@@ -878,7 +878,71 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
-    // GET /decks/:deck_id/cards/total
+    router.get("/decks/:deck_id/cards/total", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested deck id
+
+            let deck_id: &str = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
+
+            let deck_id: i64 = match deck_id.parse::<u64>() {
+                Ok(deck_id) => deck_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // ensure deck exists; otherwise bail early
+            match deck_exists(grokdb, deck_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* noop; continue */}
+            }
+
+            let totals = match grokdb.cards.count_by_deck(deck_id) {
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(count) => {
+                    count
+                }
+            };
+
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            let response = CardPaginationInfo {
+                num_of_cards: totals
+            }.to_json();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
+        }
+    });
+
     router.get("/decks/:deck_id/cards/:card_id", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
@@ -916,43 +980,6 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             // fetch and parse requested card id
 
             let card_id = req.extensions.get::<Router>().unwrap().find("card_id").unwrap();
-
-            // GET /decks/:deck_id/cards/total
-            // number of cards in a deck
-            match card_id.to_lowercase().as_ref() {
-                "total" => {
-
-                    let totals = match grokdb.cards.count_by_deck(deck_id) {
-                        Err(why) => {
-                            // why: QueryError
-
-                            let ref reason = format!("{:?}", why);
-                            let res_code = status::InternalServerError;
-
-                            let err_response = ErrorResponse {
-                                status: res_code,
-                                developerMessage: reason,
-                                userMessage: why.description(),
-                            }.to_json();
-
-                            return Ok(Response::with((res_code, err_response)));
-                        },
-
-                        Ok(count) => {
-                            count
-                        }
-                    };
-
-                    let content_type = "application/json".parse::<Mime>().unwrap();
-
-                    let response = CardPaginationInfo {
-                        num_of_cards: totals
-                    }.to_json();
-
-                    return Ok(Response::with((content_type, status::Ok, response)));
-                },
-                _ => {/* continue */}
-            }
 
             let card_id: i64 = match card_id.parse::<u64>() {
                 Ok(card_id) => card_id as i64,
