@@ -106,6 +106,39 @@ Stashes.prototype.clearCache = function() {
     });
 };
 
+// get total number of stashes
+// async
+Stashes.prototype.totalStashes = function() {
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .get(`/api/stashes/total`)
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    const numOfStashes = response.body.num_of_stashes >= 0 ? response.body.num_of_stashes : 0;
+
+                    return resolve(numOfStashes);
+                    break;
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                }
+
+            });
+
+    });
+};
+
 // returns true/false
 // sync
 Stashes.prototype.stashHasCard = function(stashID, cardID) {
@@ -363,6 +396,7 @@ Stashes.prototype.currentID = function(stashID = NOT_SET) {
         });
 
         this._store.stage(stage);
+        this._store.commit();
 
         value = stashID;
     }
@@ -391,6 +425,7 @@ Stashes.prototype.page = function(page = NOT_SET) {
         });
 
         this._store.stage(stage);
+        this._store.commit();
 
         value = page;
     }
@@ -417,6 +452,7 @@ Stashes.prototype.sort = function(sort = NOT_SET) {
         });
 
         this._store.stage(stage);
+        this._store.commit();
 
         value = sort;
     }
@@ -443,6 +479,7 @@ Stashes.prototype.order = function(order = NOT_SET) {
         });
 
         this._store.stage(stage);
+        this._store.commit();
 
         value = order;
     }
@@ -579,6 +616,7 @@ Stashes.prototype.pageOfCardBelongsTo = function(page = NOT_SET) {
         });
 
         this._store.stage(stage);
+        this._store.commit();
 
         value = page;
     }
@@ -605,6 +643,7 @@ Stashes.prototype.sortOfCardBelongsTo = function(sort = NOT_SET) {
         });
 
         this._store.stage(stage);
+        this._store.commit();
 
         value = sort;
     }
@@ -631,6 +670,7 @@ Stashes.prototype.orderOfCardBelongsTo = function(order = NOT_SET) {
         });
 
         this._store.stage(stage);
+        this._store.commit();
 
         value = order;
     }
@@ -778,6 +818,7 @@ Stashes.prototype.pageAll = function(page = NOT_SET) {
         });
 
         this._store.stage(stage);
+        this._store.commit();
 
         value = page;
     }
@@ -804,6 +845,7 @@ Stashes.prototype.sortOfCardAll = function(sort = NOT_SET) {
         });
 
         this._store.stage(stage);
+        this._store.commit();
 
         value = sort;
     }
@@ -830,11 +872,45 @@ Stashes.prototype.orderOfCardAll = function(order = NOT_SET) {
         });
 
         this._store.stage(stage);
+        this._store.commit();
 
         value = order;
     }
 
     return value;
+};
+
+// get total number of stashes
+// async
+Stashes.prototype.totalStashesByCard = function(cardID) {
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .get(`/api/cards/${cardID}/stashes/total`)
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    const numOfStashes = response.body.num_of_stashes >= 0 ? response.body.num_of_stashes : 0;
+
+                    return resolve(numOfStashes);
+                    break;
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                }
+
+            });
+
+    });
 };
 
 // async
