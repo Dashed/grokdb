@@ -1155,7 +1155,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                                     "created_at" => SortBy::CreatedAt,
                                     "updated_at" => SortBy::UpdatedAt,
                                     "title" => SortBy::Title,
-                                    "reviewed_date" => SortBy::ReviewedDate,
+                                    "reviewed_at" => SortBy::ReviewedDate,
                                     "times_reviewed" => SortBy::TimesReviewed,
                                     // "raw_score" => SortBy::RawScore,
                                     _ => SortBy::UpdatedAt
