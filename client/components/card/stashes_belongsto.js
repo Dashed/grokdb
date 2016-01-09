@@ -2,15 +2,23 @@ const React = require('react');
 const _ = require('lodash');
 
 const courier = require('courier');
-const Pagination = require('components/pagination');
 const StashListItem = require('./stashlistitem');
 
+const StashesBelongsToPagination = require('./stashes_belongsto_pagination');
 
 const StashesBelongsTo = React.createClass({
+
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
 
     propTypes: {
         cardID: React.PropTypes.number.isRequired,
         stashesByID: React.PropTypes.array.isRequired
+    },
+
+    onClickPage(requestedPageNum) {
+        return this.context.store.stashes.pageOfCardBelongsTo(requestedPageNum);
     },
 
     render() {
@@ -46,10 +54,25 @@ const StashesBelongsTo = React.createClass({
         });
 
         return (
-            <ul className="list-group">
-                {items}
-            </ul>
+            <div>
+                <div className="row m-b">
+                    <div className="col-sm-12">
+                        <ul className="list-group">
+                            {items}
+                        </ul>
+                    </div>
+                </div>
+                <div className="row m-b">
+                    <div className="col-sm-12">
+                        <StashesBelongsToPagination
+                            cardID={cardID}
+                            onClickPage={this.onClickPage}
+                        />
+                    </div>
+                </div>
+            </div>
         );
+
     }
 
 });
@@ -67,8 +90,6 @@ module.exports = courier({
     component: StashesBelongsTo,
 
     watch(props, manual, context) {
-
-        const {cardID} = props;
 
         return [
             context.store.stashes.watchPageOfCardBelongsTo(),
