@@ -56,7 +56,7 @@ pub const SETUP: [&'static str; 22] = [
 
     // cards score history/indices
     CARDS_SCORE_HISTORY_CARD_INDEX,
-    CARDS_SCORE_HISTORY_OCCURED_AT_INDEX,
+    CARDS_SCORE_HISTORY_OCCURRED_AT_INDEX,
 
     // stashes
     STASHES,
@@ -247,7 +247,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS CARDS_SCORE_INDEX ON CardsScore (card);
 const CARDS_SCORE_HISTORY: &'static str = "
 CREATE TABLE IF NOT EXISTS CardsScoreHistory (
 
-    occured_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+    occurred_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
 
     is_review_event INT NOT NULL DEFAULT 0,
 
@@ -268,7 +268,7 @@ AFTER UPDATE
 OF success, fail, changelog
 ON CardsScore
 BEGIN
-   INSERT INTO CardsScoreHistory(is_review_event, occured_at, success, fail, changelog, card)
+   INSERT INTO CardsScoreHistory(is_review_event, occurred_at, success, fail, changelog, card)
    VALUES (NEW.reviewed_at <> OLD.reviewed_at, strftime('%s', 'now'), (NEW.success - OLD.success), (NEW.fail - OLD.fail), NEW.changelog, NEW.card);
 END;
 ";
@@ -278,9 +278,9 @@ CREATE INDEX IF NOT EXISTS CARDS_SCORE_HISTORY_CARD_INDEX
 ON CardsScoreHistory (card);
 ";
 
-const CARDS_SCORE_HISTORY_OCCURED_AT_INDEX: &'static str = "
-CREATE INDEX IF NOT EXISTS CARDS_SCORE_HISTORY_OCCURED_AT_INDEX
-ON CardsScoreHistory (occured_at DESC);
+const CARDS_SCORE_HISTORY_OCCURRED_AT_INDEX: &'static str = "
+CREATE INDEX IF NOT EXISTS CARDS_SCORE_HISTORY_OCCURRED_AT_INDEX
+ON CardsScoreHistory (occurred_at DESC);
 ";
 
 /* stashes */
