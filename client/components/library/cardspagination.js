@@ -35,8 +35,13 @@ module.exports = courier({
 
     onlyWaitingOnMount: true,
 
+    // TODO: optimization opportunity
+
     watch(props, manual, context) {
-        return context.store.cards.watchPage();
+        return [
+            context.store.decks.watchCurrentID(),
+            context.store.cards.watchPage()
+        ];
     },
 
     assignNewProps: function(props, context) {
