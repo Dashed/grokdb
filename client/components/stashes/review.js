@@ -263,11 +263,11 @@ const NoReview = React.createClass({
         store: React.PropTypes.object.isRequired
     },
 
-    backToCardsList(event) {
+    onClickBackButton(event) {
         event.preventDefault();
         event.stopPropagation();
 
-        this.context.store.routes.toLibraryCards();
+        this.context.store.routes.toStashCards();
     },
 
     render() {
@@ -278,7 +278,7 @@ const NoReview = React.createClass({
                         <button
                             type="button"
                             className="btn btn-sm btn-danger"
-                            onClick={this.backToCardsList}
+                            onClick={this.onClickBackButton}
                         >
                             {'Stop Reviewing Stash'}
                         </button>
