@@ -935,7 +935,7 @@ const boostrapRoutes = co.wrap(function *(store) {
     }, postRouteLoad);
 
     const toStash = function(stashID) {
-        page.redirect(`/stash/${stashID}`);
+        page.redirect(`/stash/${stashID}/cards`);
     };
 
     const toStashList = function() {
