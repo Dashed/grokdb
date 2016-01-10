@@ -8,14 +8,18 @@ const CardTabs = React.createClass({
     propTypes: {
         onSwitch: React.PropTypes.func.isRequired,
         currentTab: React.PropTypes.oneOf([tabs.front, tabs.back, tabs.description, tabs.stashes, tabs.meta]),
-        hideBack: React.PropTypes.bool.isRequired
+
+        // cosmetic flasg
+        hideBack: React.PropTypes.bool.isRequired,
+        hideStashes: React.PropTypes.bool.isRequired
     },
 
     getDefaultProps() {
 
         return {
             currentTab: tabs.front,
-            hideBack: false
+            hideBack: false,
+            hideStashes: false
         };
     },
 
@@ -63,6 +67,25 @@ const CardTabs = React.createClass({
 
     },
 
+    getStashes() {
+
+        if(this.props.hideStashes) {
+            return null;
+        }
+
+        return (
+            <li className="nav-item">
+                <a
+                    className={this.getStyle(tabs.stashes)}
+                    onClick={this.onSwitchTab(tabs.stashes)}
+                    href="#">
+                    {'Stashes'}
+                </a>
+            </li>
+        );
+
+    },
+
     render() {
         return (
             <ul className="nav nav-tabs">
@@ -83,14 +106,7 @@ const CardTabs = React.createClass({
                         {'Description'}
                     </a>
                 </li>
-                <li className="nav-item">
-                    <a
-                        className={this.getStyle(tabs.stashes)}
-                        onClick={this.onSwitchTab(tabs.stashes)}
-                        href="#">
-                        {'Stashes'}
-                    </a>
-                </li>
+                {this.getStashes()}
                 <li className="nav-item">
                     <a
                         className={this.getStyle(tabs.meta)}

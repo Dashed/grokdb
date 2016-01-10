@@ -39,7 +39,8 @@ const DumbCardDetail = React.createClass({
         // cosmetic flags
         isReviewing: React.PropTypes.bool.isRequired,
         hideBack: React.PropTypes.bool.isRequired,
-        hideEdit: React.PropTypes.bool.isRequired
+        hideEdit: React.PropTypes.bool.isRequired,
+        hideStashes: React.PropTypes.bool.isRequired
     },
 
     getDefaultProps() {
@@ -47,7 +48,8 @@ const DumbCardDetail = React.createClass({
         return {
             isReviewing: false,
             hideBack: false,
-            hideEdit: false
+            hideEdit: false,
+            hideStashes: false
         };
     },
 
@@ -590,6 +592,7 @@ const DumbCardDetail = React.createClass({
                     <div className="col-sm-12 m-b">
                         <CardTabs
                             hideBack={this.props.hideBack}
+                            hideStashes={this.props.hideStashes}
                             currentTab={this.props.currentTab}
                             onSwitch={this.onSwitchCurrentTab} />
                     </div>
