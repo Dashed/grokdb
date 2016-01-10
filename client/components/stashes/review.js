@@ -14,6 +14,8 @@ const CardDetail = require('components/card/index');
 const ReviewTabBar = require('components/review/tabbar');
 const difficulty = require('constants/difficulty');
 
+const StashHeader = require('./header');
+
 const Review = React.createClass({
 
     contextTypes: {
@@ -206,8 +208,15 @@ const Review = React.createClass({
             return null;
         }
 
+        const {currentStashID} = this.props;
+
         return (
             <div>
+                <div className="row">
+                    <div className="col-sm-12 m-y">
+                        <StashHeader isReviewing stashID={currentStashID} />
+                    </div>
+                </div>
                 <div className="row">
                     <div className="col-sm-12">
                         <CardDetail
@@ -263,6 +272,10 @@ const NoReview = React.createClass({
         store: React.PropTypes.object.isRequired
     },
 
+    propTypes: {
+        currentStashID: React.PropTypes.number.isRequired
+    },
+
     onClickBackButton(event) {
         event.preventDefault();
         event.stopPropagation();
@@ -275,6 +288,11 @@ const NoReview = React.createClass({
             <div>
                 <div className="row">
                     <div className="col-sm-12 m-y">
+                        <StashHeader isReviewing stashID={this.props.currentStashID} />
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-sm-12 m-b">
                         <button
                             type="button"
                             className="btn btn-sm btn-danger"
