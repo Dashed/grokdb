@@ -87,6 +87,7 @@ function Stashes(store) {
     // i.e. if a card is within a stash
     this._lookupRelationshipStashCard = minitrue({}); // Map<[stash_id<int>, card_id<int>], bool>
 
+    this._numStashes = void 0;
 }
 
 Stashes.prototype.constructor = Stashes;
@@ -94,6 +95,8 @@ Stashes.prototype.constructor = Stashes;
 // clear lookup table
 // sync
 Stashes.prototype.clearCache = function() {
+
+    this._numStashes = void 0;
 
     stashLoader.clearAll();
 
@@ -112,6 +115,11 @@ Stashes.prototype.totalStashes = function() {
 
     return new Promise((resolve, reject) => {
 
+        if(_.isNumber(this._numStashes)) {
+            resolve(this._numStashes);
+            return;
+        }
+
         superhot
             .get(`/api/stashes/total`)
             .end((err, response) => {
@@ -121,6 +129,8 @@ Stashes.prototype.totalStashes = function() {
                 case 200:
 
                     const numOfStashes = response.body.num_of_stashes >= 0 ? response.body.num_of_stashes : 0;
+
+                    this._numStashes = numOfStashes;
 
                     return resolve(numOfStashes);
                     break;
