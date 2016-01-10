@@ -1,8 +1,6 @@
 const React = require('react');
 const classnames = require('classnames');
 
-const courier = require('courier');
-
 const StashesAll = require('./stashes_all');
 const StashesBelongsTo = require('./stashes_belongsto');
 
@@ -104,27 +102,4 @@ const CardStashes = React.createClass({
     }
 });
 
-module.exports = courier({
-
-    contextTypes: {
-        store: React.PropTypes.object.isRequired
-    },
-
-    component: CardStashes,
-
-    watch(props, manual, context) {
-        return [
-            context.store.cards.watchCurrentID()
-        ];
-    },
-
-    assignNewProps: function(props, context) {
-
-        return {
-
-            cardID: context.store.cards.currentID()
-
-        };
-
-    }
-});
+module.exports = CardStashes;

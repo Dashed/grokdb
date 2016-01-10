@@ -315,7 +315,9 @@ const DumbCardDetail = React.createClass({
                 <div>
                     <div className="row">
                         <div className="col-sm-12">
-                            <CardStashes />
+                            <CardStashes
+                                cardID={this.props.currentCard.get('id')}
+                            />
                         </div>
                     </div>
                 </div>
@@ -567,7 +569,12 @@ const DumbCardDetail = React.createClass({
                                 );
                             }
 
-                            return (<CardHeader isReviewing={this.props.isReviewing} cardID={this.props.currentCard.get('id')} />);
+                            return (
+                                <CardHeader
+                                    isReviewing={this.props.isReviewing}
+                                    cardID={this.props.currentCard.get('id')}
+                                />
+                            );
 
                         }).call(this)}
                     </div>
