@@ -4,7 +4,7 @@ const moment = require('moment');
 
 const courier = require('courier');
 
-const WaitingCardListItem = require('./waitingcardlistitem');
+const WaitingCardListItem = require('components/card/waitingcardlistitem');
 
 const CardListItem = React.createClass({
 
