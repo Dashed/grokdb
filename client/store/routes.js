@@ -1068,16 +1068,114 @@ const boostrapRoutes = co.wrap(function *(store) {
         reloadAppState,
         ensureValidStashID,
         ensureStashIDExists,
+        parseQueries,
         function(context, next) {
+
+            const {queries} = context;
 
             const stashID = context.stash_id;
 
             store.resetStage();
             store.stashes.currentID(stashID);
             store.routes.route(ROUTE.STASHES.PROFILE.CARDS);
-            store.commit();
 
-            next();
+            // pagination queries
+
+            let pageNum = 1;
+            if(_.has(queries, 'page')) {
+
+                pageNum = filterInteger(queries.page, NOT_SET);
+
+                if(pageNum === NOT_SET) {
+                    pageNum = 1;
+                }
+            }
+            store.cards.pageOfStash(pageNum);
+
+            if(_.has(queries, 'order_by')) {
+
+                let pageOrder = NOT_SET;
+
+                switch(String(queries.order_by).toLowerCase()) {
+
+                case 'descending':
+                case 'desc':
+                    pageOrder = cardPagination.order.DESC;
+                    break;
+
+                case 'ascending':
+                case 'asc':
+                    pageOrder = cardPagination.order.ASC;
+                    break;
+
+                default:
+                    pageOrder = cardPagination.order.DESC;
+                }
+
+                store.cards.orderOfStash(pageOrder);
+            }
+
+            if(_.has(queries, 'sort_by')) {
+
+                let pageSort = NOT_SET;
+
+                switch(String(queries.sort_by).toLowerCase()) {
+
+                case 'reviewed_at':
+                    pageSort = cardPagination.sort.REVIEWED_AT;
+                    break;
+
+                case 'times_reviewed':
+                    pageSort = cardPagination.sort.TIMES_REVIEWED;
+                    break;
+
+                case 'title':
+                    pageSort = cardPagination.sort.TITLE;
+                    break;
+
+                case 'created_at':
+                    pageSort = cardPagination.sort.CREATED_AT;
+                    break;
+
+                case 'updated_at':
+                    pageSort = cardPagination.sort.UPDATED_AT;
+                    break;
+
+                default:
+                    pageSort = cardPagination.sort.UPDATED_AT;
+                }
+
+                store.cards.sortOfStash(pageSort);
+            }
+
+            // ensure pageNum is within valid bounds
+
+            store.cards.totalCardsByStash(stashID)
+                .then(
+                // fulfillment
+                function(totalCards) {
+
+                    if(totalCards <= 0) {
+                        store.commit();
+                        next();
+                        return null;
+                    }
+
+                    const numOfPages = Math.ceil(totalCards / perPage);
+                    const pageSort = store.cards.sort();
+                    const pageOrder = store.cards.order();
+
+                    if(pageNum > numOfPages || pageNum <= 0) {
+                        store.routes.toStashCards(stashID, pageSort, pageOrder, 1);
+                        return null;
+                    }
+
+                    store.commit();
+
+                    next();
+                    return null;
+                });
+
 
         }, postRouteLoad);
 
@@ -1385,6 +1483,8 @@ Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID
             this._store.resetStage();
             toDeckID = this._store.decks.currentID();
         }
+
+        invariant(_.isNumber(filterInteger(toDeckID)) && toDeckID > 0, `Malformed toDeckID. Given ${toDeckID}`);
 
         if(pageNum === NOT_SET) {
             pageNum = this._store.cards.page();
@@ -1705,10 +1805,10 @@ Routes.prototype.toAddNewStash = function() {
 };
 
 Routes.prototype.toStash = function(stashID) {
-    this.toStashCards(stashID);
+    this.toStashCards(stashID, void 0, void 0, 1);
 };
 
-Routes.prototype.toStashCards = function(stashID = NOT_SET) {
+Routes.prototype.toStashCards = function(stashID = NOT_SET, pageSort = NOT_SET, pageOrder = NOT_SET, pageNum = NOT_SET) {
 
     this.shouldChangeRoute(() => {
 
@@ -1719,7 +1819,59 @@ Routes.prototype.toStashCards = function(stashID = NOT_SET) {
 
         invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
 
-        page(`/stash/${stashID}/cards`);
+        if(pageNum === NOT_SET) {
+            pageNum = this._store.cards.page();
+        }
+
+        if(pageOrder === NOT_SET) {
+            pageOrder = this._store.cards.order();
+        }
+
+        switch(pageOrder) {
+
+        case cardPagination.order.DESC:
+            pageOrder = 'descending';
+            break;
+
+        case cardPagination.order.ASC:
+            pageOrder = 'ascending';
+            break;
+
+        default:
+            pageOrder = 'descending';
+        }
+
+        if(pageSort === NOT_SET) {
+            pageSort = this._store.cards.sort();
+        }
+
+        switch(pageSort) {
+
+        case cardPagination.sort.REVIEWED_AT:
+            pageSort = 'reviewed_at';
+            break;
+
+        case cardPagination.sort.TIMES_REVIEWED:
+            pageSort = 'times_reviewed';
+            break;
+
+        case cardPagination.sort.TITLE:
+            pageSort = 'title';
+            break;
+
+        case cardPagination.sort.CREATED_AT:
+            pageSort = 'created_at';
+            break;
+
+        case cardPagination.sort.UPDATED_AT:
+            pageSort = 'updated_at';
+            break;
+
+        default:
+            pageSort = 'updated_at';
+        }
+
+        page(`/stash/${stashID}/cards?order_by=${pageOrder}&sort_by=${pageSort}&page=${pageNum}`);
     });
 };
 

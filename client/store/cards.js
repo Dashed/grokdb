@@ -104,6 +104,50 @@ const cardTotalsLoader = new DataLoader(function(keys) {
     return Promise.all(promiseArray);
 });
 
+const cardTotalsByStashLoader = new DataLoader(function(keys) {
+
+    if(keys.length <= 0) {
+        return Promise.resolve([]);
+    }
+
+    const promiseArray = _.reduce(keys, (accumulator, stashID) => {
+
+        const prom = new Promise((resolve, reject) => {
+
+            superhot
+                .get(`/api/stashes/${stashID}/cards/total`)
+                .end((err, response) => {
+
+                    switch(response.status) {
+
+                    case 200:
+
+                        const numOfCards = response.body.num_of_cards >= 0 ? response.body.num_of_cards : 0;
+
+                        return resolve(numOfCards);
+                        break;
+
+                    default:
+
+                        if (err) {
+                            return reject(err);
+                        }
+
+                        return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                    }
+
+                });
+
+        });
+
+        accumulator.push(prom);
+
+        return accumulator;
+    }, []);
+
+    return Promise.all(promiseArray);
+});
+
 function Cards(store) {
 
     this._store = store;
@@ -118,6 +162,7 @@ Cards.prototype.constructor = Cards;
 Cards.prototype.clearCache = function() {
     cardLoader.clearAll();
     cardTotalsLoader.clearAll();
+    cardTotalsByStashLoader.clearAll();
     this._lookup.update(function() {
         return Immutable.Map();
     });
@@ -127,6 +172,12 @@ Cards.prototype.clearCache = function() {
 // async
 Cards.prototype.totalCards = function(deckID) {
     return cardTotalsLoader.load(deckID);
+};
+
+// get total number of cards within given deck
+// async
+Cards.prototype.totalCardsByStash = function(stashID) {
+    return cardTotalsByStashLoader.load(stashID);
 };
 
 // load and cache card onto lookup table
@@ -732,12 +783,94 @@ Cards.prototype.page = function(page = NOT_SET) {
     return Number(value);
 };
 
+// TODO: rename to changeSort
 // sync
 Cards.prototype.changeFilter = function(sort, order) {
 
     const currentDeckID = this._store.decks.currentID();
 
     this._store.routes.toLibraryCards(currentDeckID, sort, order);
+};
+
+// sync
+Cards.prototype.watchSortOfStash = function() {
+    return this._store.state().cursor(['stash', 'cards', 'sort']);
+};
+
+// sync
+Cards.prototype.sortOfStash = function(sort = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['stash', 'cards', 'sort']);
+
+    if(sort !== NOT_SET) {
+
+        stage = stage.updateIn(['stash', 'cards', 'sort'], function() {
+            return sort;
+        });
+
+        this._store.stage(stage);
+        this._store.commit();
+
+        value = sort;
+    }
+
+    return value;
+};
+
+// sync
+Cards.prototype.watchOrderOfStash = function() {
+    return this._store.state().cursor(['stash', 'cards', 'order']);
+};
+
+// sync
+Cards.prototype.orderOfStash = function(order = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['stash', 'cards', 'order']);
+
+    if(order !== NOT_SET) {
+
+        stage = stage.updateIn(['stash', 'cards', 'order'], function() {
+            return order;
+        });
+
+        this._store.stage(stage);
+        this._store.commit();
+
+        value = order;
+    }
+
+    return value;
+};
+
+// sync
+Cards.prototype.watchPageOfStash = function() {
+    return this._store.state().cursor(['stash', 'cards', 'page']);
+};
+
+// sync
+Cards.prototype.pageOfStash = function(page = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['stash', 'cards', 'page']);
+
+    if(page !== NOT_SET && Number(page) >= 0) {
+
+        stage = stage.updateIn(['stash', 'cards', 'page'], function() {
+            return Number(page);
+        });
+
+        this._store.stage(stage);
+        this._store.commit();
+
+        value = page;
+    }
+
+    return Number(value);
 };
 
 module.exports = {
