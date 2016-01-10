@@ -64,7 +64,14 @@ const SCHEMA = {
     },
 
     stash: {
-        self: null // stash id
+        self: null, // stash id
+
+        cards: {
+            // pagination / filtering for list of cards in a stash
+            sort: cardPagination.sort.UPDATED_AT,
+            order: cardPagination.order.DESC,
+            page: 1,
+        }
     },
 
     stashes: {
