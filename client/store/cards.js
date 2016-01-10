@@ -377,7 +377,6 @@ Cards.prototype.currentID = function(cardID = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = cardID;
     }
@@ -831,7 +830,6 @@ Cards.prototype.sort = function(sort = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = sort;
     }
@@ -858,7 +856,6 @@ Cards.prototype.order = function(order = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = order;
     }
@@ -885,7 +882,6 @@ Cards.prototype.page = function(page = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = page;
     }
@@ -921,7 +917,6 @@ Cards.prototype.sortOfStash = function(sort = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = sort;
     }
@@ -948,7 +943,6 @@ Cards.prototype.orderOfStash = function(order = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = order;
     }
@@ -975,7 +969,6 @@ Cards.prototype.pageOfStash = function(page = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = page;
     }

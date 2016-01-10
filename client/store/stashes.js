@@ -412,7 +412,6 @@ Stashes.prototype.currentID = function(stashID = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = stashID;
     }
@@ -441,7 +440,6 @@ Stashes.prototype.page = function(page = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = page;
     }
@@ -468,7 +466,6 @@ Stashes.prototype.sort = function(sort = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = sort;
     }
@@ -495,7 +492,6 @@ Stashes.prototype.order = function(order = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = order;
     }
@@ -632,7 +628,6 @@ Stashes.prototype.pageOfCardBelongsTo = function(page = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = page;
     }
@@ -659,7 +654,6 @@ Stashes.prototype.sortOfCardBelongsTo = function(sort = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = sort;
     }
@@ -686,7 +680,6 @@ Stashes.prototype.orderOfCardBelongsTo = function(order = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = order;
     }
@@ -868,7 +861,6 @@ Stashes.prototype.pageAll = function(page = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = page;
     }
@@ -895,7 +887,6 @@ Stashes.prototype.sortOfCardAll = function(sort = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = sort;
     }
@@ -922,7 +913,6 @@ Stashes.prototype.orderOfCardAll = function(order = NOT_SET) {
         });
 
         this._store.stage(stage);
-        this._store.commit();
 
         value = order;
     }
