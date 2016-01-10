@@ -1413,6 +1413,100 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
+    router.get("/stashes/:stash_id/cards/:card_id", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested stash id
+
+            let stash_id = req.extensions.get::<Router>().unwrap().find("stash_id").unwrap();
+
+            let stash_id: i64 = match stash_id.parse::<u64>() {
+                Ok(stash_id) => stash_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // ensure stash exists
+            match stash_exists(grokdb, stash_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* stash exists; continue */}
+            }
+
+            // fetch and parse requested card id
+
+            let card_id = req.extensions.get::<Router>().unwrap().find("card_id").unwrap();
+
+            let card_id: i64 = match card_id.parse::<u64>() {
+                Ok(card_id) => card_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // check if stash has card
+
+            match grokdb.cards.stash_has_card(stash_id, card_id) {
+
+                Err(why) => {
+                    // why: QueryError
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(false) => {
+
+                    let ref reason = format!("No such card in given stash.");
+                    let res_code = status::NotFound;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: reason,
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(true) => {/* stash has card */},
+            };
+
+            return get_card_by_id(grokdb.clone(), card_id);
+        }
+    });
+
 }
 
 /* helpers */

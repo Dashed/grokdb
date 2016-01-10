@@ -560,6 +560,48 @@ impl CardsAPI {
 
     }
 
+    pub fn stash_has_card(&self, stash_id: i64, card_id: i64) -> Result<bool, QueryError> {
+
+        let db_conn_guard = self.db.lock().unwrap();
+        let ref db_conn = *db_conn_guard;
+
+        let ref query = format!("
+            SELECT
+                COUNT(1)
+            FROM
+                StashCards
+            WHERE
+                stash = :stash_id
+            AND
+                card = :card_id
+            LIMIT 1;
+        ");
+
+        let params: &[(&str, &ToSql)] = &[
+            (":card_id", &card_id),
+            (":stash_id", &stash_id)
+        ];
+
+        let relationship_exists = db_conn.query_row_named(query, params, |row| -> bool {
+            let count: i64 = row.get(0);
+            return count >= 1;
+        });
+
+        match relationship_exists {
+            Err(why) => {
+                let err = QueryError {
+                    sqlite_error: why,
+                    query: query.clone(),
+                };
+                return Err(err);
+            },
+            Ok(relationship_exists) => {
+                return Ok(relationship_exists);
+            }
+        };
+
+    }
+
     pub fn count_by_stash(&self, stash_id: i64) -> Result<i64, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
