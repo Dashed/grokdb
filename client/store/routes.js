@@ -236,18 +236,25 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     };
 
-    const ensureValidCardID = function(context, next) {
+    const redirectToDeckByID = function(context) {
+        toDeck(context.deck_id);
+    };
 
-        const cardID = filterInteger(context.params.card_id, NOT_ID);
+    const ensureValidCardID = function(otherwise) {
 
-        if(cardID === NOT_ID) {
-            toDeck(context.deck_id);
-            return;
-        }
+        return function(context, next) {
 
-        context.card_id = cardID;
+            const cardID = filterInteger(context.params.card_id, NOT_ID);
 
-        next();
+            if(cardID === NOT_ID) {
+                otherwise.call(void 0, context);
+                return;
+            }
+
+            context.card_id = cardID;
+
+            next();
+        };
     };
 
     const ensureCardIDByDeckIDExists = function(context, next) {
@@ -592,7 +599,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     page('/card', reloadAppState, toRootDeck);
 
-    page('/card/:card_id', reloadAppState, ensureValidCardID, function(context) {
+    page('/card/:card_id', reloadAppState, ensureValidCardID(redirectToDeckByID), function(context) {
         const cardID = context.params.card_id;
 
         store.cards.get(cardID)
@@ -610,7 +617,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     });
 
-    page('/card/:card_id/view', reloadAppState, ensureValidCardID, function(context) {
+    page('/card/:card_id/view', reloadAppState, ensureValidCardID(redirectToDeckByID), function(context) {
         const cardID = context.params.card_id;
 
         store.cards.get(cardID)
@@ -629,7 +636,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     page('/card/:card_id/view/front',
             reloadAppState,
-            ensureValidCardID,
+            ensureValidCardID(redirectToDeckByID),
             function(context) {
 
                 const cardID = context.params.card_id;
@@ -649,7 +656,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     page('/card/:card_id/view/back',
             reloadAppState,
-            ensureValidCardID,
+            ensureValidCardID(redirectToDeckByID),
             function(context) {
 
                 const cardID = context.params.card_id;
@@ -669,7 +676,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     page('/card/:card_id/view/description',
             reloadAppState,
-            ensureValidCardID,
+            ensureValidCardID(redirectToDeckByID),
             function(context) {
 
                 const cardID = context.params.card_id;
@@ -689,7 +696,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     page('/card/:card_id/view/meta',
             reloadAppState,
-            ensureValidCardID,
+            ensureValidCardID(redirectToDeckByID),
             function(context) {
 
                 const cardID = context.params.card_id;
@@ -709,7 +716,7 @@ const boostrapRoutes = co.wrap(function *(store) {
 
     page('/card/:card_id/view/stashes',
             reloadAppState,
-            ensureValidCardID,
+            ensureValidCardID(redirectToDeckByID),
             function(context) {
 
                 const cardID = context.params.card_id;
@@ -730,7 +737,7 @@ const boostrapRoutes = co.wrap(function *(store) {
     page('/deck/:deck_id/card/:card_id/view/front',
             reloadAppState,
             ensureValidDeckID,
-            ensureValidCardID,
+            ensureValidCardID(redirectToDeckByID),
             ensureDeckIDExists,
             ensureCardIDByDeckIDExists,
             function(context, next) {
@@ -750,7 +757,7 @@ const boostrapRoutes = co.wrap(function *(store) {
     page('/deck/:deck_id/card/:card_id/view/back',
             reloadAppState,
             ensureValidDeckID,
-            ensureValidCardID,
+            ensureValidCardID(redirectToDeckByID),
             ensureDeckIDExists,
             ensureCardIDByDeckIDExists,
             function(context, next) {
@@ -770,7 +777,7 @@ const boostrapRoutes = co.wrap(function *(store) {
     page('/deck/:deck_id/card/:card_id/view/description',
             reloadAppState,
             ensureValidDeckID,
-            ensureValidCardID,
+            ensureValidCardID(redirectToDeckByID),
             ensureDeckIDExists,
             ensureCardIDByDeckIDExists,
             function(context, next) {
@@ -790,7 +797,7 @@ const boostrapRoutes = co.wrap(function *(store) {
     page('/deck/:deck_id/card/:card_id/view/meta',
             reloadAppState,
             ensureValidDeckID,
-            ensureValidCardID,
+            ensureValidCardID(redirectToDeckByID),
             ensureDeckIDExists,
             ensureCardIDByDeckIDExists,
             function(context, next) {
@@ -810,7 +817,7 @@ const boostrapRoutes = co.wrap(function *(store) {
     page('/deck/:deck_id/card/:card_id/view/stashes',
             reloadAppState,
             ensureValidDeckID,
-            ensureValidCardID,
+            ensureValidCardID(redirectToDeckByID),
             ensureDeckIDExists,
             ensureCardIDByDeckIDExists,
             function(context, next) {
