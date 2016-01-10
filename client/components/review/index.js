@@ -114,7 +114,9 @@ const Review = React.createClass({
             isEditing: false
         });
 
-        this.context.store.cards.patchCurrent(patch);
+        const cardID = this.props.card.get('id');
+
+        this.context.store.cards.patch(cardID, patch);
     },
 
     editCard() {
@@ -215,6 +217,7 @@ const Review = React.createClass({
 
                             isReviewing
                             hideBack={!this.state.reveal}
+                            hideEdit={!this.state.reveal}
 
                             currentTab={this.props.currentTab}
                             currentCard={this.props.card}

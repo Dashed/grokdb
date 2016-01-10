@@ -36,15 +36,18 @@ const DumbCardDetail = React.createClass({
         editCard: React.PropTypes.func.isRequired,
         onCancelEdit: React.PropTypes.func.isRequired,
 
+        // cosmetic flags
         isReviewing: React.PropTypes.bool.isRequired,
-        hideBack: React.PropTypes.bool.isRequired
+        hideBack: React.PropTypes.bool.isRequired,
+        hideEdit: React.PropTypes.bool.isRequired
     },
 
     getDefaultProps() {
 
         return {
             isReviewing: false,
-            hideBack: false
+            hideBack: false,
+            hideEdit: false
         };
     },
 
@@ -362,6 +365,10 @@ const DumbCardDetail = React.createClass({
 
     getEditCancelButton() {
 
+        if(this.props.hideEdit) {
+            return null;
+        }
+
         if(!this.props.isEditing) {
 
             return (
@@ -385,9 +392,9 @@ const DumbCardDetail = React.createClass({
 
     shouldSaveCard() {
 
-        const newTitle = this.state.newTitle;
+        const titleSource = this.getTitleSource();
 
-        if(_.isString(newTitle) && newTitle.length > 0) {
+        if(_.isString(titleSource) && titleSource.length > 0) {
             return true;
         }
 
