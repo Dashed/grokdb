@@ -49,7 +49,7 @@ module.exports = {
             'qs',
             'moment',
             'react-prop-once', // TODO: remove if unused
-            'scriptjs',
+            'little-loader',
             'markdown-it',
             'markdown-it-abbr',
             // 'markdown-it-footnote',

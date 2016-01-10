@@ -8,9 +8,11 @@ require('bluebird').longStackTraces();
 
 // superagent proxy
 const superhot = require('store/superhot');
-const scriptjs = require('scriptjs');
+const littleloader = require('little-loader');
 
 new Promise(function(resolve) {
+
+    // check if mathjax assets exist
 
     superhot.get('/mathjax/MathJax.js').end(function(err, response){
         resolve(response.status == 200);
@@ -21,7 +23,12 @@ new Promise(function(resolve) {
     const mjscript = hasLocalMathJax ? '/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML' :
         'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
 
-    scriptjs(mjscript, function() {
+    littleloader(mjscript, function (err) {
+
+        if(err) {
+            console.error(err);
+        }
+
         require('./index.js');
     });
 
