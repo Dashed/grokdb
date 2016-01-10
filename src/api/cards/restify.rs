@@ -1348,6 +1348,71 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
+    router.get("/stashes/:stash_id/cards/total", {
+        let grokdb = grokdb.clone();
+        move |req: &mut Request| -> IronResult<Response> {
+            let ref grokdb = grokdb.deref();
+
+            // fetch and parse requested stash id
+
+            let stash_id = req.extensions.get::<Router>().unwrap().find("stash_id").unwrap();
+
+            let stash_id: i64 = match stash_id.parse::<u64>() {
+                Ok(stash_id) => stash_id as i64,
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
+            // ensure stash exists
+            match stash_exists(grokdb, stash_id) {
+                Err(response) => {
+                    return response;
+                },
+                _ => {/* stash exists; continue */}
+            }
+
+            let totals = match grokdb.cards.count_by_stash(stash_id) {
+                Err(why) => {
+                    // why: QueryError
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::InternalServerError;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                },
+
+                Ok(count) => {
+                    count
+                }
+            };
+
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            let response = CardPaginationInfo {
+                num_of_cards: totals
+            }.to_json();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
+        }
+    });
+
 }
 
 /* helpers */
