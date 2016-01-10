@@ -21,6 +21,14 @@ const SCHEMA = {
         root: null, // deck_id
         self: null, // deck_id
 
+        // TODO: refactor to here (XYZ)
+        // cards: {
+        //     // pagination / filtering for list of cards in a deck
+        //     sort: cardPagination.sort.UPDATED_AT,
+        //     order: cardPagination.order.DESC,
+        //     page: 1,
+        // }
+
         // TODO: not used; remove
         // children: [], // List<deck_id>
 
@@ -31,6 +39,7 @@ const SCHEMA = {
     card: {
         self: null,
 
+        // TODO: remove and refactor to (XYZ)
         // pagination / filtering for list of cards in a deck
         sort: cardPagination.sort.UPDATED_AT,
         order: cardPagination.order.DESC,
