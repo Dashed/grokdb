@@ -1,4 +1,4 @@
-pub const SETUP: [&'static str; 23] = [
+pub const SETUP: [&'static str; 22] = [
 
     // configs
 
@@ -41,7 +41,6 @@ pub const SETUP: [&'static str; 23] = [
     // cards score/triggers
 
     CARDS_SCORE_ON_NEW_CARD_TRIGGER,
-    CARDS_SCORE_ON_UPDATED_TRIGGER,
 
     // cards score/indices
 
@@ -204,16 +203,21 @@ END;
 
 // changelog is internal for CardsScoreHistory to take snapshot of.
 // times_seen is number of times a card was put up for review.
-// times_reviewed is number of times a card was actually reviewed. skipping a card
-// is not actually reviewing the card.
+// times_reviewed is number of times a card was actually reviewed.
+// note that, skipping a card is not actually reviewing the card.
 const CARDS_SCORE: &'static str = "
 CREATE TABLE IF NOT EXISTS CardsScore (
+
+    changelog TEXT NOT NULL DEFAULT '',
+
     success INTEGER NOT NULL DEFAULT 0,
     fail INTEGER NOT NULL DEFAULT 0,
+
     times_reviewed INT NOT NULL DEFAULT 0,
     times_seen INT NOT NULL DEFAULT 0,
-    updated_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
-    changelog TEXT NOT NULL DEFAULT '',
+
+    seen_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+    reviewed_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
 
     card INTEGER NOT NULL,
 
@@ -232,21 +236,6 @@ BEGIN
 END;
 ";
 
-const CARDS_SCORE_ON_UPDATED_TRIGGER: &'static str = "
-CREATE TRIGGER IF NOT EXISTS CARDS_SCORE_ON_UPDATED_TRIGGER
-AFTER UPDATE OF
-    success, fail
-ON CardsScore
-BEGIN
-    UPDATE
-        CardsScore
-    SET
-        updated_at = strftime('%s', 'now'),
-        times_seen = times_seen + 1
-    WHERE card = NEW.card;
-END;
-";
-
 // enforce 1-1 relationship
 const CARDS_SCORE_INDEX: &'static str = "
 CREATE UNIQUE INDEX IF NOT EXISTS CARDS_SCORE_INDEX ON CardsScore (card);
@@ -259,9 +248,14 @@ const CARDS_SCORE_HISTORY: &'static str = "
 CREATE TABLE IF NOT EXISTS CardsScoreHistory (
 
     occured_at INT NOT NULL DEFAULT (strftime('%s', 'now')),
+
+    is_review_event INT NOT NULL DEFAULT 0,
+
     success INTEGER NOT NULL DEFAULT 0,
     fail INTEGER NOT NULL DEFAULT 0,
+
     changelog TEXT NOT NULL DEFAULT '',
+
     card INTEGER NOT NULL,
 
     FOREIGN KEY (card) REFERENCES Cards(card_id) ON DELETE CASCADE
@@ -274,8 +268,8 @@ AFTER UPDATE
 OF success, fail, changelog
 ON CardsScore
 BEGIN
-   INSERT INTO CardsScoreHistory(occured_at, success, fail, changelog, card)
-   VALUES (strftime('%s', 'now'), (NEW.success - OLD.success), (NEW.fail - OLD.fail), NEW.changelog, NEW.card);
+   INSERT INTO CardsScoreHistory(is_review_event, occured_at, success, fail, changelog, card)
+   VALUES (NEW.reviewed_at <> OLD.reviewed_at, strftime('%s', 'now'), (NEW.success - OLD.success), (NEW.fail - OLD.fail), NEW.changelog, NEW.card);
 END;
 ";
 

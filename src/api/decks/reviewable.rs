@@ -295,7 +295,7 @@ impl ReviewableSelection for ReviewableDeck {
             WHERE
                 dc.ancestor = :deck_id
             AND
-                (c.created_at - cs.updated_at) = 0;
+                (c.created_at - cs.seen_at) = 0;
         ");
 
         let maybe_count = db_conn.query_row_named(query, params, |row| -> i64 {
@@ -338,7 +338,7 @@ impl ReviewableSelection for ReviewableDeck {
             WHERE
                 dc.ancestor = :deck_id
             AND
-                (c.created_at - cs.updated_at) = 0
+                (c.created_at - cs.seen_at) = 0
             LIMIT 1
             OFFSET :offset;
         ");
@@ -399,9 +399,9 @@ impl ReviewableSelection for ReviewableDeck {
             WHERE
                 dc.ancestor = :deck_id
             AND
-                (strftime('%s','now') - cs.updated_at) >= :age_of_consent
+                (strftime('%s','now') - cs.seen_at) >= :age_of_consent
             AND
-                rank_score(cs.success, cs.fail, strftime('%s','now') - cs.updated_at, cs.times_reviewed) >= :min_score;
+                rank_score(cs.success, cs.fail, strftime('%s','now') - cs.seen_at, cs.times_reviewed) >= :min_score;
         ");
 
         let age_in_seconds: i64 = age_in_hours * 3600;
@@ -452,11 +452,11 @@ impl ReviewableSelection for ReviewableDeck {
             WHERE
                 dc.ancestor = :deck_id
             AND
-                (strftime('%s','now') - cs.updated_at) >= :age_of_consent
+                (strftime('%s','now') - cs.seen_at) >= :age_of_consent
             AND
-                rank_score(cs.success, cs.fail, strftime('%s','now') - cs.updated_at, cs.times_reviewed) >= :min_score
+                rank_score(cs.success, cs.fail, strftime('%s','now') - cs.seen_at, cs.times_reviewed) >= :min_score
             ORDER BY
-                rank_score(cs.success, cs.fail, strftime('%s','now') - cs.updated_at, cs.times_reviewed) DESC
+                rank_score(cs.success, cs.fail, strftime('%s','now') - cs.seen_at, cs.times_reviewed) DESC
             LIMIT 1
             OFFSET :index;
         ");
@@ -513,7 +513,7 @@ impl ReviewableSelection for ReviewableDeck {
             FROM
             (
                 SELECT
-                    c.card_id, cs.success, cs.fail, cs.updated_at, cs.times_reviewed
+                    c.card_id, cs.success, cs.fail, cs.seen_at, cs.times_reviewed
                 FROM DecksClosure AS dc
 
                 INNER JOIN Cards AS c
@@ -525,17 +525,17 @@ impl ReviewableSelection for ReviewableDeck {
                 WHERE
                     dc.ancestor = :deck_id
                 ORDER BY
-                    (strftime('%s','now') - cs.updated_at) DESC
+                    (strftime('%s','now') - cs.seen_at) DESC
                 LIMIT :purgatory_size
             )
             AS sub
             WHERE
-                rank_score(sub.success, sub.fail, strftime('%s','now') - sub.updated_at, sub.times_reviewed) >= :min_score
+                rank_score(sub.success, sub.fail, strftime('%s','now') - sub.seen_at, sub.times_reviewed) >= :min_score
             {sort_by_score}
             ;
         ", sort_by_score = {
             if sort_by_score {
-                "ORDER BY rank_score(sub.success, sub.fail, strftime('%s','now') - sub.updated_at, sub.times_reviewed) DESC"
+                "ORDER BY rank_score(sub.success, sub.fail, strftime('%s','now') - sub.seen_at, sub.times_reviewed) DESC"
             } else {
                 ""
             }
@@ -579,7 +579,7 @@ impl ReviewableSelection for ReviewableDeck {
             FROM
             (
                 SELECT
-                    c.card_id, cs.success, cs.fail, cs.updated_at, cs.times_reviewed
+                    c.card_id, cs.success, cs.fail, cs.seen_at, cs.times_reviewed
                 FROM DecksClosure AS dc
 
                 INNER JOIN Cards AS c
@@ -591,17 +591,17 @@ impl ReviewableSelection for ReviewableDeck {
                 WHERE
                     dc.ancestor = :deck_id
                 ORDER BY
-                    (strftime('%s','now') - cs.updated_at) DESC
+                    (strftime('%s','now') - cs.seen_at) DESC
                 LIMIT :purgatory_size
             )
             AS sub
             WHERE
-                rank_score(sub.success, sub.fail, strftime('%s','now') - sub.updated_at, sub.times_reviewed) >= :min_score
+                rank_score(sub.success, sub.fail, strftime('%s','now') - sub.seen_at, sub.times_reviewed) >= :min_score
             {sort_by_score}
             LIMIT 1 OFFSET :index;
         ", sort_by_score = {
             if sort_by_score {
-                "ORDER BY rank_score(sub.success, sub.fail, strftime('%s','now') - sub.updated_at, sub.times_reviewed) DESC"
+                "ORDER BY rank_score(sub.success, sub.fail, strftime('%s','now') - sub.seen_at, sub.times_reviewed) DESC"
             } else {
                 ""
             }

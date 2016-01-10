@@ -776,7 +776,7 @@ FROM   (SELECT *
                                ON cs.card = c.card_id
                 WHERE  dc.ancestor = :deck_id
                        AND cs.times_reviewed > 0
-                ORDER  BY cs.updated_at {sort_order})
+                ORDER  BY cs.reviewed_at {sort_order})
         UNION ALL
         SELECT *
         FROM   (SELECT c.card_id,
@@ -794,7 +794,7 @@ FROM   (SELECT *
                                ON cs.card = c.card_id
                 WHERE  dc.ancestor = :deck_id
                        AND cs.times_reviewed = 0
-                ORDER  BY cs.updated_at {sort_order})) AS res
+                ORDER  BY cs.reviewed_at {sort_order})) AS res
 WHERE  res.card_id NOT IN (SELECT *
                            FROM   (SELECT c.oid
                                    FROM   decksclosure AS dc
@@ -804,7 +804,7 @@ WHERE  res.card_id NOT IN (SELECT *
                                                   ON cs.card = c.card_id
                                    WHERE  dc.ancestor = :deck_id
                                           AND cs.times_reviewed > 0
-                                   ORDER  BY cs.updated_at {sort_order})
+                                   ORDER  BY cs.reviewed_at {sort_order})
                            UNION ALL
                            SELECT *
                            FROM   (SELECT c.oid
@@ -815,7 +815,7 @@ WHERE  res.card_id NOT IN (SELECT *
                                                   ON cs.card = c.card_id
                                    WHERE  dc.ancestor = :deck_id
                                           AND cs.times_reviewed = 0
-                                   ORDER  BY cs.updated_at {sort_order})
+                                   ORDER  BY cs.reviewed_at {sort_order})
                            LIMIT
                            :offset)
 LIMIT  :per_page;
@@ -969,7 +969,7 @@ FROM   (SELECT *
                                ON cs.card = c.card_id
                 WHERE  sc.stash = :stash_id
                        AND cs.times_reviewed > 0
-                ORDER  BY cs.updated_at {sort_order})
+                ORDER  BY cs.reviewed_at {sort_order})
         UNION ALL
         SELECT *
         FROM   (SELECT c.card_id,
@@ -987,7 +987,7 @@ FROM   (SELECT *
                                ON cs.card = c.card_id
                 WHERE  sc.stash = :stash_id
                        AND cs.times_reviewed = 0
-                ORDER  BY cs.updated_at {sort_order})) AS res
+                ORDER  BY cs.reviewed_at {sort_order})) AS res
 WHERE  res.card_id NOT IN (SELECT *
                            FROM   (SELECT c.oid
                                    FROM   StashCards AS sc
@@ -997,7 +997,7 @@ WHERE  res.card_id NOT IN (SELECT *
                                                   ON cs.card = c.card_id
                                    WHERE  sc.stash = :stash_id
                                           AND cs.times_reviewed > 0
-                                   ORDER  BY cs.updated_at {sort_order})
+                                   ORDER  BY cs.reviewed_at {sort_order})
                            UNION ALL
                            SELECT *
                            FROM   (SELECT c.oid
@@ -1008,7 +1008,7 @@ WHERE  res.card_id NOT IN (SELECT *
                                                   ON cs.card = c.card_id
                                    WHERE  sc.stash = :stash_id
                                           AND cs.times_reviewed = 0
-                                   ORDER  BY cs.updated_at {sort_order})
+                                   ORDER  BY cs.reviewed_at {sort_order})
                            LIMIT
                            :offset)
 LIMIT  :per_page;
