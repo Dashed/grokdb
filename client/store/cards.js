@@ -213,6 +213,63 @@ Cards.prototype.loadByDeck = function(cardID = NOT_SET, deckID) {
 };
 
 // async
+Cards.prototype.loadByStash = function(cardID = NOT_SET, stashID) {
+
+    if(cardID === NOT_SET) {
+        return Promise.resolve(void 0);
+    }
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .get(`/api/stashes/${stashID}/cards/${cardID}`)
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    cardID = Number(response.body.id);
+                    const card = Immutable.fromJS(response.body);
+
+                    this._lookup.cursor(cardID).update(function() {
+                        return card;
+                    });
+
+                    return resolve(card);
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                }
+
+            });
+
+    });
+
+    return cardLoader.load(cardID)
+        .then((card) => {
+
+            cardID = Number(cardID);
+
+            // cache onto lookup table
+
+            card = Immutable.fromJS(card);
+
+            this._lookup.cursor(cardID).update(function() {
+                return card;
+            });
+
+            return card;
+        });
+
+};
+
+// async
 Cards.prototype.get = function(cardID) {
 
     cardID = Number(cardID);
