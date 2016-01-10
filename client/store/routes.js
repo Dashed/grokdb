@@ -734,6 +734,26 @@ const boostrapRoutes = co.wrap(function *(store) {
                     });
             });
 
+    page('/deck/:deck_id/card/:card_id',
+            reloadAppState,
+            function(context) {
+
+                const deckID = context.params.deck_id;
+                const cardID = context.params.card_id;
+                page.redirect(`/deck/${deckID}/card/${cardID}/view/front`);
+
+            });
+
+    page('/deck/:deck_id/card/:card_id/view',
+            reloadAppState,
+            function(context) {
+
+                const deckID = context.params.deck_id;
+                const cardID = context.params.card_id;
+                page.redirect(`/deck/${deckID}/card/${cardID}/view/front`);
+
+            });
+
     page('/deck/:deck_id/card/:card_id/view/front',
             reloadAppState,
             ensureValidDeckID,
