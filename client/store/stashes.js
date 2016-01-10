@@ -392,7 +392,13 @@ Stashes.prototype.create = function(createStash) {
     });
 };
 
+// sync
+Stashes.prototype.watchCurrentID = function() {
+    return this._store.state().cursor(['stash', 'self']);
+};
+
 // fetch/set current stash id from app state
+// sync
 Stashes.prototype.currentID = function(stashID = NOT_SET) {
 
     let stage = this._store.stage();
