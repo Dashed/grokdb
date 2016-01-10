@@ -540,12 +540,12 @@ impl CardsAPI {
             (":deck_id", &deck_id)
         ];
 
-        let deck_exists = db_conn.query_row_named(query, params, |row| -> bool {
+        let relationship_exists = db_conn.query_row_named(query, params, |row| -> bool {
             let count: i64 = row.get(0);
             return count >= 1;
         });
 
-        match deck_exists {
+        match relationship_exists {
             Err(why) => {
                 let err = QueryError {
                     sqlite_error: why,
@@ -553,8 +553,8 @@ impl CardsAPI {
                 };
                 return Err(err);
             },
-            Ok(deck_exists) => {
-                return Ok(deck_exists);
+            Ok(relationship_exists) => {
+                return Ok(relationship_exists);
             }
         };
 
