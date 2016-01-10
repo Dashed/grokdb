@@ -1,12 +1,12 @@
 const React = require('react');
 const Immutable = require('immutable');
-const moment = require('moment');
 
 const courier = require('courier');
 
 const WaitingCardListItem = require('components/card/waitingcardlistitem');
+const CardListItem = require('components/card/cardlistitem');
 
-const CardListItem = React.createClass({
+const WrappedCardListItem = React.createClass({
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
@@ -17,9 +17,7 @@ const CardListItem = React.createClass({
         card: React.PropTypes.instanceOf(Immutable.Map).isRequired
     },
 
-    onClick(event) {
-        event.preventDefault();
-        event.stopPropagation();
+    onClick() {
 
         // invariant: card belongs to current deck
 
@@ -30,40 +28,16 @@ const CardListItem = React.createClass({
 
     render() {
 
-        const {card} = this.props;
+        const {card, cardID} = this.props;
 
         // datetime of when last reviewed
 
-        const offset = new Date().getTimezoneOffset();
-        const lastReviewedDatetime = moment.unix(card.getIn(['review_stat', 'reviewed_at'])).utcOffset(-offset);
-
-        const createdAt = moment.unix(card.get('created_at')).utcOffset(-offset);
-        const wasReviewed = Math.abs(lastReviewedDatetime.diff(createdAt)) <= 250 ? false : true;
-
-        const lastReviewed = wasReviewed ? `last reviewed ${lastReviewedDatetime.fromNow()}.` : `hasn't been reviewed yet.`;
-
-        const extraSummary = wasReviewed ? `Reviewed ${card.getIn(['review_stat', 'times_reviewed'])} times.` : '';
-
-        // TODO: get score
-        const score = `Performance score of ${100-card.getIn(['review_stat', 'score']).toPrecision(5)*100}%`;
-
         return (
-            <li className="list-group-item">
-                <h6 className="list-group-item-heading m-y-0">
-                    <a href="#" onClick={this.onClick} >
-                        {card.get('title')}
-                    </a>
-                </h6>
-                <p className="list-group-item-text m-y-0">
-                    <small className="text-muted">
-                        {`Card #${card.get('id')} ${lastReviewed} ${extraSummary} ${score}`}
-                    </small>
-                    <br/>
-                    <small>
-                        {'deck path'}
-                    </small>
-                </p>
-            </li>
+            <CardListItem
+                cardID={cardID}
+                card={card}
+                onClick={this.onClick}
+            />
         );
     }
 
@@ -71,13 +45,17 @@ const CardListItem = React.createClass({
 
 module.exports = courier({
 
-    component: CardListItem,
+    component: WrappedCardListItem,
     waitingComponent: WaitingCardListItem,
 
     onlyWaitingOnMount: true,
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
+    },
+
+    propTypes: {
+        cardID: React.PropTypes.number.isRequired
     },
 
     shouldRewatch(props) {

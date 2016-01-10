@@ -8,6 +8,7 @@ const WaitingCardListItem = React.createClass({
         event.preventDefault();
         event.stopPropagation();
 
+        // noop
     },
 
     render() {

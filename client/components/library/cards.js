@@ -9,7 +9,7 @@ const {perPage} = require('constants/cardspagination');
 const CardListItem = require('./cardlistitem');
 const CardsFilter = require('./cardsfilter');
 const CardsPagination = require('./cardspagination');
-const WaitingCardListItem = require('./waitingcardlistitem');
+const WaitingCardListItem = require('components/card/waitingcardlistitem');
 
 const DumbCardsList = React.createClass({
 
