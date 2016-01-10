@@ -4,6 +4,7 @@ const minitrue = require('minitrue');
 const invariant = require('invariant');
 const DataLoader = require('dataloader');
 
+const filterInteger = require('utils/filterinteger');
 const superhot = require('./superhot');
 
 const {Response, OK, INVALID} = require('./response');
@@ -594,6 +595,115 @@ Cards.prototype.currentCardsID = function() {
 
         superhot
             .get(`/api/decks/${currentID}/cards`)
+            .query({
+                'per_page': perPage
+            })
+            .query({
+                'page': pageNum
+            })
+            .query({
+                'sort_by': pageSort
+            })
+            .query({
+                'order_by': pageOrder
+            })
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    invariant(_.isArray(response.body), `Expected array. Given ${response.body}`);
+
+                    const result = _.map(response.body, (card) => {
+
+                        const cardID = card.id;
+
+                        this._lookup.cursor(cardID).update(function() {
+                            return Immutable.fromJS(card);
+                        });
+
+                        return cardID;
+
+                    });
+
+                    return resolve(result);
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                }
+
+            });
+    });
+
+};
+
+// async
+Cards.prototype.currentCardsIDByStash = function(stashID) {
+
+    invariant(filterInteger(stashID, NOT_SET) !== NOT_SET, `Given ${stashID}`);
+
+    return new Promise((resolve, reject) => {
+
+        const pageNum = this._store.cards.pageOfStash();
+
+        invariant(_.isNumber(pageNum) && pageNum >= 1, `Given ${pageNum}`);
+
+        const pageSort = (() => {
+
+            switch(this._store.cards.sortOfStash()) {
+
+            case SORT.REVIEWED_AT:
+                return 'reviewed_at';
+                break;
+
+            case SORT.TIMES_REVIEWED:
+                return 'times_reviewed';
+                break;
+
+            case SORT.TITLE:
+                return 'title';
+                break;
+
+            case SORT.CREATED_AT:
+                return 'created_at';
+                break;
+
+            case SORT.UPDATED_AT:
+                return 'updated_at';
+                break;
+
+            default:
+                throw Error(`Unexpected sort. Given ${this._store.cards.sortOfStash()}`);
+            }
+
+        })();
+
+        const pageOrder = (() => {
+
+            switch(this._store.cards.orderOfStash()) {
+
+            case ORDER.ASC:
+                return 'ascending';
+                break;
+
+            case ORDER.DESC:
+                return 'descending';
+                break;
+
+            default:
+                throw Error(`Unexpected order. Given ${this._store.cards.orderOfStash()}`);
+            }
+
+        })();
+
+        superhot
+            .get(`/api/stashes/${stashID}/cards`)
             .query({
                 'per_page': perPage
             })
