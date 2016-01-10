@@ -37,7 +37,6 @@ const CardProfile = React.createClass({
     },
 
     onClickBackButton() {
-
         this.context.store.routes.toLibraryCards();
     },
 

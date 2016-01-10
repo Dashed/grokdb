@@ -34,7 +34,18 @@ const DumbCardDetail = React.createClass({
 
         onCardSave: React.PropTypes.func.isRequired,
         editCard: React.PropTypes.func.isRequired,
-        onCancelEdit: React.PropTypes.func.isRequired
+        onCancelEdit: React.PropTypes.func.isRequired,
+
+        isReviewing: React.PropTypes.bool.isRequired,
+        hideBack: React.PropTypes.bool.isRequired
+    },
+
+    getDefaultProps() {
+
+        return {
+            isReviewing: false,
+            hideBack: false
+        };
     },
 
     getInitialState() {
@@ -556,7 +567,7 @@ const DumbCardDetail = React.createClass({
                                 );
                             }
 
-                            return (<CardHeader cardID={this.props.currentCard.get('id')} />);
+                            return (<CardHeader isReviewing={this.props.isReviewing} cardID={this.props.currentCard.get('id')} />);
 
                         }).call(this)}
                     </div>
@@ -564,6 +575,7 @@ const DumbCardDetail = React.createClass({
                 <div className="row">
                     <div className="col-sm-12 m-b">
                         <CardTabs
+                            hideBack={this.props.hideBack}
                             currentTab={this.props.currentTab}
                             onSwitch={this.onSwitchCurrentTab} />
                     </div>

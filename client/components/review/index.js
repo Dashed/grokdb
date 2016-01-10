@@ -2,18 +2,15 @@ const React = require('react');
 const Immutable = require('immutable');
 const either = require('react-either');
 const invariant = require('invariant');
-const TextareaAutosize = require('react-textarea-autosize');
-const _ = require('lodash');
 
 const {types: ROUTES} = require('store/routes');
 const {ReviewPatch} = require('store/review');
 
 const courier = require('courier');
 
-const MarkdownPreview = require('components/markdownpreview');
-const RenderSourceTabs = require('components/rendersourcetabs');
-const CardHeader = require('components/card/header');
-const CardTabs = require('components/card/tabs');
+const {tabs} = require('constants/cardprofile');
+
+const CardDetail = require('components/card/index');
 const ReviewTabBar = require('./tabbar');
 const difficulty = require('constants/difficulty');
 
@@ -25,7 +22,7 @@ const Review = React.createClass({
 
     propTypes: {
         currentDeckID: React.PropTypes.number.isRequired,
-        currentTab: React.PropTypes.oneOf(['Front', 'Back', 'Description', 'Stashes', 'Meta']),
+        currentTab: React.PropTypes.oneOf([tabs.front, tabs.back, tabs.description, tabs.stashes, tabs.meta]),
         card: React.PropTypes.instanceOf(Immutable.Map).isRequired
     },
 
@@ -38,26 +35,7 @@ const Review = React.createClass({
             difficulty: difficulty.none,
 
             // hide back-side of card when being reviewed
-            reveal: false,
-
-            // new values for card when editing it
-
-            newTitle: void 0,
-
-            front: {
-                showRender: true,
-                newSource: void 0
-            },
-
-            back: {
-                showRender: true,
-                newSource: void 0
-            },
-
-            description: {
-                showRender: true,
-                newSource: void 0
-            }
+            reveal: false
         };
     },
 
@@ -71,26 +49,7 @@ const Review = React.createClass({
             difficulty: difficulty.none,
 
             // hide back-side of card when being reviewed
-            reveal: false,
-
-            // new values for card when editing it
-
-            newTitle: void 0,
-
-            front: {
-                showRender: true,
-                newSource: void 0
-            },
-
-            back: {
-                showRender: true,
-                newSource: void 0
-            },
-
-            description: {
-                showRender: true,
-                newSource: void 0
-            }
+            reveal: false
         });
 
         const deckID = this.props.currentDeckID;
@@ -100,17 +59,15 @@ const Review = React.createClass({
     componentWillMount() {
 
         // redirect to front side of card if back-side shouldn't be revealed yet
-        if(this.getCurrentTab() === 'back' && !this.state.reveal) {
+        if(this.props.currentTab === tabs.back && !this.state.reveal) {
+
             const deckID = this.props.currentDeckID;
             this.context.store.routes.toDeckReviewCardFront(deckID);
         }
 
     },
 
-    backToCardsList(event) {
-        event.preventDefault();
-        event.stopPropagation();
-
+    onClickBackButton() {
         this.context.store.routes.toLibraryCards();
     },
 
@@ -120,27 +77,27 @@ const Review = React.createClass({
 
         switch(tabType) {
 
-        case 'Front':
+        case tabs.front:
 
             this.context.store.routes.toDeckReviewCardFront(deckID);
             break;
 
-        case 'Back':
+        case tabs.back:
 
             this.context.store.routes.toDeckReviewCardBack(deckID);
             break;
 
-        case 'Description':
+        case tabs.description:
 
             this.context.store.routes.toDeckReviewCardDescription(deckID);
             break;
 
-        case 'Meta':
+        case tabs.meta:
 
             this.context.store.routes.toDeckReviewCardMeta(deckID);
             break;
 
-        case 'Stashes':
+        case tabs.stashes:
 
             this.context.store.routes.toDeckReviewCardStashes(deckID);
             break;
@@ -151,212 +108,29 @@ const Review = React.createClass({
         }
     },
 
-    getCurrentTab() {
-
-        let key = 'front';
-
-        switch(this.props.currentTab) {
-
-        case 'Front':
-            key = 'front';
-            break;
-
-        case 'Back':
-            key = 'back';
-            break;
-
-        case 'Description':
-            key = 'description';
-            break;
-
-        case 'Stashes':
-            key = 'stashes';
-            break;
-
-        case 'Meta':
-            key = 'meta';
-            break;
-
-        default:
-            throw Error(`Unexpected currentTab value. Given: ${this.state.currentTab}`);
-        }
-
-        return key;
-
-    },
-
-    getSource(currentTab) {
-
-        // invarant: currentTab is one of front, back, or description
-
-        const newSource = this.state[currentTab].newSource;
-
-        if(_.isString(newSource)) {
-            return newSource;
-        }
-
-        const {card} = this.props;
-
-        switch(currentTab) {
-        case 'front':
-        case 'back':
-        case 'description':
-            break;
-
-        default:
-            throw Error(`Unexpected currentTab. Given: ${currentTab}`);
-        }
-
-        return card.get(currentTab);
-
-    },
-
-    getCurrentSwitchRenderSourceTab() {
-        return this.state[this.getCurrentTab()].showRender;
-    },
-
-    onSwitchRenderSourceTab(tabType) {
-
-        let currentTab = this.getCurrentTab();
-
-        let showRender = true;
-
-        switch(tabType) {
-        case 'render':
-            showRender = true;
-            break;
-        case 'source':
-            showRender = false;
-            break;
-        default:
-            throw Error(`Unexpected tabType. Given: ${tabType}`);
-        };
+    onCardSave(patch) {
 
         this.setState({
-            [currentTab]: _.assign({}, this.state[currentTab], {
-                showRender: showRender
-            })
+            isEditing: false
+        });
+
+        this.context.store.cards.patchCurrent(patch);
+    },
+
+    editCard() {
+
+        this.setState({
+            isEditing: true
         });
 
     },
 
-    getCardPropComponent() {
+    onCancelEdit() {
 
-        // invarant: currentTab is one of front, back, or description
+        this.setState({
+            isEditing: false
+        });
 
-        const currentTab = this.getCurrentTab();
-
-        const source = this.getSource(currentTab);
-        const showRender = this.state[currentTab].showRender;
-
-        if(showRender) {
-            return <MarkdownPreview key="preview" text={source} />;
-        }
-
-        const placeholder = (() => {
-
-            if(!this.state.isEditing) {
-                return '';
-            }
-
-            // only show placeholder when editing
-
-            switch(currentTab) {
-            case 'front':
-                return 'Front side for new card';
-                break;
-
-            case 'back':
-                return 'Back side for new card';
-                break;
-
-            case 'description':
-                return 'Description for new card';
-                break;
-
-            default:
-                throw Error(`Unexpected currentTab. Given: ${currentTab}`);
-            }
-        })();
-
-        return (
-            <TextareaAutosize
-                key="textarea"
-                useCacheForDOMMeasurements
-                minRows={6}
-                maxRows={10}
-                className="form-control"
-                id="deck_source"
-                placeholder={placeholder}
-                onChange={this.onSourceChange}
-                value={source}
-                readOnly={!this.state.isEditing}
-            />
-        );
-
-    },
-
-    getChildComponent() {
-
-        const currentTab = this.getCurrentTab();
-
-        switch(currentTab) {
-        case 'front':
-        case 'back':
-        case 'description':
-
-            return (
-                <div>
-                    <div className="row">
-                        <div className="col-sm-12 m-b">
-                            <RenderSourceTabs
-                                showRender={this.getCurrentSwitchRenderSourceTab()}
-                                onSwitch={this.onSwitchRenderSourceTab}
-                                showEditButton={false}
-                            />
-                        </div>
-                    </div>
-                    <div className="row">
-                        <div className="col-sm-12">
-                            {this.getCardPropComponent()}
-                        </div>
-                    </div>
-                </div>
-            );
-
-            break;
-
-        case 'stashes':
-
-            return (
-                <div>
-                    <div className="row">
-                        <div className="col-sm-12">
-                            {'stashes'}
-                        </div>
-                    </div>
-                </div>
-            );
-
-            break;
-
-        case 'meta':
-
-            return (
-                <div>
-                    <div className="row">
-                        <div className="col-sm-12">
-                            {'meta'}
-                        </div>
-                    </div>
-                </div>
-            );
-
-            break;
-
-        default:
-            throw Error(`Unexpected currentTab. Given: ${currentTab}`);
-        }
     },
 
     onReveal() {
@@ -429,44 +203,34 @@ const Review = React.createClass({
     render() {
 
         // bail early
-        if(this.getCurrentTab() === 'back' && !this.state.reveal) {
+        if(this.props.currentTab === tabs.back && !this.state.reveal) {
             return null;
         }
-
-        const {card} = this.props;
 
         return (
             <div>
                 <div className="row">
-                    <div className="col-sm-12 m-y">
-                        <button
-                            type="button"
-                            className="btn btn-sm btn-danger"
-                            onClick={this.backToCardsList}
-                        >
-                            {'Stop Reviewing Deck'}
-                        </button>
-                    </div>
-                </div>
-                <div className="row">
-                    <div className="col-sm-12 m-b">
-                        <CardHeader
-                            isReviewing
-                            cardID={card.get('id')}
-                        />
-                    </div>
-                </div>
-                <div className="row">
-                    <div className="col-sm-12 m-b">
-                        <CardTabs
-                            hideBack={!this.state.reveal}
-                            currentTab={this.props.currentTab}
-                            onSwitch={this.onSwitchCurrentTab} />
-                    </div>
-                </div>
-                <div className="row">
                     <div className="col-sm-12">
-                        {this.getChildComponent()}
+                        <CardDetail
+
+                            isReviewing
+                            hideBack={!this.state.reveal}
+
+                            currentTab={this.props.currentTab}
+                            currentCard={this.props.card}
+
+                            isEditing={this.state.isEditing}
+                            disableSave={this.state.disableSave}
+
+                            backButtonLabel="Stop Reviewing Deck"
+                            onClickBackButton={this.onClickBackButton}
+
+                            onSwitchCurrentTab={this.onSwitchCurrentTab}
+
+                            onCardSave={this.onCardSave}
+                            editCard={this.editCard}
+                            onCancelEdit={this.onCancelEdit}
+                        />
                     </div>
                 </div>
                 <div className="row">
@@ -488,6 +252,7 @@ const Review = React.createClass({
                 </div>
             </div>
         );
+
     }
 });
 
@@ -573,27 +338,27 @@ module.exports = courier({
 
                 case ROUTES.REVIEW.VIEW.FRONT:
 
-                    currentTab = 'Front';
+                    currentTab = tabs.front;
                     break;
 
                 case ROUTES.REVIEW.VIEW.BACK:
 
-                    currentTab = 'Back';
+                    currentTab = tabs.back;
                     break;
 
                 case ROUTES.REVIEW.VIEW.DESCRIPTION:
 
-                    currentTab = 'Description';
+                    currentTab = tabs.description;
                     break;
 
                 case ROUTES.REVIEW.VIEW.META:
 
-                    currentTab = 'Meta';
+                    currentTab = tabs.meta;
                     break;
 
                 case ROUTES.REVIEW.VIEW.STASHES:
 
-                    currentTab = 'Stashes';
+                    currentTab = tabs.stashes;
                     break;
 
                 default:
