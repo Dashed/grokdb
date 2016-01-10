@@ -10,6 +10,7 @@ const CreateStash = require('./create');
 const StashesList = require('./list');
 const StashDetail = require('./detail');
 const StashesPagination = require('./pagination');
+const CardProfile = require('./cardprofile');
 
 const Stashes = React.createClass({
 
@@ -83,20 +84,29 @@ const Stashes = React.createClass({
             );
             break;
 
-        // case ROUTES.STASHES.REVIEW.VIEW.FRONT:
-        // case ROUTES.STASHES.REVIEW.VIEW.BACK:
-        // case ROUTES.STASHES.REVIEW.VIEW.DESCRIPTION:
-        // case ROUTES.STASHES.REVIEW.VIEW.META:
-        // case ROUTES.STASHES.REVIEW.VIEW.STASHES:
+        case ROUTES.STASHES.CARD.VIEW.FRONT:
+        case ROUTES.STASHES.CARD.VIEW.BACK:
+        case ROUTES.STASHES.CARD.VIEW.DESCRIPTION:
+        case ROUTES.STASHES.CARD.VIEW.STASHES:
+        case ROUTES.STASHES.CARD.VIEW.META:
+            return (
+                <CardProfile />
+            );
+            break;
 
-        //     return null;
-        //     break;
+        case ROUTES.STASHES.REVIEW.VIEW.FRONT:
+        case ROUTES.STASHES.REVIEW.VIEW.BACK:
+        case ROUTES.STASHES.REVIEW.VIEW.DESCRIPTION:
+        case ROUTES.STASHES.REVIEW.VIEW.META:
+        case ROUTES.STASHES.REVIEW.VIEW.STASHES:
+
+            return null;
+            break;
 
         default:
             invariant(false, `Unexpected route. Given: ${String(this.props.route)}`);
 
         }
-
 
     }
 });

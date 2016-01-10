@@ -119,17 +119,25 @@ const App = courier({
             view = 'settings';
             break;
 
+        case ROUTES.STASHES.VIEW.LIST:
+        case ROUTES.STASHES.VIEW.ADD:
+
         case ROUTES.STASHES.PROFILE.CARDS:
         case ROUTES.STASHES.PROFILE.DESCRIPTION:
         case ROUTES.STASHES.PROFILE.META:
-        case ROUTES.STASHES.VIEW.LIST:
-        case ROUTES.STASHES.VIEW.ADD:
-        // TODO: complete
-        // case ROUTES.STASHES.REVIEW.VIEW.FRONT:
-        // case ROUTES.STASHES.REVIEW.VIEW.BACK:
-        // case ROUTES.STASHES.REVIEW.VIEW.DESCRIPTION:
-        // case ROUTES.STASHES.REVIEW.VIEW.META:
-        // case ROUTES.STASHES.REVIEW.VIEW.STASHES:
+
+        case ROUTES.STASHES.CARD.VIEW.FRONT:
+        case ROUTES.STASHES.CARD.VIEW.BACK:
+        case ROUTES.STASHES.CARD.VIEW.DESCRIPTION:
+        case ROUTES.STASHES.CARD.VIEW.STASHES:
+        case ROUTES.STASHES.CARD.VIEW.META:
+
+        case ROUTES.STASHES.REVIEW.VIEW.FRONT:
+        case ROUTES.STASHES.REVIEW.VIEW.BACK:
+        case ROUTES.STASHES.REVIEW.VIEW.DESCRIPTION:
+        case ROUTES.STASHES.REVIEW.VIEW.STASHES:
+        case ROUTES.STASHES.REVIEW.VIEW.META:
+
             handler = Stashes;
             view = 'stashes';
             break;
@@ -144,14 +152,14 @@ const App = courier({
         case ROUTES.CARD.VIEW.FRONT:
         case ROUTES.CARD.VIEW.BACK:
         case ROUTES.CARD.VIEW.DESCRIPTION:
-        case ROUTES.CARD.VIEW.META:
         case ROUTES.CARD.VIEW.STASHES:
+        case ROUTES.CARD.VIEW.META:
 
         case ROUTES.REVIEW.VIEW.FRONT:
         case ROUTES.REVIEW.VIEW.BACK:
         case ROUTES.REVIEW.VIEW.DESCRIPTION:
-        case ROUTES.REVIEW.VIEW.META:
         case ROUTES.REVIEW.VIEW.STASHES:
+        case ROUTES.REVIEW.VIEW.META:
             handler = Library;
             view = 'library';
             break;

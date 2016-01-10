@@ -138,6 +138,7 @@ const ROUTE = {
         }
     },
 
+    // TODO: move this into ROUTE.LIBRARY
     // deck review
     REVIEW: {
         VIEW: {
@@ -1902,6 +1903,55 @@ Routes.prototype.toStashMeta = function(stashID = NOT_SET) {
         invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
 
         page(`/stash/${stashID}/meta`);
+    });
+};
+
+Routes.prototype.toStashCard = function(cardID, stashID) {
+    this.toStashCardFront(cardID, stashID);
+};
+
+Routes.prototype.toStashCardFront = function(cardID, stashID) {
+
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/card/${cardID}/view/front`);
+    });
+};
+
+Routes.prototype.toStashCardBack = function(cardID, stashID) {
+
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/card/${cardID}/view/back`);
+    });
+};
+
+Routes.prototype.toStashCardDescription = function(cardID, stashID) {
+
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/card/${cardID}/view/description`);
+    });
+};
+
+Routes.prototype.toStashCardMeta = function(cardID, stashID) {
+
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/card/${cardID}/view/meta`);
+    });
+};
+
+Routes.prototype.toStashCardStashes = function(cardID, stashID) {
+
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/card/${cardID}/view/stashes`);
     });
 };
 

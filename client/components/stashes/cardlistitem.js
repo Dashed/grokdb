@@ -23,8 +23,7 @@ const WrappedCardListItem = React.createClass({
 
         const currentStashID = this.context.store.stashes.currentID();
 
-        console.log('change');
-        // this.context.store.routes.toCard(this.props.cardID, currentDeckID);
+        this.context.store.routes.toStashCard(this.props.cardID, currentStashID);
     },
 
     render() {
