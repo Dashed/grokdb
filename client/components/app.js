@@ -135,7 +135,6 @@ const App = courier({
         case ROUTES.STASHES.REVIEW.VIEW.FRONT:
         case ROUTES.STASHES.REVIEW.VIEW.BACK:
         case ROUTES.STASHES.REVIEW.VIEW.DESCRIPTION:
-        case ROUTES.STASHES.REVIEW.VIEW.STASHES:
         case ROUTES.STASHES.REVIEW.VIEW.META:
 
             handler = Stashes;

@@ -11,6 +11,7 @@ const StashesList = require('./list');
 const StashDetail = require('./detail');
 const StashesPagination = require('./pagination');
 const CardProfile = require('./cardprofile');
+const StashReview = require('./review');
 
 const Stashes = React.createClass({
 
@@ -98,9 +99,10 @@ const Stashes = React.createClass({
         case ROUTES.STASHES.REVIEW.VIEW.BACK:
         case ROUTES.STASHES.REVIEW.VIEW.DESCRIPTION:
         case ROUTES.STASHES.REVIEW.VIEW.META:
-        case ROUTES.STASHES.REVIEW.VIEW.STASHES:
 
-            return null;
+            return (
+                <StashReview />
+            );
             break;
 
         default:

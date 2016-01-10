@@ -59,6 +59,56 @@ const reviewDeckCardLoader = new DataLoader(function(keys) {
 
 });
 
+const reviewStashCardLoader = new DataLoader(function(keys) {
+
+    if(keys.length <= 0) {
+        return Promise.resolve([]);
+    }
+
+    const promiseArray = _.reduce(keys, (accumulator, stashID) => {
+
+        const prom = new Promise((resolve, reject) => {
+
+            superhot
+                .get(`/api/stashes/${stashID}/review`)
+                .end((err, response) => {
+
+                    switch(response.status) {
+
+                    case 200:
+
+                        const card = Immutable.fromJS(response.body);
+
+                        return resolve(card);
+                        break;
+
+                    case 404:
+
+                        return resolve(void 0);
+                        break;
+
+                    default:
+
+                        if (err) {
+                            return reject(err);
+                        }
+
+                        return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                    }
+
+                });
+
+        });
+
+        accumulator.push(prom);
+
+        return accumulator;
+    }, []);
+
+    return Promise.all(promiseArray);
+
+});
+
 function ReviewPatch(cardID) {
 
     this._cardID = cardID;
@@ -148,6 +198,7 @@ function Review(store) {
 Review.prototype.clearCache = function() {
 
     reviewDeckCardLoader.clearAll();
+    reviewStashCardLoader.clearAll();
 
     this._lookup.update(function() {
         return Immutable.Map();
@@ -343,34 +394,6 @@ Review.prototype.watchCardOfCurrentDeck = function() {
 
 };
 
-// card id being reviewed within stash
-// sync
-Review.prototype.cardIDOfStash = function(cardID = NOT_SET) {
-
-    let value = cardID;
-    const cursor = this._lookup.cursor('cardIDOfStash');
-
-    if(cardID === NOT_SET) {
-        value = cursor.deref();
-    } else {
-        cursor.update(function() {
-            return Number(value);
-        });
-    }
-
-    return Number(value);
-};
-
-// sync
-Review.prototype.hasCardIDOfStash = function() {
-    return filterInteger(this.cardIDOfStash(), NOT_SET) !== NOT_SET;
-};
-
-// sync
-Review.prototype.watchCardOfCurrentStash = function() {
-    return this._lookup.cursor('cardIDOfStash');
-};
-
 // get reviewable card for deck
 // async
 Review.prototype.deck = function() {
@@ -426,10 +449,73 @@ Review.prototype.getReviewableCardForDeck = function() {
 
 };
 
+// card id being reviewed within stash
+// sync
+Review.prototype.cardIDOfStash = function(cardID = NOT_SET) {
+
+    let value = cardID;
+    const cursor = this._lookup.cursor('cardIDOfStash');
+
+    if(cardID === NOT_SET) {
+        value = cursor.deref();
+    } else {
+        cursor.update(function() {
+            return Number(value);
+        });
+    }
+
+    return Number(value);
+};
+
+// sync
+Review.prototype.hasCardIDOfStash = function() {
+    return filterInteger(this.cardIDOfStash(), NOT_SET) !== NOT_SET;
+};
+
+// sync
+Review.prototype.watchCardOfCurrentStash = function() {
+    return this._lookup.cursor('cardIDOfStash');
+};
+
 // get reviewable card for stash
 // async
 Review.prototype.stash = function() {
-    // TODO: complete
+
+    const currentID = this._store.stashes.currentID();
+
+    return reviewStashCardLoader.load(currentID)
+        .then((card) => {
+
+            if(!Immutable.Map.isMap(card)) {
+
+                // TODO: error handling. this is an invariant violation
+
+                this.cardIDOfStash(void 0);
+
+                return card;
+            }
+
+            const cardID = Number(card.get('id'));
+
+            this.cardIDOfStash(cardID);
+
+            // cache this card
+            this._store.cards._lookup.cursor(cardID).update(function() {
+                return card;
+            });
+
+            return card;
+        });
+};
+
+// async
+Review.prototype.getNextReviewableCardForStash = function() {
+
+    // clear any cache
+    const currentID = this._store.stashes.currentID();
+    reviewStashCardLoader.clear(currentID);
+
+    return this.stash();
 };
 
 // async

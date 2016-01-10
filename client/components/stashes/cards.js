@@ -58,9 +58,25 @@ const DumbCardsList = React.createClass({
         this.context.store.routes.toStashCards(void 0, void 0, void 0, requestedPageNum);
     },
 
+    toStashReview(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.context.store.routes.toStashReview();
+    },
+
     render() {
         return (
             <div>
+                <div className="row">
+                    <div className="col-sm-12 m-b">
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-primary-outline"
+                            onClick={this.toStashReview}
+                        >{'Review this Stash'}</button>
+                    </div>
+                </div>
                 <div className="row m-b">
                     <div className="col-sm-12">
                         {this.cardsList()}

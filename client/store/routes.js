@@ -169,8 +169,8 @@ const ROUTE = {
                 FRONT: Symbol(),
                 BACK: Symbol(),
                 DESCRIPTION: Symbol(),
-                STASHES: Symbol(),
                 META: Symbol()
+                // note: Stashes is not supported
             }
         },
 
@@ -1340,6 +1340,66 @@ const boostrapRoutes = co.wrap(function *(store) {
                 next();
             }, postRouteLoad);
 
+    page('/stash/:stash_id/review', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context) {
+
+        const stashID = context.stash_id;
+
+        page.redirect(`/stash/${stashID}/review/view/front`);
+
+    });
+
+    page('/stash/:stash_id/review/view/front', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
+
+        const stashID = context.stash_id;
+
+        store.resetStage();
+        store.stashes.currentID(stashID);
+        store.routes.route(ROUTE.STASHES.REVIEW.VIEW.FRONT);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/stash/:stash_id/review/view/back', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
+
+        const stashID = context.stash_id;
+
+        store.resetStage();
+        store.stashes.currentID(stashID);
+        store.routes.route(ROUTE.STASHES.REVIEW.VIEW.BACK);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/stash/:stash_id/review/view/description', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
+
+        const stashID = context.stash_id;
+
+        store.resetStage();
+        store.stashes.currentID(stashID);
+        store.routes.route(ROUTE.STASHES.REVIEW.VIEW.DESCRIPTION);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/stash/:stash_id/review/view/meta', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
+
+        const stashID = context.stash_id;
+
+        store.resetStage();
+        store.stashes.currentID(stashID);
+        store.routes.route(ROUTE.STASHES.REVIEW.VIEW.META);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
     // route not found; redirect to the root deck
     page('*', function(context, next) {
         console.error('not found', context);
@@ -1952,6 +2012,56 @@ Routes.prototype.toStashCardStashes = function(cardID, stashID) {
 
     this.shouldChangeRoute(() => {
         page(`/stash/${stashID}/card/${cardID}/view/stashes`);
+    });
+};
+
+Routes.prototype.toStashReview = function(toStashID = NOT_SET) {
+
+    this.shouldChangeRoute(() => {
+
+        if(toStashID === NOT_SET) {
+            this._store.resetStage();
+            toStashID = this._store.stashes.currentID();
+        }
+
+        page(`/stash/${toStashID}/review/view/front`);
+    });
+
+};
+
+Routes.prototype.toStashReviewCardFront = function(stashID) {
+
+    invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/review/view/front`);
+    });
+};
+
+Routes.prototype.toStashReviewCardBack = function(stashID) {
+
+    invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/review/view/back`);
+    });
+};
+
+Routes.prototype.toStashReviewCardDescription = function(stashID) {
+
+    invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/review/view/description`);
+    });
+};
+
+Routes.prototype.toStashReviewCardMeta = function(stashID) {
+
+    invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/review/view/meta`);
     });
 };
 
