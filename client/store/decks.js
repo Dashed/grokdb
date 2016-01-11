@@ -453,6 +453,7 @@ Decks.prototype.ancestors = function(deckID) {
 
     return this.get(deckID)
         .then((deck) => {
+            // invariant: deck.get('ancestors') is Immutable.List
             return deck.get('ancestors').toArray();
         });
 
@@ -484,6 +485,7 @@ Decks.prototype.ancestors = function(deckID) {
     // });
 };
 
+// fetch and resolve list of ancestors of deckID along with deckID itself
 // async
 Decks.prototype.path = function(deckID) {
 
