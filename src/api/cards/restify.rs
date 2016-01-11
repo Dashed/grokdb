@@ -878,7 +878,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
-    router.get("/decks/:deck_id/cards/total", {
+    router.get("/decks/:deck_id/cards/count", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
             let ref grokdb = grokdb.deref();
@@ -912,7 +912,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 _ => {/* noop; continue */}
             }
 
-            let totals = match grokdb.cards.count_by_deck(deck_id) {
+            let count = match grokdb.cards.count_by_deck(deck_id) {
                 Err(why) => {
                     // why: QueryError
 
@@ -936,7 +936,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             let content_type = "application/json".parse::<Mime>().unwrap();
 
             let response = CardPaginationInfo {
-                num_of_cards: totals
+                num_of_cards: count
             }.to_json();
 
             return Ok(Response::with((content_type, status::Ok, response)));
@@ -1351,7 +1351,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
-    router.get("/stashes/:stash_id/cards/total", {
+    router.get("/stashes/:stash_id/cards/count", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
             let ref grokdb = grokdb.deref();
@@ -1385,7 +1385,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 _ => {/* stash exists; continue */}
             }
 
-            let totals = match grokdb.cards.count_by_stash(stash_id) {
+            let count = match grokdb.cards.count_by_stash(stash_id) {
                 Err(why) => {
                     // why: QueryError
 
@@ -1409,7 +1409,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             let content_type = "application/json".parse::<Mime>().unwrap();
 
             let response = CardPaginationInfo {
-                num_of_cards: totals
+                num_of_cards: count
             }.to_json();
 
             return Ok(Response::with((content_type, status::Ok, response)));

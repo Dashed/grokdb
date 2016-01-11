@@ -506,12 +506,12 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
-    router.get("/stashes/total", {
+    router.get("/stashes/count", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
             let ref grokdb = grokdb.deref();
 
-            let totals = match grokdb.stashes.count() {
+            let count = match grokdb.stashes.count() {
                 Err(why) => {
                     // why: QueryError
 
@@ -535,7 +535,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             let content_type = "application/json".parse::<Mime>().unwrap();
 
             let response = StashPaginationInfo {
-                num_of_stashes: totals
+                num_of_stashes: count
             }.to_json();
 
             return Ok(Response::with((content_type, status::Ok, response)));
@@ -1112,7 +1112,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         }
     });
 
-    router.get("/cards/:card_id/stashes/total", {
+    router.get("/cards/:card_id/stashes/count", {
         let grokdb = grokdb.clone();
         move |req: &mut Request| -> IronResult<Response> {
             let ref grokdb = grokdb.deref();
@@ -1146,7 +1146,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 _ => {/* card exists; continue */}
             }
 
-            let totals = match grokdb.stashes.count_by_card(card_id) {
+            let count = match grokdb.stashes.count_by_card(card_id) {
                 Err(why) => {
                     // why: QueryError
 
@@ -1170,7 +1170,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
             let content_type = "application/json".parse::<Mime>().unwrap();
 
             let response = StashPaginationInfo {
-                num_of_stashes: totals
+                num_of_stashes: count
             }.to_json();
 
             return Ok(Response::with((content_type, status::Ok, response)));

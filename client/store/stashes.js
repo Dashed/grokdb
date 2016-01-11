@@ -121,7 +121,7 @@ Stashes.prototype.totalStashes = function() {
         }
 
         superhot
-            .get(`/api/stashes/total`)
+            .get(`/api/stashes/count`)
             .end((err, response) => {
 
                 switch(response.status) {
@@ -694,7 +694,7 @@ Stashes.prototype.totalStashesByCard = function(cardID) {
     return new Promise((resolve, reject) => {
 
         superhot
-            .get(`/api/cards/${cardID}/stashes/total`)
+            .get(`/api/cards/${cardID}/stashes/count`)
             .end((err, response) => {
 
                 switch(response.status) {

@@ -61,7 +61,7 @@ const cardLoader = new DataLoader(function(keys) {
     });
 });
 
-const cardTotalsLoader = new DataLoader(function(keys) {
+const cardsCountLoader = new DataLoader(function(keys) {
 
     if(keys.length <= 0) {
         return Promise.resolve([]);
@@ -72,7 +72,7 @@ const cardTotalsLoader = new DataLoader(function(keys) {
         const prom = new Promise((resolve, reject) => {
 
             superhot
-                .get(`/api/decks/${deckID}/cards/total`)
+                .get(`/api/decks/${deckID}/cards/count`)
                 .end((err, response) => {
 
                     switch(response.status) {
@@ -105,7 +105,7 @@ const cardTotalsLoader = new DataLoader(function(keys) {
     return Promise.all(promiseArray);
 });
 
-const cardTotalsByStashLoader = new DataLoader(function(keys) {
+const cardsCountByStashLoader = new DataLoader(function(keys) {
 
     if(keys.length <= 0) {
         return Promise.resolve([]);
@@ -116,7 +116,7 @@ const cardTotalsByStashLoader = new DataLoader(function(keys) {
         const prom = new Promise((resolve, reject) => {
 
             superhot
-                .get(`/api/stashes/${stashID}/cards/total`)
+                .get(`/api/stashes/${stashID}/cards/count`)
                 .end((err, response) => {
 
                     switch(response.status) {
@@ -162,8 +162,8 @@ Cards.prototype.constructor = Cards;
 // sync
 Cards.prototype.clearCache = function() {
     cardLoader.clearAll();
-    cardTotalsLoader.clearAll();
-    cardTotalsByStashLoader.clearAll();
+    cardsCountLoader.clearAll();
+    cardsCountByStashLoader.clearAll();
     this._lookup.update(function() {
         return Immutable.Map();
     });
@@ -172,13 +172,13 @@ Cards.prototype.clearCache = function() {
 // get total number of cards within given deck
 // async
 Cards.prototype.totalCards = function(deckID) {
-    return cardTotalsLoader.load(deckID);
+    return cardsCountLoader.load(deckID);
 };
 
 // get total number of cards within given deck
 // async
 Cards.prototype.totalCardsByStash = function(stashID) {
-    return cardTotalsByStashLoader.load(stashID);
+    return cardsCountByStashLoader.load(stashID);
 };
 
 // load and cache card onto lookup table
