@@ -14,7 +14,8 @@ const WrappedCardListItem = React.createClass({
 
     propTypes: {
         cardID: React.PropTypes.number.isRequired,
-        card: React.PropTypes.instanceOf(Immutable.Map).isRequired
+        card: React.PropTypes.instanceOf(Immutable.Map).isRequired,
+        path: React.PropTypes.array.isRequired
     },
 
     onClick() {
@@ -28,7 +29,7 @@ const WrappedCardListItem = React.createClass({
 
     render() {
 
-        const {card, cardID} = this.props;
+        const {card, cardID, path} = this.props;
 
         // datetime of when last reviewed
 
@@ -36,6 +37,7 @@ const WrappedCardListItem = React.createClass({
             <CardListItem
                 cardID={cardID}
                 card={card}
+                path={path}
                 onClick={this.onClick}
             />
         );
@@ -79,9 +81,21 @@ module.exports = courier({
 
         return context.store.cards.get(cardID)
             .then(function(card) {
-                return {
-                    card: card
-                };
+
+                // get id of deck containing this card
+                const deckID = card.get('deck');
+
+                return context.store.decks.path(deckID)
+                    .then(function(path) {
+
+                        // invariant: path is array of resolved ancestors decks
+
+                        return {
+                            card: card,
+                            path: path
+                        };
+
+                    });
             });
     }
 });
