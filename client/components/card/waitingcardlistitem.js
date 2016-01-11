@@ -25,7 +25,7 @@ const WaitingCardListItem = React.createClass({
                         {`Card #`}
                     </small>
                     <br/>
-                    <small>
+                    <small style={{color: '#ffffff'}}>
                         {'deck path'}
                     </small>
                 </p>
