@@ -32,14 +32,19 @@ const ReviewTabBar = React.createClass({
         onReveal: React.PropTypes.func.isRequired,
         onNext: React.PropTypes.func.isRequired,
         onSkip: React.PropTypes.func.isRequired,
-        onChooseDifficulty: React.PropTypes.func.isRequired
+        onChooseDifficulty: React.PropTypes.func.isRequired,
+
+        // cosmetic flags
+        noSkip: React.PropTypes.bool.isRequired
     },
 
     getDefaultProps() {
 
         return {
             reveal: false,
-            difficulty: difficulty.none
+            difficulty: difficulty.none,
+
+            noSkip: false
         };
     },
 
@@ -81,6 +86,23 @@ const ReviewTabBar = React.createClass({
 
     primaryState() {
 
+        if(this.props.noSkip) {
+
+            return (
+                <div key="primary">
+                    <div className="col-sm-12">
+                        <button
+                            type="button"
+                            className="btn btn-primary btn-lg btn-block"
+                            onClick={this.onReveal}
+                        >
+                            {'Show Back Side'}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <div key="primary">
                 <div className="col-sm-9">
@@ -116,6 +138,76 @@ const ReviewTabBar = React.createClass({
     },
 
     secondaryState() {
+
+        if(this.props.noSkip) {
+
+            return (
+                <div key="secondary">
+                    <div className="col-sm-4">
+                        <div className="btn-group btn-group-lg" style={BUTTON_GROUP_STYLE} role="group">
+                            <button
+                                type="button"
+                                style={STYLE_FAIL}
+                                className={this.getButtonClass(difficulty.forgot, 'btn-danger', 'btn-danger-outline')}
+                                onClick={this.onChooseDifficulty(difficulty.forgot)}
+                            >
+                                {'Forgot'}
+                            </button>
+                            <button
+                                type="button"
+                                style={STYLE_FAIL}
+                                className={this.getButtonClass(difficulty.hard, 'btn-danger', 'btn-danger-outline')}
+                                onClick={this.onChooseDifficulty(difficulty.hard)}
+                            >
+                                {'Hard'}
+                            </button>
+                            <button
+                                type="button"
+                                style={STYLE_FAIL}
+                                className={this.getButtonClass(difficulty.fail, 'btn-danger', 'btn-danger-outline')}
+                                onClick={this.onChooseDifficulty(difficulty.fail)}
+                            >
+                                {'Fail'}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="col-sm-4">
+                        <div className="btn-group btn-group-lg" style={BUTTON_GROUP_STYLE} role="group">
+                            <button
+                                type="button"
+                                style={STYLE_SUCCESS}
+                                className={this.getButtonClass(difficulty.good, 'btn-success', 'btn-success-outline')}
+                                onClick={this.onChooseDifficulty(difficulty.good)}
+                            >
+                                {'Good'}
+                            </button>
+                            <button
+                                type="button"
+                                style={STYLE_SUCCESS}
+                                className={this.getButtonClass(difficulty.easy, 'btn-success', 'btn-success-outline')}
+                                onClick={this.onChooseDifficulty(difficulty.easy)}
+                            >
+                                {'Easy'}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="col-sm-4">
+                        <div className="btn-group btn-group-lg" style={BUTTON_GROUP_STYLE} role="group">
+                            <button
+                                type="button"
+                                style={{width: '100%'}}
+                                className={classnames('btn', 'btn-info-outline', {
+                                    'disabled': this.props.difficulty === difficulty.none
+                                })}
+                                onClick={this.onNext}
+                            >
+                                {'Done'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
 
         return (
             <div key="secondary">

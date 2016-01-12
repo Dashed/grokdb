@@ -234,6 +234,7 @@ const CardReview = React.createClass({
                 <div className="row">
                     <div className="col-sm-12">
                         <ReviewTabBar
+                            noSkip
                             reveal={this.state.reveal}
                             difficulty={this.state.difficulty}
                             onReveal={this.onReveal}
