@@ -104,29 +104,40 @@ const CardProfile = React.createClass({
 
     },
 
+    onReview() {
+
+        const deckID = this.props.currentDeckID;
+        const cardID = this.props.currentCard.get('id');
+
+        this.context.store.routes.toCardReview(cardID, deckID);
+    },
+
     render() {
 
         return (
-            <div>
-                <div className="row">
-                    <div className="col-sm-12">
-                        <CardDetail
-                            currentTab={this.props.currentTab}
-                            currentCard={this.props.currentCard}
+            <div className="row">
+                <div className="col-sm-12">
+                    <CardDetail
 
-                            isEditing={this.state.isEditing}
-                            disableSave={this.state.disableSave}
+                        showReviewButton
 
-                            backButtonLabel="Back to cards list"
-                            onClickBackButton={this.onClickBackButton}
+                        currentTab={this.props.currentTab}
+                        currentCard={this.props.currentCard}
 
-                            onSwitchCurrentTab={this.onSwitchCurrentTab}
+                        isEditing={this.state.isEditing}
+                        disableSave={this.state.disableSave}
 
-                            onCardSave={this.onCardSave}
-                            editCard={this.editCard}
-                            onCancelEdit={this.onCancelEdit}
-                        />
-                    </div>
+                        backButtonLabel="Back to cards list"
+                        onClickBackButton={this.onClickBackButton}
+
+                        onSwitchCurrentTab={this.onSwitchCurrentTab}
+
+                        onCardSave={this.onCardSave}
+                        editCard={this.editCard}
+                        onCancelEdit={this.onCancelEdit}
+
+                        onReview={this.onReview}
+                    />
                 </div>
             </div>
         );

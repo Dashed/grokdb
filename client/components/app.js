@@ -154,11 +154,20 @@ const App = courier({
         case ROUTES.CARD.VIEW.STASHES:
         case ROUTES.CARD.VIEW.META:
 
+        // reviewing a deck
         case ROUTES.REVIEW.VIEW.FRONT:
         case ROUTES.REVIEW.VIEW.BACK:
         case ROUTES.REVIEW.VIEW.DESCRIPTION:
         case ROUTES.REVIEW.VIEW.STASHES:
         case ROUTES.REVIEW.VIEW.META:
+
+        // reviewing a card itself
+        case ROUTES.CARD.REVIEW.VIEW.FRONT:
+        case ROUTES.CARD.REVIEW.VIEW.BACK:
+        case ROUTES.CARD.REVIEW.VIEW.DESCRIPTION:
+        case ROUTES.CARD.REVIEW.VIEW.STASHES:
+        case ROUTES.CARD.REVIEW.VIEW.META:
+
             handler = Library;
             view = 'library';
             break;

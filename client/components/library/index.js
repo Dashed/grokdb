@@ -10,8 +10,9 @@ const Breadcrumb = require('./breadcrumb');
 const Header = require('./header');
 const Subnav = require('./subnav');
 const LibraryDetail = require('./detail');
-
+const CardReview = require('./cardreview');
 const CardProfile = require('./cardprofile');
+
 const Review = require('components/review');
 
 const DumbLibrary = React.createClass({
@@ -66,6 +67,22 @@ const DumbLibrary = React.createClass({
                     </div>
                 </div>
             );
+            break;
+
+        case ROUTES.CARD.REVIEW.VIEW.FRONT:
+        case ROUTES.CARD.REVIEW.VIEW.BACK:
+        case ROUTES.CARD.REVIEW.VIEW.DESCRIPTION:
+        case ROUTES.CARD.REVIEW.VIEW.STASHES:
+        case ROUTES.CARD.REVIEW.VIEW.META:
+
+            return (
+                <div className="row">
+                    <div className="col-sm-12">
+                        <CardReview />
+                    </div>
+                </div>
+            );
+
             break;
 
         case ROUTES.REVIEW.VIEW.FRONT:

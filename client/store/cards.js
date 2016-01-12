@@ -364,6 +364,7 @@ Cards.prototype.watchCurrentID = function() {
 };
 
 // fetch/set current card id from app state
+// sync
 Cards.prototype.currentID = function(cardID = NOT_SET) {
 
     let stage = this._store.stage();
