@@ -1,12 +1,16 @@
 const React = require('react');
 const Immutable = require('immutable');
 const moment = require('moment');
+const _ = require('lodash');
 
 const CardListItem = React.createClass({
 
     propTypes: {
         cardID: React.PropTypes.number.isRequired,
         card: React.PropTypes.instanceOf(Immutable.Map).isRequired,
+
+        // deck path of card
+        path: React.PropTypes.array.isRequired,
 
         onClick: React.PropTypes.func.isRequired
     },
@@ -16,6 +20,37 @@ const CardListItem = React.createClass({
         event.stopPropagation();
 
         this.props.onClick.call(void 0);
+
+    },
+
+    getDeckPath() {
+
+        const {path} = this.props;
+
+        const crumbs = _.reduce(path, (accumulator, deck) => {
+
+            accumulator.push(
+                <span key={`sep-${accumulator.length}`}>
+                    {'/ '}
+                </span>
+            );
+
+            accumulator.push(
+                <span key={`crumb-${deck.get('id')}-${accumulator.length}`}>
+                    {deck.get('name')}
+                    {' '}
+                </span>
+            );
+
+            return accumulator;
+        }, []);
+
+        return (
+            <small className="text-muted">
+                {'Deck path: '}
+                {crumbs}
+            </small>
+        );
 
     },
 
@@ -50,9 +85,7 @@ const CardListItem = React.createClass({
                         {`Card #${card.get('id')} ${lastReviewed} ${extraSummary} ${score}`}
                     </small>
                     <br/>
-                    <small>
-                        {'deck path'}
-                    </small>
+                    {this.getDeckPath()}
                 </p>
             </li>
         );
