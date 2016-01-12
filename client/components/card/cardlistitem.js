@@ -5,6 +5,10 @@ const _ = require('lodash');
 
 const CardListItem = React.createClass({
 
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
     propTypes: {
         cardID: React.PropTypes.number.isRequired,
         card: React.PropTypes.instanceOf(Immutable.Map).isRequired,
@@ -23,6 +27,15 @@ const CardListItem = React.createClass({
 
     },
 
+    toDeck(deckID) {
+
+        return (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.context.store.routes.toDeck(deckID, 1);
+        };
+    },
+
     getDeckPath() {
 
         const {path} = this.props;
@@ -35,9 +48,16 @@ const CardListItem = React.createClass({
                 </span>
             );
 
+            const deckID = deck.get('id');
+
             accumulator.push(
-                <span key={`crumb-${deck.get('id')}-${accumulator.length}`}>
-                    {deck.get('name')}
+                <span key={`crumb-${deckID}-${accumulator.length}`}>
+                    <a
+                        href="#"
+                        onClick={this.toDeck(deckID)}
+                        >
+                        {deck.get('name')}
+                    </a>
                     {' '}
                 </span>
             );
