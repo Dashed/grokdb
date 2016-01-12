@@ -3,6 +3,8 @@ const Immutable = require('immutable');
 const moment = require('moment');
 const _ = require('lodash');
 
+const courier = require('courier');
+
 const CardListItem = React.createClass({
 
     contextTypes: {
@@ -10,6 +12,7 @@ const CardListItem = React.createClass({
     },
 
     propTypes: {
+        currentDeckID: React.PropTypes.number.isRequired,
         cardID: React.PropTypes.number.isRequired,
         card: React.PropTypes.instanceOf(Immutable.Map).isRequired,
 
@@ -38,7 +41,7 @@ const CardListItem = React.createClass({
 
     getDeckPath() {
 
-        const {path} = this.props;
+        const {path, currentDeckID} = this.props;
 
         const crumbs = _.reduce(path, (accumulator, deck) => {
 
@@ -50,17 +53,31 @@ const CardListItem = React.createClass({
 
             const deckID = deck.get('id');
 
-            accumulator.push(
-                <span key={`crumb-${deckID}-${accumulator.length}`}>
-                    <a
-                        href="#"
-                        onClick={this.toDeck(deckID)}
-                        >
+            if(deckID == currentDeckID) {
+
+                accumulator.push(
+                    <span key={`crumb-${deckID}-${accumulator.length}`}>
                         {deck.get('name')}
-                    </a>
-                    {' '}
-                </span>
-            );
+                        {' '}
+                    </span>
+                );
+
+            } else {
+
+                accumulator.push(
+                    <span key={`crumb-${deckID}-${accumulator.length}`}>
+                        <a
+                            href="#"
+                            onClick={this.toDeck(deckID)}
+                            >
+                            {deck.get('name')}
+                        </a>
+                        {' '}
+                    </span>
+                );
+            }
+
+
 
             return accumulator;
         }, []);
@@ -113,4 +130,27 @@ const CardListItem = React.createClass({
 
 });
 
-module.exports = CardListItem;
+module.exports = courier({
+
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
+    component: CardListItem,
+
+    onlyWaitingOnMount: true,
+
+    watch(props, manual, context) {
+        return [
+            context.store.decks.watchCurrentID()
+        ];
+    },
+
+    assignNewProps: function(props, context) {
+
+        return {
+            currentDeckID: context.store.decks.currentID()
+        };
+    }
+
+});
