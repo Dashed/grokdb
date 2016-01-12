@@ -14,6 +14,8 @@ const CardHeader = require('./header');
 const CardTabs = require('./tabs');
 const CardStashes = require('./stashes');
 
+const NOOP = () => void 0;
+
 const DumbCardDetail = React.createClass({
 
     contextTypes: {
@@ -36,7 +38,10 @@ const DumbCardDetail = React.createClass({
         editCard: React.PropTypes.func.isRequired,
         onCancelEdit: React.PropTypes.func.isRequired,
 
+        onReview: React.PropTypes.func.isRequired,
+
         // cosmetic flags
+        showReviewButton: React.PropTypes.bool.isRequired,
         isReviewing: React.PropTypes.bool.isRequired,
         hideBack: React.PropTypes.bool.isRequired,
         hideEdit: React.PropTypes.bool.isRequired,
@@ -46,6 +51,8 @@ const DumbCardDetail = React.createClass({
     getDefaultProps() {
 
         return {
+            onReview: NOOP,
+            showReviewButton: false,
             isReviewing: false,
             hideBack: false,
             hideEdit: false,
@@ -488,8 +495,7 @@ const DumbCardDetail = React.createClass({
         event.preventDefault();
         event.stopPropagation();
 
-        // TODO: implement
-        console.log('implement');
+        this.props.onReview.call(void 0);
     },
 
     componentWillReceiveProps(nextProps) {
@@ -543,6 +549,22 @@ const DumbCardDetail = React.createClass({
 
     },
 
+    getReviewButton() {
+
+        if(!this.props.showReviewButton) {
+            return null;
+        }
+
+        return (
+            <button
+                type="button"
+                className="btn btn-sm btn-primary-outline pull-right m-r"
+                onClick={this.toReviewCard}
+            >{'Review this Card'}</button>
+        );
+
+    },
+
     render() {
         return (
             <div>
@@ -554,11 +576,7 @@ const DumbCardDetail = React.createClass({
                             onClick={this.onClickBackButton}
                         >{this.props.backButtonLabel}</button>
                         {this.getEditCancelButton()}
-                        <button
-                            type="button"
-                            className="btn btn-sm btn-primary-outline pull-right m-r"
-                            onClick={this.toReviewCard}
-                        >{'Review this Card'}</button>
+                        {this.getReviewButton()}
                     </div>
                 </div>
                 <div className="row">
