@@ -9,6 +9,7 @@ const courier = require('courier');
 const {tabs} = require('constants/cardprofile');
 
 const CardDetail = require('components/card/index');
+const StashHeader = require('./header');
 
 // /stash/:stash_id/card/:card_id
 const CardProfile = React.createClass({
@@ -108,6 +109,11 @@ const CardProfile = React.createClass({
 
         return (
             <div>
+                <div className="row">
+                    <div className="col-sm-12 m-b">
+                        <StashHeader stashID={this.props.currentStashID} />
+                    </div>
+                </div>
                 <div className="row">
                     <div className="col-sm-12">
                         <CardDetail
