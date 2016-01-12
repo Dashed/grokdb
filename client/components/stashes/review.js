@@ -213,7 +213,7 @@ const Review = React.createClass({
         return (
             <div>
                 <div className="row">
-                    <div className="col-sm-12 m-y">
+                    <div className="col-sm-12 m-b">
                         <StashHeader isReviewing stashID={currentStashID} />
                     </div>
                 </div>
@@ -287,7 +287,7 @@ const NoReview = React.createClass({
         return (
             <div>
                 <div className="row">
-                    <div className="col-sm-12 m-y">
+                    <div className="col-sm-12 m-b">
                         <StashHeader isReviewing stashID={this.props.currentStashID} />
                     </div>
                 </div>

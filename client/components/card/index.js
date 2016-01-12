@@ -569,7 +569,7 @@ const DumbCardDetail = React.createClass({
         return (
             <div>
                 <div className="row">
-                    <div className="col-sm-12 m-y">
+                    <div className="col-sm-12 m-b">
                         <button
                             type="button"
                             className="btn btn-sm btn-danger"

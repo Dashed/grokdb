@@ -35,7 +35,7 @@ const DumbLibrary = React.createClass({
             return (
                 <div>
                     <div className="row">
-                        <div className="col-sm-12">
+                        <div className="col-sm-12 m-b">
                             <Header />
                         </div>
                     </div>
@@ -144,7 +144,7 @@ const LibraryWrapper = React.createClass({
         return (
             <div>
                 <div className="row">
-                    <div className="col-sm-12">
+                    <div className="col-sm-12 m-b">
                         <Breadcrumb />
                     </div>
                 </div>
