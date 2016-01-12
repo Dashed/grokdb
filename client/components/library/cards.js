@@ -7,7 +7,7 @@ const courier = require('courier');
 const {perPage} = require('constants/cardspagination');
 
 const CardListItem = require('./cardlistitem');
-const CardsFilter = require('./cardsfilter');
+const CardsSortDropDown = require('./cardssortdropdown');
 const CardsPagination = require('./cardspagination');
 const WaitingCardListItem = require('components/card/waitingcardlistitem');
 
@@ -178,7 +178,7 @@ const LibraryCards = React.createClass({
                         >{'Review this deck'}</a>
 
                         <div className="pull-right">
-                            <CardsFilter />
+                            <CardsSortDropDown />
                         </div>
                     </div>
                 </div>
