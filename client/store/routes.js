@@ -870,6 +870,17 @@ const boostrapRoutes = co.wrap(function *(store) {
                 next();
             }, postRouteLoad);
 
+    page('/deck/:deck_id/card/:card_id/review',
+            reloadAppState,
+            function(context) {
+
+                const deckID = context.params.deck_id;
+                const cardID = context.params.card_id;
+
+                page.redirect(`/deck/${deckID}/card/${cardID}/review/front`);
+
+            });
+
     page('/deck/:deck_id/card/:card_id/review/front',
             reloadAppState,
             ensureValidDeckID,
