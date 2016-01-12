@@ -1514,6 +1514,13 @@ const boostrapRoutes = co.wrap(function *(store) {
         // route change. (e.g. discard changes)
         store.routes.shouldChangeRoute(context, function() {
             next();
+        }, function() {
+
+            // TODO: this is partial fix. history seems to be still flaky
+
+            store.routes.removeConfirm();
+
+            page.redirect(context.canonicalPath);
         });
 
     });
@@ -1594,7 +1601,7 @@ Routes.prototype.removeConfirm = function() {
 // call this function to check if all pre-conditions are satisfied before a route
 // can be changed. if pre-conditions are satisfied, then callback is called.
 // otherwise, callback is not called.
-Routes.prototype.shouldChangeRoute = function(ctx, callback) {
+Routes.prototype.shouldChangeRoute = function(ctx, callback, otherwise) {
 
     const confirm = this.confirm();
 
@@ -1610,6 +1617,11 @@ Routes.prototype.shouldChangeRoute = function(ctx, callback) {
             const ret = window.confirm(message);
 
             if(!ret) {
+
+                if(_.isFunction(otherwise)) {
+                    otherwise.call(null);
+                }
+
                 return;
             }
         }
