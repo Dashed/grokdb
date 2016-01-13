@@ -67,7 +67,6 @@ fn main() {
         .about("flashcard app to help you grok better")
 
         .arg(
-
             Arg::with_name("app_path")
             .short("a")
             .long("app")
@@ -82,9 +81,30 @@ fn main() {
                 }
             })
         )
-        // TODO: port
+        .arg(
+            Arg::with_name("port")
+            .short("p")
+            .long("port")
+            .help("Port number to serve")
+            .takes_value(true)
+            // TODO: refactor to remove this
+            .required(true)
+            .validator(|port| {
+                let port = port.trim();
+                if port.len() <= 0 {
+                    return Err(String::from("invalid port number"));
+                }
+                match port.parse::<u16>() {
+                    Ok(_) => {
+                        return Ok(());
+                    },
+                    _ => {
+                        return Err(String::from("invalid port number"));
+                    }
+                };
+            })
+        )
         // TODO: multiple static directories to serve
-
         .arg(
             Arg::with_name("database_name")
             .help("Database name to store your flashcards")
@@ -99,6 +119,18 @@ fn main() {
                 }
             })
         ).get_matches();
+
+    // fetch port number to serve to
+    let port = cmd_matches.value_of("port")
+                            .unwrap()
+                            .trim();
+
+    let port: u16 = match port.parse::<u16>() {
+        Ok(port) => port,
+        _ => unreachable!()
+    };
+
+    // fetch database name
 
     let mut database_name: String = cmd_matches.value_of("database_name")
                                                 .unwrap()
@@ -162,9 +194,9 @@ fn main() {
 
     /* start the server */
 
-    match Iron::new(log_chain).http("0.0.0.0:3030") {
+    match Iron::new(log_chain).http(("localhost", port)) {
         Err(why) => panic!("{:?}", why),
-        Ok(_) => println!("Listening on port 3030"),
+        Ok(_) => println!("Listening on port {}", port),
     }
 
 }
