@@ -70,7 +70,7 @@ const DeckMeta = React.createClass({
                                     type="text"
                                     onChange={this.onNameChange}
                                     value={this.deckName()}
-                                    placeholder="Name of deck"
+                                    placeholder="Name of Deck"
                                 />
                             </p>
                             <a
@@ -82,7 +82,7 @@ const DeckMeta = React.createClass({
                                 })}
                                 onClick={this.renameDeck}
                             >
-                                {'Rename deck'}
+                                {'Rename Deck'}
                             </a>
                         </div>
                     </div>
