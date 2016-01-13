@@ -1,89 +1,38 @@
 const React = require('react');
-const ReactDOM = require('react-dom');
-const classnames = require('classnames');
-const _ = require('lodash');
 const Immutable = require('immutable');
+const _ = require('lodash');
 
 const courier = require('courier');
 
 const {pagination: cardPagination} = require('store/cards');
+const SortDropDown = require('components/sortdropdown');
 
-let labelMap = Immutable.Map();
-
-labelMap = labelMap.setIn([cardPagination.sort.REVIEWED_AT, cardPagination.order.DESC], 'Recently Reviewed');
-labelMap = labelMap.setIn([cardPagination.sort.REVIEWED_AT, cardPagination.order.ASC], 'Least Recently Reviewed');
-
-labelMap = labelMap.setIn([cardPagination.sort.TIMES_REVIEWED, cardPagination.order.DESC], 'Most Frequently Reviewed');
-labelMap = labelMap.setIn([cardPagination.sort.TIMES_REVIEWED, cardPagination.order.ASC], 'Least Frequently Reviewed');
-
-labelMap = labelMap.setIn([cardPagination.sort.TITLE, cardPagination.order.DESC], 'Card Title Descending');
-labelMap = labelMap.setIn([cardPagination.sort.TITLE, cardPagination.order.ASC], 'Card Title Ascending');
-
-labelMap = labelMap.setIn([cardPagination.sort.CREATED_AT, cardPagination.order.DESC], 'Recently Created');
-labelMap = labelMap.setIn([cardPagination.sort.CREATED_AT, cardPagination.order.ASC], 'Least Recently Created');
-
-labelMap = labelMap.setIn([cardPagination.sort.UPDATED_AT, cardPagination.order.DESC], 'Recently Updated');
-labelMap = labelMap.setIn([cardPagination.sort.UPDATED_AT, cardPagination.order.ASC], 'Least Recently Updated');
-
-const list = [
-    cardPagination.sort.REVIEWED_AT,
-    cardPagination.sort.TIMES_REVIEWED,
-    cardPagination.sort.UPDATED_AT,
-    cardPagination.sort.TITLE,
-    cardPagination.sort.CREATED_AT
+const listOrder = [
+    ['Recently Reviewed', [cardPagination.sort.REVIEWED_AT, cardPagination.order.DESC]],
+    ['Least Recently Reviewed', [cardPagination.sort.REVIEWED_AT, cardPagination.order.ASC]],
+    ['Most Frequently Reviewed', [cardPagination.sort.TIMES_REVIEWED, cardPagination.order.DESC]],
+    ['Least Frequently Reviewed', [cardPagination.sort.TIMES_REVIEWED, cardPagination.order.ASC]],
+    ['Card Title Descending', [cardPagination.sort.TITLE, cardPagination.order.DESC]],
+    ['Card Title Ascending', [cardPagination.sort.TITLE, cardPagination.order.ASC]],
+    ['Recently Created', [cardPagination.sort.CREATED_AT, cardPagination.order.DESC]],
+    ['Least Recently Created', [cardPagination.sort.CREATED_AT, cardPagination.order.ASC]],
+    ['Recently Updated', [cardPagination.sort.UPDATED_AT, cardPagination.order.DESC]],
+    ['Least Recently Updated', [cardPagination.sort.UPDATED_AT, cardPagination.order.ASC]]
 ];
 
-const dropDownItemStyle = {
-    fontSize: '.875rem'
-};
+const listOrderInverse = _.reduce(listOrder, (accumulator, [label, path]) => {
+    return accumulator.setIn(path, label);
+}, Immutable.Map());
 
-const CardsFilter = React.createClass({
+const CardsSort = React.createClass({
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
     },
 
-    getInitialState() {
-        return {
-            open: false
-        };
-    },
-
     propTypes: {
-
-        sort: React.PropTypes.oneOf([
-            cardPagination.sort.REVIEWED_AT,
-            cardPagination.sort.TIMES_REVIEWED,
-            cardPagination.sort.TITLE,
-            cardPagination.sort.CREATED_AT,
-            cardPagination.sort.UPDATED_AT,
-        ]),
-
-        order: React.PropTypes.oneOf([
-            cardPagination.order.DESC,
-            cardPagination.order.ASC
-        ])
-    },
-
-    // notes: https://github.com/facebook/react/issues/579#issuecomment-60841923
-
-    componentDidMount: function () {
-        document.body.addEventListener('click', this.handleBodyClick);
-    },
-
-    componentWillUnmount: function () {
-        document.body.removeEventListener('click', this.handleBodyClick);
-    },
-
-    handleBodyClick: function (event) {
-
-        if(!this.state.open || event.target == ReactDOM.findDOMNode(this.refs.sortbutton)) {
-            return;
-        }
-
-        this.setState({
-            open: !this.state.open
-        });
+        currentLabel: React.PropTypes.string.isRequired,
+        listOrder: React.PropTypes.array.isRequired
     },
 
     dropdownClickHandler: function(e) {
@@ -92,95 +41,19 @@ const CardsFilter = React.createClass({
         e.nativeEvent.stopImmediatePropagation();
     },
 
-    onClickDropdown(event) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        this.setState({
-            open: !this.state.open
-        });
-    },
-
-    onClickSort(sort, order) {
-        return (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-
-            this.context.store.cards.changeFilter(sort, order);
-        };
-    },
-
-    getLabel() {
-        const {sort, order} = this.props;
-
-        return labelMap.getIn([sort, order]);
-    },
-
-    getListItems() {
-
-        return _.reduce(list, function(buttons, sortKey, index) {
-
-
-            let key = '';
-            let label = labelMap.getIn([sortKey, cardPagination.order.DESC]);
-
-            key = `${index}-0`;
-            buttons.push(
-                <a
-                    key={key}
-                    className="dropdown-item sortbutton"
-                    href="#"
-                    style={dropDownItemStyle}
-                    onClick={this.onClickSort(sortKey, cardPagination.order.DESC)}
-                >
-                    {label}
-                </a>
-            );
-
-
-            key = `${index}-1`;
-            label = labelMap.getIn([sortKey, cardPagination.order.ASC]);
-            buttons.push(
-                <a
-                    key={key}
-                    className="dropdown-item sortbutton"
-                    href="#"
-                    style={dropDownItemStyle}
-                    onClick={this.onClickSort(sortKey, cardPagination.order.ASC)}
-                >
-                    {label}
-                </a>
-            );
-
-            return buttons;
-        }, [], this);
-
+    onClickSort([sort, order]) {
+        this.context.store.cards.changeFilter(sort, order);
     },
 
     render() {
 
         return (
             <div>
-                <div className={classnames('dropdown', {open: this.state.open})}>
-                    <button
-                        ref="sortbutton"
-                        className="btn btn-sm btn-secondary dropdown-toggle"
-                        type="button"
-                        id="dropdownMenu1"
-                        data-toggle="dropdown"
-                        aria-haspopup="true"
-                        aria-expanded="false"
-
-                        onClick={this.onClickDropdown}>
-                        {`Sort by `}
-                        <strong>
-                            {this.getLabel()}
-                        </strong>
-                    </button>
-                    <div className="dropdown-menu dropdown-menu-right">
-                        {this.getListItems()}
-                    </div>
-                </div>
+                <SortDropDown
+                    listOrder={this.props.listOrder}
+                    currentLabel={this.props.currentLabel}
+                    onClickSort={this.onClickSort}
+                />
             </div>
         );
     }
@@ -192,7 +65,7 @@ module.exports = courier({
         store: React.PropTypes.object.isRequired
     },
 
-    component: CardsFilter,
+    component: CardsSort,
 
     watch(props, manual, context) {
         return [
@@ -203,11 +76,12 @@ module.exports = courier({
 
     assignNewProps: function(props, context) {
 
-        return {
-            order: context.store.cards.order(),
-            sort: context.store.cards.sort()
-        };
+        const path = [context.store.cards.sort(), context.store.cards.order()];
 
+        return {
+            currentLabel: listOrderInverse.getIn(path),
+            listOrder: listOrder
+        };
     }
 
 });
