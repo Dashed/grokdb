@@ -86,11 +86,12 @@ Promise.all([loadMathJax, loadStore])
             console.error(err);
         }
 
-
-
-        // NOTE: As of react v0.13, contexts are an undocumented feature
-        // NOTE: As of react v0.13, React.withContext() is deprecated.
-        // See: https://www.tildedave.com/2014/11/15/introduction-to-contexts-in-react-js.html
+        // As of React v0.14.x, contexts are experimental.
+        // see: https://facebook.github.io/react/docs/context.html
+        //
+        // Use context to infect any and all component with the reference to the store.
+        // This infection is stateless, and any component that uses it need only be
+        // infected once.
         const WithContext = React.createClass({
 
             childContextTypes: {
@@ -108,7 +109,10 @@ Promise.all([loadMathJax, loadStore])
             }
         });
 
-        ReactDOM.render(<WithContext rootCursor={store.state()} />, document.getElementById('grokdb-container'));
+        ReactDOM.render(<WithContext />, document.getElementById('grokdb-container'));
+
+        // silence bluebird v3 warnings
+        return null;
     });
 
 // TODO: issue: https://github.com/petkaantonov/bluebird/issues/903
