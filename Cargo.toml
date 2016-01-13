@@ -38,7 +38,9 @@ version = "0"
 version = "0"
 
 [dependencies.logger]
-version = "0"
+# version = "0"
+git = "https://github.com/iron/logger"
+rev = "78c20cbda030a03107fec91b5282183d6eee9997"
 
 [dependencies.router]
 version = "0.1"
@@ -47,6 +49,4 @@ version = "0.1"
 version = "0"
 
 [dependencies.urlencoded]
-git = "https://github.com/iron/urlencoded"
-rev = "58468f45cd48000f68dc12ffb142b443ae7edc48"
-
+version = "0.2"
