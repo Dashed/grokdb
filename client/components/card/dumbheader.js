@@ -1,5 +1,11 @@
 const React = require('react');
 
+const NAME_STYLE = {
+    'overflowWrap': 'break-word',
+    'wordWrap': 'break-word',
+    'overflow': 'hidden'
+};
+
 const DumbCardHeader = React.createClass({
 
     propTypes: {
@@ -33,7 +39,7 @@ const DumbCardHeader = React.createClass({
 
         return (
             <div>
-                <h4 className="m-y-0">
+                <h4 className="m-y-0" style={NAME_STYLE}>
                     <span className="text-muted lead">
                         {this.getLead()}
                     </span>

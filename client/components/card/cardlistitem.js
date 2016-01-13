@@ -5,6 +5,12 @@ const _ = require('lodash');
 
 const courier = require('courier');
 
+const NAME_STYLE = {
+    'overflowWrap': 'break-word',
+    'wordWrap': 'break-word',
+    'overflow': 'hidden'
+};
+
 const CardListItem = React.createClass({
 
     contextTypes: {
@@ -83,7 +89,7 @@ const CardListItem = React.createClass({
         }, []);
 
         return (
-            <small className="text-muted">
+            <small className="text-muted" style={NAME_STYLE}>
                 {'Deck path: '}
                 {crumbs}
             </small>
@@ -112,7 +118,7 @@ const CardListItem = React.createClass({
 
         return (
             <li className="list-group-item">
-                <h6 className="list-group-item-heading m-y-0">
+                <h6 className="list-group-item-heading m-y-0" style={NAME_STYLE}>
                     <a href="#" onClick={this.onClick} >
                         {card.get('title')}
                     </a>

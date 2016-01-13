@@ -3,6 +3,11 @@ const Immutable = require('immutable');
 
 const courier = require('courier');
 
+const NAME_STYLE = {
+    'overflowWrap': 'break-word',
+    'wordWrap': 'break-word'
+};
+
 const StashListItem = React.createClass({
 
     contextTypes: {
@@ -27,7 +32,7 @@ const StashListItem = React.createClass({
 
         return (
             <li className="list-group-item">
-                <h6 className="list-group-item-heading m-y-0">
+                <h6 className="list-group-item-heading m-y-0" style={NAME_STYLE}>
                     <a href="#" onClick={this.onClick} >
                         {stash.get('name')}
                     </a>

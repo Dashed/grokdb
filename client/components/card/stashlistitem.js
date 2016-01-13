@@ -8,6 +8,12 @@ const classnames = require('classnames');
 
 const courier = require('courier');
 
+const NAME_STYLE = {
+    'overflowWrap': 'break-word',
+    'wordWrap': 'break-word',
+    'overflow': 'hidden'
+};
+
 const StashListItem = React.createClass({
 
     contextTypes: {
@@ -75,7 +81,7 @@ const StashListItem = React.createClass({
         return (
             <li className={classnames('list-group-item', activeStyle)}>
                 {this.getButton()}
-                <h6 className="list-group-item-heading m-y-0">
+                <h6 className="list-group-item-heading m-y-0" style={NAME_STYLE}>
                     <a href="#" onClick={this.toStash}>
                         {stash.get('name')}
                     </a>

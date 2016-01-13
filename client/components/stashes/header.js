@@ -2,6 +2,11 @@ const React = require('react');
 
 const courier = require('courier');
 
+const NAME_STYLE = {
+    'overflowWrap': 'break-word',
+    'wordWrap': 'break-word'
+};
+
 const DumbStashHeader = React.createClass({
 
     propTypes: {
@@ -35,7 +40,7 @@ const DumbStashHeader = React.createClass({
 
         return (
             <div>
-                <h4 className="m-y-0">
+                <h4 className="m-y-0" style={NAME_STYLE}>
                     <span className="text-muted lead">
                         {this.getLead()}
                     </span>

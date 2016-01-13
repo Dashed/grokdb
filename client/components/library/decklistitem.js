@@ -4,6 +4,12 @@ const moment = require('moment');
 
 const courier = require('courier');
 
+const NAME_STYLE = {
+    'overflowWrap': 'break-word',
+    'wordWrap': 'break-word',
+    'overflow': 'hidden'
+};
+
 const DeckListItem = React.createClass({
 
     contextTypes: {
@@ -47,7 +53,7 @@ const DeckListItem = React.createClass({
 
         return (
             <li className="list-group-item">
-                <h6 className="list-group-item-heading m-y-0">
+                <h6 className="list-group-item-heading m-y-0" style={NAME_STYLE}>
                     <a href="#" onClick={this.onClick} >
                         {deck.get('name')}
                     </a>

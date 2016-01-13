@@ -4,6 +4,13 @@ const invariant = require('invariant');
 
 const courier = require('courier');
 
+const NAME_STYLE = {
+    'overflowWrap': 'break-word',
+    'wordWrap': 'break-word',
+    'wordBreak': 'break-word'
+};
+
+
 const Breadcrumb = React.createClass({
 
     contextTypes: {
@@ -11,7 +18,17 @@ const Breadcrumb = React.createClass({
     },
 
     propTypes: {
-        path: React.PropTypes.array.isRequired
+        path: React.PropTypes.array.isRequired,
+
+        // cosmetic flags
+        isReviewing: React.PropTypes.bool.isRequired
+    },
+
+    getDefaultProps() {
+
+        return {
+            isReviewing: false
+        };
     },
 
     toDeck(deckID) {
@@ -55,10 +72,27 @@ const Breadcrumb = React.createClass({
         });
     },
 
+    getReviewing() {
+
+        if(!this.props.isReviewing) {
+            return null;
+        }
+
+        return (
+            <li>
+                <strong>
+                    {'Reviewing'}
+                </strong>
+            </li>
+        );
+
+    },
+
     render() {
 
         return (
-            <ol className="breadcrumb m-y-0">
+            <ol className="breadcrumb m-y-0" style={NAME_STYLE}>
+                {this.getReviewing()}
                 {this.generateCrumb()}
             </ol>
         );

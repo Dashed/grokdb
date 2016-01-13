@@ -3,6 +3,12 @@ const Immutable = require('immutable');
 
 const courier = require('courier');
 
+const NAME_STYLE = {
+    'overflowWrap': 'break-word',
+    'wordWrap': 'break-word',
+    'overflow': 'hidden'
+};
+
 const Header = React.createClass({
 
     propTypes: {
@@ -17,7 +23,7 @@ const Header = React.createClass({
         const deckID = currentDeck.get('id');
 
         return (
-            <h4>
+            <h4 style={NAME_STYLE}>
                 <span className="text-muted lead">{`Deck #${deckID}`}</span>
                 {' '}
                 <span>{deckName}</span>
