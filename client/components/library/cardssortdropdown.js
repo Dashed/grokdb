@@ -1,28 +1,9 @@
 const React = require('react');
-const Immutable = require('immutable');
-const _ = require('lodash');
 
 const courier = require('courier');
 
 const {pagination: cardPagination} = require('store/cards');
-const SortDropDown = require('components/sortdropdown');
-
-const listOrder = [
-    ['Recently Reviewed', [cardPagination.sort.REVIEWED_AT, cardPagination.order.DESC]],
-    ['Least Recently Reviewed', [cardPagination.sort.REVIEWED_AT, cardPagination.order.ASC]],
-    ['Most Frequently Reviewed', [cardPagination.sort.TIMES_REVIEWED, cardPagination.order.DESC]],
-    ['Least Frequently Reviewed', [cardPagination.sort.TIMES_REVIEWED, cardPagination.order.ASC]],
-    ['Card Title Descending', [cardPagination.sort.TITLE, cardPagination.order.DESC]],
-    ['Card Title Ascending', [cardPagination.sort.TITLE, cardPagination.order.ASC]],
-    ['Recently Created', [cardPagination.sort.CREATED_AT, cardPagination.order.DESC]],
-    ['Least Recently Created', [cardPagination.sort.CREATED_AT, cardPagination.order.ASC]],
-    ['Recently Updated', [cardPagination.sort.UPDATED_AT, cardPagination.order.DESC]],
-    ['Least Recently Updated', [cardPagination.sort.UPDATED_AT, cardPagination.order.ASC]]
-];
-
-const listOrderInverse = _.reduce(listOrder, (accumulator, [label, path]) => {
-    return accumulator.setIn(path, label);
-}, Immutable.Map());
+const CardsSortDropDown = require('components/card/sortdropdown');
 
 const CardsSort = React.createClass({
 
@@ -31,17 +12,21 @@ const CardsSort = React.createClass({
     },
 
     propTypes: {
-        currentLabel: React.PropTypes.string.isRequired,
-        listOrder: React.PropTypes.array.isRequired
+        sort: React.PropTypes.oneOf([
+            cardPagination.sort.REVIEWED_AT,
+            cardPagination.sort.TIMES_REVIEWED,
+            cardPagination.sort.TITLE,
+            cardPagination.sort.CREATED_AT,
+            cardPagination.sort.UPDATED_AT,
+        ]),
+
+        order: React.PropTypes.oneOf([
+            cardPagination.order.DESC,
+            cardPagination.order.ASC
+        ])
     },
 
-    dropdownClickHandler: function(e) {
-        event.preventDefault();
-        event.stopPropagation();
-        e.nativeEvent.stopImmediatePropagation();
-    },
-
-    onClickSort([sort, order]) {
+    onClickSort(sort, order) {
         this.context.store.cards.changeFilter(sort, order);
     },
 
@@ -49,9 +34,9 @@ const CardsSort = React.createClass({
 
         return (
             <div>
-                <SortDropDown
-                    listOrder={this.props.listOrder}
-                    currentLabel={this.props.currentLabel}
+                <CardsSortDropDown
+                    order={this.props.order}
+                    sort={this.props.sort}
                     onClickSort={this.onClickSort}
                 />
             </div>
@@ -76,13 +61,10 @@ module.exports = courier({
 
     assignNewProps: function(props, context) {
 
-        const path = [context.store.cards.sort(), context.store.cards.order()];
-
         return {
-            currentLabel: listOrderInverse.getIn(path),
-            listOrder: listOrder
+            sort: context.store.cards.sort(),
+            order: context.store.cards.order()
         };
     }
 
 });
-
