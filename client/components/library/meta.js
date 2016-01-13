@@ -4,7 +4,7 @@ const classnames = require('classnames');
 
 const courier = require('courier');
 
-const Meta = React.createClass({
+const DeckMeta = React.createClass({
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
@@ -94,7 +94,7 @@ const Meta = React.createClass({
 
 module.exports = courier({
 
-    component: Meta,
+    component: DeckMeta,
 
     contextTypes: {
         store: React.PropTypes.object.isRequired
