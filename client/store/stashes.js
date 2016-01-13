@@ -421,6 +421,163 @@ Stashes.prototype.currentID = function(stashID = NOT_SET) {
     return value;
 };
 
+// async
+Stashes.prototype.current = function() {
+
+    const currentID = this.currentID();
+
+    return this.get(currentID);
+};
+
+// TODO: refactor to utils
+const attachCurrentObserver = function(currentCursor, currentID, observer) {
+
+    let snapshotCurrent = currentCursor.deref();
+
+    const currentUnsub = currentCursor.observe(function(newCurrent, oldCurrent) {
+
+        if(!Immutable.Map.isMap(newCurrent)) {
+            // lookup table may have been cleared.
+            // bail event propagation early.
+            // note: don't unsubscribe at this point, as deck record may be reloaded.
+            // e.g. entry: deck record --> void 0 --> deck record
+            return;
+        }
+
+        const actualID = newCurrent.get('id');
+
+        if(actualID == currentID && newCurrent != oldCurrent) {
+
+            // There are cases when newCurrent and oldCurrent are effectively deeply equal.
+            // This can occur when doing something equivalent to:
+            // currentCursor.update(() => Immutable.fromJS(newCurrent.toJS()))
+            // Immutable.is is deep compare, but should prevent unnecessary DOM renders or network requests.
+            // Only do this if oldCurrent is still a Map.
+            // We still call observer for the case: void 0 --> deck record
+            if(!Immutable.is(snapshotCurrent, newCurrent)) {
+                snapshotCurrent = newCurrent;
+                observer.call(null);
+                return;
+            }
+
+            snapshotCurrent = newCurrent;
+
+            return;
+        }
+
+        // change occured on deck of unexpected id
+        currentUnsub.call(null);
+
+    });
+
+    return currentUnsub;
+};
+
+// sync
+Stashes.prototype.watchCurrent = function() {
+
+    return {
+        observe: (observer) => {
+
+            let currentID = this.currentID();
+            let currentCursor = this._lookup.cursor(currentID);
+            let currentUnsub = attachCurrentObserver(currentCursor, currentID, observer);
+
+            const stashSelfCursor = this._store.state().cursor(['stash', 'self']);
+
+            const stashSelfUnsub = stashSelfCursor.observe((newID/*, oldID*/) => {
+
+                // invariant: newID != oldID
+
+                if(newID == currentID) {
+                    return;
+                }
+
+                currentUnsub.call(null);
+
+                // ensure new stash is on lookup table
+                Promise.resolve(this.get(newID))
+                    .then(() => {
+
+                        currentID = newID;
+                        currentCursor = this._lookup.cursor(currentID);
+                        currentUnsub = attachCurrentObserver(currentCursor, currentID, observer);
+
+                        observer.call(null);
+
+                        return null;
+                    });
+
+            });
+
+            return function() {
+                currentUnsub.call(null);
+                stashSelfUnsub.call(null);
+            };
+        }
+    };
+};
+
+// async
+Stashes.prototype.patch = function(stashID, patch) {
+
+    invariant(_.isPlainObject(patch), `Expected stash patch to be plain object. Given: ${patch}`);
+
+    stashID = Number(stashID);
+
+    const oldStash = this._lookup.cursor(stashID).deref();
+
+    // optimistic update
+    this._lookup.cursor(stashID).update(function(__oldStash) {
+
+        patch = Immutable.fromJS(patch);
+
+        return __oldStash.mergeDeep(patch);
+    });
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .patch(`/api/stashes/${stashID}`)
+            .send(patch)
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    const stash = Immutable.fromJS(response.body);
+
+                    this._lookup.cursor(stashID).update(function() {
+                        return stash;
+                    });
+
+                    return resolve(stash);
+
+                default:
+
+                    // revert optimistic update
+                    this._lookup.cursor(stashID).update(function() {
+                        return oldStash;
+                    });
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return reject(Error(`Unexpected response.status. Given: ${response.status}`));
+                }
+            });
+
+    });
+
+};
+
+// async
+Stashes.prototype.patchCurrent = function(patch) {
+    this.patch(this.currentID(), patch);
+};
+
 // sync
 Stashes.prototype.watchPage = function() {
     return this._store.state().cursor(['stashes', 'page']);

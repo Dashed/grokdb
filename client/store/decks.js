@@ -348,6 +348,7 @@ Decks.prototype.watchCurrentID = function() {
     return this._store.state().cursor(['deck', 'self']);
 };
 
+// TODO: refactor to utils
 const attachCurrentObserver = function(currentCursor, currentID, observer) {
 
     let snapshotCurrent = currentCursor.deref();
