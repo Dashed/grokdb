@@ -67,21 +67,6 @@ fn main() {
         .about("flashcard app to help you grok better")
 
         .arg(
-            Arg::with_name("app_path")
-            .short("a")
-            .long("app")
-            .help("Sets directory path to serve web app from")
-            .takes_value(true)
-            .validator(|app_path| {
-                let app_path = app_path.trim();
-                if app_path.len() <= 0 {
-                    return Err(String::from("invalid directory app path"));
-                } else {
-                    return Ok(());
-                }
-            })
-        )
-        .arg(
             Arg::with_name("port")
             .short("p")
             .long("port")
@@ -104,7 +89,39 @@ fn main() {
                 };
             })
         )
-        // TODO: multiple static directories to serve
+        .arg(
+            Arg::with_name("app_path")
+            .short("a")
+            .long("app")
+            .help("Sets directory path to serve web app from")
+            .takes_value(true)
+            .multiple(false)
+            .validator(|app_path| {
+                let app_path = app_path.trim();
+                if app_path.len() <= 0 {
+                    return Err(String::from("invalid directory app dir path"));
+                } else {
+                    return Ok(());
+                }
+            })
+        )
+        .arg(
+            Arg::with_name("dir")
+            .short("d")
+            .long("dir")
+            .help("Static assets directory to serve")
+            .takes_value(true)
+            .multiple(false)
+            .required(false)
+            .validator(|asset_path| {
+                let asset_path = asset_path.trim();
+                if asset_path.len() <= 0 {
+                    return Err(String::from("invalid directory static dir path"));
+                } else {
+                    return Ok(());
+                }
+            })
+        )
         .arg(
             Arg::with_name("database_name")
             .help("Database name to store your flashcards")
@@ -174,6 +191,11 @@ fn main() {
     mount
         .mount("/api", router)
         .mount("/", Static::new(Path::new(app_path)));
+
+    if let Some(ref asset_path) = cmd_matches.value_of("dir") {
+        let asset_path = asset_path.trim();
+        mount.mount("/assets", Static::new(Path::new(asset_path)));
+    }
 
     /* iron logging */
 
