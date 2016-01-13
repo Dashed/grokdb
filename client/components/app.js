@@ -193,17 +193,7 @@ const AppContainer = React.createClass({
                 <hr className="m-t-lg"/>
                 <footer className="m-b row">
                     <div className="col-sm-6">
-                        <a href="https://github.com/dashed/grokdb/issues" target="_blank">{'Bugs? Issues? Ideas?'}</a>
-                    </div>
-                    <div className="col-sm-6">
-                        <div className="btn-group p-b pull-right" role="group" aria-label="Basic example">
-                            <button
-                                type="button"
-                                className="btn btn-warning"
-                            >
-                                {"Backup database"}
-                            </button>
-                        </div>
+                        <a href="https://github.com/dashed/grokdb/issues" target="_blank">{'Issues? Questions? Comments?'}</a>
                     </div>
                 </footer>
             </div>
