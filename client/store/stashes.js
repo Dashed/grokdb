@@ -439,8 +439,8 @@ const attachCurrentObserver = function(currentCursor, currentID, observer) {
         if(!Immutable.Map.isMap(newCurrent)) {
             // lookup table may have been cleared.
             // bail event propagation early.
-            // note: don't unsubscribe at this point, as deck record may be reloaded.
-            // e.g. entry: deck record --> void 0 --> deck record
+            // note: don't unsubscribe at this point, as stash record may be reloaded.
+            // e.g. entry: stash record --> void 0 --> stash record
             return;
         }
 
@@ -453,7 +453,7 @@ const attachCurrentObserver = function(currentCursor, currentID, observer) {
             // currentCursor.update(() => Immutable.fromJS(newCurrent.toJS()))
             // Immutable.is is deep compare, but should prevent unnecessary DOM renders or network requests.
             // Only do this if oldCurrent is still a Map.
-            // We still call observer for the case: void 0 --> deck record
+            // We still call observer for the case: void 0 --> stash record
             if(!Immutable.is(snapshotCurrent, newCurrent)) {
                 snapshotCurrent = newCurrent;
                 observer.call(null);
@@ -465,7 +465,7 @@ const attachCurrentObserver = function(currentCursor, currentID, observer) {
             return;
         }
 
-        // change occured on deck of unexpected id
+        // change occured on stash of unexpected id
         currentUnsub.call(null);
 
     });
