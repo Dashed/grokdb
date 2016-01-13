@@ -12,6 +12,7 @@ const StashDetail = require('./detail');
 const StashesPagination = require('./pagination');
 const CardProfile = require('./cardprofile');
 const StashReview = require('./review');
+const StashesSortDropDown = require('./stashessortdropdown');
 
 const Stashes = React.createClass({
 
@@ -50,6 +51,9 @@ const Stashes = React.createClass({
                                     className="btn btn-success"
                                     onClick={this.toNewStash}
                                 >{'New Stash'}</button>
+                            </div>
+                            <div className="pull-right">
+                                <StashesSortDropDown />
                             </div>
                         </div>
                     </div>

@@ -656,6 +656,12 @@ Stashes.prototype.order = function(order = NOT_SET) {
     return value;
 };
 
+// sync
+Stashes.prototype.changeSort = function(sort, order) {
+
+    this._store.routes.toStashes(sort, order);
+};
+
 // async
 Stashes.prototype.list = function(page = NOT_SET, __pageSort = NOT_SET, __pageOrder = NOT_SET) {
 
