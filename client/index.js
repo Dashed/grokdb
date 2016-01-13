@@ -2,13 +2,44 @@ const React = require('react');
 const ReactDOM = require('react-dom');
 // const co = require('co');
 
+// superagent proxy
+const superhot = require('store/superhot');
+const littleloader = require('little-loader');
+
 const bootstrapStore = require('store');
 const App = require('components/app');
 
 const isSymbol = require('./utils/issymbol');
 
 
-bootstrapStore
+const loadMathJax = new Promise(function(resolve) {
+
+    // check if mathjax assets exist
+
+    superhot.get('/mathjax/MathJax.js').end(function(err, response){
+        resolve(response.status == 200);
+    });
+
+}).then(function(hasLocalMathJax) {
+
+    const mjscript = hasLocalMathJax ? '/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML' :
+        'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+
+    return new Promise(function(resolve) {
+
+        littleloader(mjscript, function (err) {
+
+            if(err) {
+                console.error(err);
+            }
+
+            resolve(null);
+        });
+
+    });
+});
+
+const loadStore = bootstrapStore
     .then(function(store) {
 
         return new Promise(function(resolve) {
@@ -38,12 +69,17 @@ bootstrapStore
             waiting();
 
         });
+    });
+
+Promise.all([loadMathJax, loadStore])
+    .then(function(results) {
+        return Promise.resolve(results[1]);
     })
     .then(function(store) {
 
-        // console.log('====');
-        // console.log(String(store.state()));
-        // console.log('====');
+        console.log('====');
+        console.log(String(store.state()));
+        console.log('====');
 
         // NOTE: As of react v0.13, contexts are an undocumented feature
         // NOTE: As of react v0.13, React.withContext() is deprecated.
