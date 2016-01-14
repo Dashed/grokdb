@@ -17,7 +17,8 @@ const StashesAll = React.createClass({
     },
 
     onClickPage(requestedPageNum) {
-        return this.context.store.stashes.pageAll(requestedPageNum);
+        this.context.store.stashes.pageAll(requestedPageNum);
+        this.context.store.commit();
     },
 
     render() {

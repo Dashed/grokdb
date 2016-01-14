@@ -18,7 +18,8 @@ const StashesBelongsTo = React.createClass({
     },
 
     onClickPage(requestedPageNum) {
-        return this.context.store.stashes.pageOfCardBelongsTo(requestedPageNum);
+        this.context.store.stashes.pageOfCardBelongsTo(requestedPageNum);
+        this.context.store.commit();
     },
 
     render() {
