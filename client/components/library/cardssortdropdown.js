@@ -27,7 +27,7 @@ const CardsSort = React.createClass({
     },
 
     onClickSort(sort, order) {
-        this.context.store.cards.changeFilter(sort, order);
+        this.context.store.cards.changeSort(sort, order);
     },
 
     render() {

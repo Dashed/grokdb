@@ -890,9 +890,8 @@ Cards.prototype.page = function(page = NOT_SET) {
     return Number(value);
 };
 
-// TODO: rename to changeSort
 // sync
-Cards.prototype.changeFilter = function(sort, order) {
+Cards.prototype.changeSort = function(sort, order) {
 
     const currentDeckID = this._store.decks.currentID();
 
