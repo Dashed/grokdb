@@ -13,6 +13,7 @@ const MarkdownPreview = require('components/markdownpreview');
 const CardHeader = require('./header');
 const CardTabs = require('./tabs');
 const CardStashes = require('./stashes');
+const CardMeta = require('./meta');
 
 const NOOP = () => void 0;
 
@@ -343,7 +344,7 @@ const DumbCardDetail = React.createClass({
                 <div>
                     <div className="row">
                         <div className="col-sm-12">
-                            {'meta'}
+                            <CardMeta card={this.props.currentCard} />
                         </div>
                     </div>
                 </div>
