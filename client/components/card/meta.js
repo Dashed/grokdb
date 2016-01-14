@@ -24,10 +24,18 @@ const CardMeta = React.createClass({
         const createdAt = moment.unix(card.get('created_at'));
         const wasReviewed = Math.abs(lastReviewedDatetime.diff(createdAt)) <= 250 ? false : true;
 
-        const lastReviewed = wasReviewed ? `Last reviewed ${lastReviewedDatetime.fromNow()}, or ${lastReviewedDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')}` :
+        const lastReviewed = wasReviewed ? `Last reviewed ${lastReviewedDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${lastReviewedDatetime.fromNow()})` :
         `Hasn't been reviewed yet.`;
 
-        const extraSummary = wasReviewed ? `Reviewed ${card.getIn(['review_stat', 'times_reviewed'])} times.` : '';
+        const timesReviewed = card.getIn(['review_stat', 'times_reviewed']);
+
+        const extraSummary = wasReviewed ? `Reviewed ${timesReviewed} ${timesReviewed > 1 ? 'times' : 'time'}.` : '';
+
+        const lastChosenDatetime = moment.unix(card.getIn(['review_stat', 'seen_at']));
+
+        const timesSeen = card.getIn(['review_stat', 'times_seen']);
+
+        const chosenForReview = timesSeen > 0 ? `Chosen for review ${timesSeen} ${timesSeen > 1 ? 'times' : 'time'}.` : `Hasn't been chosen for review yet.`
 
         return (
             <div>
@@ -37,28 +45,12 @@ const CardMeta = React.createClass({
                 <p>
                     {`${extraSummary}`}
                 </p>
-                {
-                    (() => {
-
-                        if(!wasReviewed) {
-                            return null;
-                        }
-
-                        const lastChosenDatetime = moment.unix(card.getIn(['review_stat', 'seen_at']));
-
-                        return (
-                            <div>
-                                <p>
-                                    {`Last chosen for review ${lastChosenDatetime.fromNow()}, or ${lastChosenDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')}`}
-                                </p>
-                                <p>
-                                    {`Chosen for review ${card.getIn(['review_stat', 'times_seen'])} times.`}
-                                </p>
-                            </div>
-                        );
-
-                    })()
-                }
+                <p>
+                    {`Last chosen for review ${lastChosenDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${lastChosenDatetime.fromNow()})`}
+                </p>
+                <p>
+                    {chosenForReview}
+                </p>
             </div>
         );
 
@@ -96,10 +88,10 @@ const CardMeta = React.createClass({
         return (
             <div>
                 <p>
-                    {`Updated ${updatedAtDatetime.fromNow()}, or ${updatedAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')}`}
+                    {`Updated ${updatedAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${updatedAtDatetime.fromNow()})`}
                 </p>
                 <p>
-                    {`Created ${createdAtDatetime.fromNow()}, or ${createdAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')}`}
+                    {`Created ${createdAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${createdAtDatetime.fromNow()})`}
                 </p>
             </div>
         );
@@ -119,5 +111,7 @@ const CardMeta = React.createClass({
         );
     }
 });
+
+// asdd
 
 module.exports = CardMeta;
