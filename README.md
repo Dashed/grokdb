@@ -27,3 +27,7 @@ During development, run: `cargo watch check |& dybuk`
 - https://github.com/passcod/cargo-watch
 - https://github.com/rsolomo/cargo-check
 - https://github.com/Ticki/dybuk
+
+### npm
+
+`rm -rf node_modules/;npm install --no-bin-links`
