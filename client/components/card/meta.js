@@ -44,10 +44,17 @@ const CardMeta = React.createClass({
                             return null;
                         }
 
+                        const lastChosenDatetime = moment.unix(card.getIn(['review_stat', 'seen_at']));
+
                         return (
-                            <p>
-                                {`Chosen for review ${card.getIn(['review_stat', 'times_seen'])} times.`}
-                            </p>
+                            <div>
+                                <p>
+                                    {`Last chosen for review ${lastChosenDatetime.fromNow()}, or ${lastChosenDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')}`}
+                                </p>
+                                <p>
+                                    {`Chosen for review ${card.getIn(['review_stat', 'times_seen'])} times.`}
+                                </p>
+                            </div>
                         );
 
                     })()
