@@ -35,7 +35,7 @@ const CardMeta = React.createClass({
 
         const timesSeen = card.getIn(['review_stat', 'times_seen']);
 
-        const chosenForReview = timesSeen > 0 ? `Chosen for review ${timesSeen} ${timesSeen > 1 ? 'times' : 'time'}.` : `Hasn't been chosen for review yet.`
+        const chosenForReview = timesSeen > 0 ? `Chosen for review ${timesSeen} ${timesSeen > 1 ? 'times' : 'time'}.` : `Hasn't been chosen for review yet.`;
 
         return (
             <div>
