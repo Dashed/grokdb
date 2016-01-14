@@ -86,6 +86,26 @@ const CardMeta = React.createClass({
 
     },
 
+    getGeneral() {
+
+        const {card} = this.props;
+
+        const createdAtDatetime = moment.unix(card.getIn(['created_at']));
+        const updatedAtDatetime = moment.unix(card.getIn(['updated_at']));
+
+        return (
+            <div>
+                <p>
+                    {`Updated ${updatedAtDatetime.fromNow()}, or ${updatedAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')}`}
+                </p>
+                <p>
+                    {`Created ${createdAtDatetime.fromNow()}, or ${createdAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')}`}
+                </p>
+            </div>
+        );
+
+    },
+
     render() {
         return (
             <div>
@@ -93,6 +113,8 @@ const CardMeta = React.createClass({
                 {this.getReviewed()}
                 <h4>{'Performance'}</h4>
                 {this.getPerformance()}
+                <h4>{'General'}</h4>
+                {this.getGeneral()}
             </div>
         );
     }
