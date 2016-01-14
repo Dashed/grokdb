@@ -7,6 +7,7 @@ extern crate chrono;
 use chrono::*;
 use iron::status;
 use iron::prelude::*;
+use iron::mime::Mime;
 use router::Router;
 use rustc_serialize::json;
 use rusqlite::DatabaseName;
@@ -157,10 +158,11 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
 
             let response = BackupResponse {
                 dest_file: dest_path
-            };
+            }.to_json();
 
-            let res_code = status::Ok;
-            return Ok(Response::with((res_code, response.to_json())));
+            let content_type = "application/json".parse::<Mime>().unwrap();
+
+            return Ok(Response::with((content_type, status::Ok, response)));
         }
     });
 }
