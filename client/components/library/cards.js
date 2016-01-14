@@ -4,8 +4,6 @@ const shallowEqual = require('shallowequal');
 
 const courier = require('courier');
 
-const {perPage} = require('constants/cardspagination');
-
 const CardListItem = require('./cardlistitem');
 const CardsSortDropDown = require('./cardssortdropdown');
 const CardsPagination = require('./cardspagination');
@@ -68,7 +66,7 @@ const WaitingDumbCardsList = React.createClass({
 
         let items = [];
 
-        let n = perPage;
+        let n = 1;
 
         while(n-- > 0) {
             items.push(
