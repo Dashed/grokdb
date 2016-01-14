@@ -275,8 +275,8 @@ BEGIN
     VALUES (
         NEW.reviewed_at <> OLD.reviewed_at,
         strftime('%s', 'now'),
-        (NEW.success - OLD.success),
-        (NEW.fail - OLD.fail),
+        max(NEW.success - OLD.success, 0),
+        max(NEW.fail - OLD.fail, 0),
         NEW.success,
         NEW.fail,
         NEW.changelog,
