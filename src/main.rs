@@ -137,6 +137,7 @@ fn main() {
             })
         ).get_matches();
 
+    // TODO: if port number is not given, find an available one
     // fetch port number to serve to
     let port = cmd_matches.value_of("port")
                             .unwrap()
