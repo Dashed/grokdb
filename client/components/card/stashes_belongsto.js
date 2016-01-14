@@ -63,7 +63,7 @@ const StashesBelongsTo = React.createClass({
                         </ul>
                     </div>
                 </div>
-                <div className="row m-b">
+                <div className="row">
                     <div className="col-sm-12">
                         <StashesBelongsToPagination
                             cardID={cardID}

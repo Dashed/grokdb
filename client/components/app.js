@@ -190,7 +190,7 @@ const AppContainer = React.createClass({
         return (
             <div className="container">
                 <App {...this.props} />
-                <hr className="m-t-lg"/>
+                <hr className="m-t"/>
                 <footer className="m-b row">
                     <div className="col-sm-6">
                         <a href="https://github.com/dashed/grokdb/issues" target="_blank">{'Issues? Questions? Comments?'}</a>
