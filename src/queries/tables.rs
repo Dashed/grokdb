@@ -254,6 +254,9 @@ CREATE TABLE IF NOT EXISTS CardsScoreHistory (
     success INTEGER NOT NULL DEFAULT 0,
     fail INTEGER NOT NULL DEFAULT 0,
 
+    total_success INTEGER NOT NULL DEFAULT 0,
+    total_fail INTEGER NOT NULL DEFAULT 0,
+
     changelog TEXT NOT NULL DEFAULT '',
 
     card INTEGER NOT NULL,
@@ -268,8 +271,17 @@ AFTER UPDATE
 OF success, fail, changelog
 ON CardsScore
 BEGIN
-   INSERT INTO CardsScoreHistory(is_review_event, occurred_at, success, fail, changelog, card)
-   VALUES (NEW.reviewed_at <> OLD.reviewed_at, strftime('%s', 'now'), (NEW.success - OLD.success), (NEW.fail - OLD.fail), NEW.changelog, NEW.card);
+    INSERT INTO CardsScoreHistory(is_review_event, occurred_at, success, fail, total_success, total_fail, changelog, card)
+    VALUES (
+        NEW.reviewed_at <> OLD.reviewed_at,
+        strftime('%s', 'now'),
+        (NEW.success - OLD.success),
+        (NEW.fail - OLD.fail),
+        NEW.success,
+        NEW.fail,
+        NEW.changelog,
+        NEW.card
+    );
 END;
 ";
 
