@@ -1,5 +1,4 @@
 const _ = require('lodash');
-const co = require('co');
 const superhot = require('./superhot');
 
 const {Response, NOT_FOUND, OK, INVALID} = require('./response');
@@ -27,7 +26,8 @@ function Configs(store) {
 
 Configs.prototype.constructor = Configs;
 
-Configs.prototype.get = co.wrap(function *(name) {
+// async
+Configs.prototype.get = function(name) {
 
     return new Promise(function(resolve, reject) {
 
@@ -64,9 +64,10 @@ Configs.prototype.get = co.wrap(function *(name) {
 
     });
 
-});
+};
 
-Configs.prototype.set = co.wrap(function *(name, value) {
+// async
+Configs.prototype.set = function(name, value) {
 
     const request = {
         value: String(value)
@@ -104,7 +105,7 @@ Configs.prototype.set = co.wrap(function *(name, value) {
 
     });
 
-});
+};
 
 module.exports = {
     Config,
