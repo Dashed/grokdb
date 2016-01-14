@@ -728,6 +728,8 @@ Cards.prototype.currentCardsIDByStash = function(stashID) {
 
                         const cardID = card.id;
 
+                        this._store.stashes.setStashCardRelationship(stashID, cardID, true);
+
                         this._lookup.cursor(cardID).update(function() {
                             return Immutable.fromJS(card);
                         });

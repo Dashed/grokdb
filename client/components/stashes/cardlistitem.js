@@ -13,9 +13,11 @@ const WrappedCardListItem = React.createClass({
     },
 
     propTypes: {
+        stashID: React.PropTypes.number.isRequired,
         cardID: React.PropTypes.number.isRequired,
         card: React.PropTypes.instanceOf(Immutable.Map).isRequired,
-        path: React.PropTypes.array.isRequired
+        path: React.PropTypes.array.isRequired,
+        hasCard: React.PropTypes.bool.isRequired
     },
 
     onClick() {
@@ -27,18 +29,28 @@ const WrappedCardListItem = React.createClass({
         this.context.store.routes.toStashCard(this.props.cardID, currentStashID);
     },
 
+    toggleRelationship() {
+
+        const {stashID, cardID, hasCard} = this.props;
+
+        this.context.store.stashes.toggleRelationship(stashID, cardID, !hasCard);
+    },
+
     render() {
 
-        const {card, cardID, path} = this.props;
+        const {card, cardID, path, hasCard} = this.props;
 
         // datetime of when last reviewed
 
         return (
             <CardListItem
+                showButton
+                hasCard={hasCard}
                 cardID={cardID}
                 card={card}
                 path={path}
                 onClick={this.onClick}
+                onToggleButton={this.toggleRelationship}
             />
         );
     }
@@ -57,6 +69,7 @@ module.exports = courier({
     },
 
     propTypes: {
+        stashID: React.PropTypes.number.isRequired,
         cardID: React.PropTypes.number.isRequired
     },
 
@@ -71,8 +84,12 @@ module.exports = courier({
     watch(props, manual, context) {
 
         const cardID = props.cardID;
+        const stashID = props.stashID;
 
-        return context.store.cards.observable(cardID);
+        return [
+            context.store.cards.observable(cardID),
+            context.store.stashes.watchStashCardRelationship(stashID, cardID)
+        ];
     },
 
     assignNewProps: function(props, context) {
@@ -90,9 +107,12 @@ module.exports = courier({
 
                         // invariant: path is array of resolved ancestors decks
 
+                        const hasCard = context.store.stashes.stashHasCard(props.stashID, cardID);
+
                         return {
                             card: card,
-                            path: path
+                            path: path,
+                            hasCard: hasCard
                         };
 
                     });

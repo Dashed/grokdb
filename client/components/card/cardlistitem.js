@@ -2,6 +2,7 @@ const React = require('react');
 const Immutable = require('immutable');
 const moment = require('moment');
 const _ = require('lodash');
+const classnames = require('classnames');
 
 const courier = require('courier');
 
@@ -25,7 +26,23 @@ const CardListItem = React.createClass({
         // deck path of card
         path: React.PropTypes.array.isRequired,
 
-        onClick: React.PropTypes.func.isRequired
+        onClick: React.PropTypes.func.isRequired,
+
+        // cosmetic flags
+        showButton: React.PropTypes.bool.isRequired,
+        hasCard: React.PropTypes.bool.isRequired, // TODO: refactor
+        onToggleButton: React.PropTypes.func.isRequired
+    },
+
+    getDefaultProps() {
+
+        return {
+            // default cosmetic flag values
+            showButton: false,
+            hasCard: false,
+            onToggleButton: () => void 0
+        };
+
     },
 
     onClick(event) {
@@ -97,6 +114,35 @@ const CardListItem = React.createClass({
 
     },
 
+    toggleRelationship(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.props.onToggleButton.call(void 0);
+    },
+
+    getButton() {
+
+        if(!this.props.showButton) {
+            return null;
+        }
+
+        const {hasCard} = this.props;
+
+        return (
+            <button
+                type="button"
+                onClick={this.toggleRelationship}
+                className={classnames('btn', 'btn-sm', 'pull-right', {
+                    'btn-success': !hasCard,
+                    'btn-danger': hasCard
+                })}>
+                { hasCard ? 'Remove' : 'Add' }
+            </button>
+        );
+
+    },
+
     render() {
 
         const {card} = this.props;
@@ -118,6 +164,7 @@ const CardListItem = React.createClass({
 
         return (
             <li className="list-group-item">
+                {this.getButton()}
                 <h6 className="list-group-item-heading m-y-0" style={NAME_STYLE}>
                     <a href="#" onClick={this.onClick} >
                         {card.get('title')}

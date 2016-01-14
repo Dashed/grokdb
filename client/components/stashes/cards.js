@@ -17,12 +17,13 @@ const DumbCardsList = React.createClass({
     },
 
     propTypes: {
+        stashID: React.PropTypes.number.isRequired,
         cardIDs: React.PropTypes.array.isRequired
     },
 
     cardsList() {
 
-        const cardIDs = this.props.cardIDs;
+        const {cardIDs, stashID} = this.props;
 
         if(cardIDs.length <= 0) {
             return (
@@ -41,7 +42,7 @@ const DumbCardsList = React.createClass({
             const key = '' + cardID + index;
 
             return (
-                <CardListItem key={key} cardID={cardID} />
+                <CardListItem key={key} stashID={stashID} cardID={cardID} />
             );
 
         });
@@ -162,6 +163,7 @@ module.exports = courier({
             .then((cardIDs) => {
 
                 return {
+                    stashID: stashID,
                     cardIDs: cardIDs
                 };
 
