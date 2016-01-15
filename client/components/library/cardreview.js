@@ -140,6 +140,12 @@ const CardReview = React.createClass({
 
     },
 
+    onDelete() {
+
+        const deckID = this.props.currentDeckID;
+        this.context.store.routes.toLibraryCards(deckID);
+    },
+
     onReveal() {
 
         const deckID = this.props.currentDeckID;
@@ -223,6 +229,7 @@ const CardReview = React.createClass({
                             onCardSave={this.onCardSave}
                             editCard={this.editCard}
                             onCancelEdit={this.onCancelEdit}
+                            onDelete={this.onDelete}
                         />
                     </div>
                 </div>
