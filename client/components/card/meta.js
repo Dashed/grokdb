@@ -38,19 +38,28 @@ const CardMeta = React.createClass({
         const chosenForReview = timesSeen > 0 ? `Chosen for review ${timesSeen} ${timesSeen > 1 ? 'times' : 'time'}.` : `Hasn't been chosen for review yet.`;
 
         return (
-            <div>
-                <p>
-                    {`${lastReviewed}`}
-                </p>
-                <p>
-                    {`${extraSummary}`}
-                </p>
-                <p>
-                    {`Last chosen for review ${lastChosenDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${lastChosenDatetime.fromNow()})`}
-                </p>
-                <p>
-                    {chosenForReview}
-                </p>
+            <div className="row">
+                <div className="col-sm-12">
+                    <div className="card">
+                        <div className="card-header">
+                            <strong>{'Review stats'}</strong>
+                        </div>
+                        <div className="card-block">
+                            <p className="card-text">
+                                {`${lastReviewed}`}
+                            </p>
+                            <p className="card-text">
+                                {`${extraSummary}`}
+                            </p>
+                            <p className="card-text">
+                                {`Last chosen for review ${lastChosenDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${lastChosenDatetime.fromNow()})`}
+                            </p>
+                            <p className="card-text">
+                                {chosenForReview}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
 
@@ -63,16 +72,25 @@ const CardMeta = React.createClass({
         const score = 100 - card.getIn(['review_stat', 'score']).toPrecision(5) * 100;
 
         return (
-            <div>
-                <p>
-                    {`Performance score of ${score}%`}
-                </p>
-                <h6>{'Internal scores'}</h6>
-                <p>
-                    <b>{'Success votes:'}</b>{` ${card.getIn(['review_stat', 'success'])}`}
-                    <br/>
-                    <b>{'Fail votes:'}</b>{` ${card.getIn(['review_stat', 'fail'])}`}
-                </p>
+            <div className="row">
+                <div className="col-sm-12">
+                    <div className="card">
+                        <div className="card-header">
+                            <strong>{'Performance'}</strong>
+                        </div>
+                        <div className="card-block">
+                            <p className="card-text">
+                                {`Performance score of ${score}%`}
+                            </p>
+                            <h6>{'Internal scores'}</h6>
+                            <p className="card-text">
+                                <b>{'Success votes:'}</b>{` ${card.getIn(['review_stat', 'success'])}`}
+                                <br/>
+                                <b>{'Fail votes:'}</b>{` ${card.getIn(['review_stat', 'fail'])}`}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
 
@@ -86,13 +104,22 @@ const CardMeta = React.createClass({
         const updatedAtDatetime = moment.unix(card.getIn(['updated_at']));
 
         return (
-            <div>
-                <p>
-                    {`Updated ${updatedAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${updatedAtDatetime.fromNow()})`}
-                </p>
-                <p>
-                    {`Created ${createdAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${createdAtDatetime.fromNow()})`}
-                </p>
+            <div className="row">
+                <div className="col-sm-12">
+                    <div className="card">
+                        <div className="card-header">
+                            <strong>{'General'}</strong>
+                        </div>
+                        <div className="card-block">
+                            <p className="card-text">
+                                {`Updated ${updatedAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${updatedAtDatetime.fromNow()})`}
+                            </p>
+                            <p className="card-text">
+                                {`Created ${createdAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${createdAtDatetime.fromNow()})`}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
 
@@ -100,13 +127,12 @@ const CardMeta = React.createClass({
 
     render() {
         return (
-            <div>
-                <h4>{'Review stats'}</h4>
-                {this.getReviewed()}
-                <h4>{'Performance'}</h4>
-                {this.getPerformance()}
-                <h4>{'General'}</h4>
-                {this.getGeneral()}
+            <div className="row">
+                <div className="col-sm-12">
+                    {this.getReviewed()}
+                    {this.getPerformance()}
+                    {this.getGeneral()}
+                </div>
             </div>
         );
     }
