@@ -172,7 +172,7 @@ const DeckMeta = React.createClass({
                         <div className="col-sm-12">
                             <div className="card">
                                 <div className="card-header">
-                                    <strong>{'Deck name'}</strong>
+                                    <strong>{'Deck Name'}</strong>
                                 </div>
                                 <div className="card-block">
                                     <p className="card-text">

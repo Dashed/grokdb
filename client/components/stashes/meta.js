@@ -161,7 +161,7 @@ const StashMeta = React.createClass({
                         <div className="col-sm-12">
                             <div className="card">
                                 <div className="card-header">
-                                    <strong>{'Stash name'}</strong>
+                                    <strong>{'Stash Name'}</strong>
                                 </div>
                                 <div className="card-block">
                                     <p className="card-text">
