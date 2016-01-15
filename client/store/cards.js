@@ -549,7 +549,6 @@ Cards.prototype.remove = function(cardID) {
     });
 };
 
-
 // async
 Cards.prototype.currentCardsID = function() {
 
