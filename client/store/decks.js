@@ -248,6 +248,7 @@ Decks.prototype.create = function(createDeck) {
 
 };
 
+// async
 Decks.prototype.remove = function(deckID) {
 
     deckID = Number(deckID);

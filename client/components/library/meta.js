@@ -100,7 +100,7 @@ const DeckMeta = React.createClass({
             return (
                 <div key="delete_deck">
                     <p className="card-text">
-                        {'Are you sure?'}
+                        <strong>{'Are you absolutely sure?'}</strong>
                     </p>
                     <a
                         href="#"
