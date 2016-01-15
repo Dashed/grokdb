@@ -392,6 +392,37 @@ Stashes.prototype.create = function(createStash) {
     });
 };
 
+// async
+Stashes.prototype.remove = function(stashID) {
+
+    stashID = Number(stashID);
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .del(`/api/stashes/${stashID}`)
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    return resolve(true);
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return resolve(Error(err));
+                }
+
+            });
+
+    });
+};
+
 // sync
 Stashes.prototype.watchCurrentID = function() {
     return this._store.state().cursor(['stash', 'self']);
