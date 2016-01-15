@@ -248,6 +248,36 @@ Decks.prototype.create = function(createDeck) {
 
 };
 
+Decks.prototype.remove = function(deckID) {
+
+    deckID = Number(deckID);
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .del(`/api/decks/${deckID}`)
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    return resolve(true);
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return resolve(Error(err));
+                }
+
+            });
+
+    });
+};
+
 // async
 Decks.prototype.exists = function(deckID) {
 
@@ -292,6 +322,7 @@ Decks.prototype.exists = function(deckID) {
 
 };
 
+// get id of root deck
 // sync
 Decks.prototype.root = function(rootDeckID = NOT_SET) {
 
