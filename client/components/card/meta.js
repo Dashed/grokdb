@@ -33,7 +33,8 @@ const CurrentDeckBreadcrumb = courier({
                     path: path,
                     toDeck: (newdeckID) => {
                         context.store.routes.toDeck(newdeckID, 1);
-                    }
+                    },
+                    dontLinkEnd: false
                 };
             });
     }

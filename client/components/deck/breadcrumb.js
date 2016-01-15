@@ -14,13 +14,15 @@ const Breadcrumb = React.createClass({
 
         // cosmetic flags
         isReviewing: React.PropTypes.bool.isRequired,
-        toDeck: React.PropTypes.func.isRequired
+        toDeck: React.PropTypes.func.isRequired,
+        dontLinkEnd: React.PropTypes.bool.isRequired
     },
 
     getDefaultProps() {
 
         return {
-            isReviewing: false
+            isReviewing: false,
+            dontLinkEnd: true
         };
     },
 
@@ -53,7 +55,7 @@ const Breadcrumb = React.createClass({
 
             const key = '' + deckID + index;
 
-            if(end == index) {
+            if(this.props.dontLinkEnd && end == index) {
                 return (
                     <li key={key} className="active">
                         {deck.get('name')}
