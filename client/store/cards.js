@@ -243,24 +243,8 @@ Cards.prototype.loadByDeck = function(cardID = NOT_SET, deckID) {
                 }
 
             });
-
     });
 
-    return cardLoader.load(cardID)
-        .then((card) => {
-
-            cardID = Number(cardID);
-
-            // cache onto lookup table
-
-            card = Immutable.fromJS(card);
-
-            this._lookup.cursor(cardID).update(function() {
-                return card;
-            });
-
-            return card;
-        });
 
 };
 

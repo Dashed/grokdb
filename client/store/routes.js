@@ -200,798 +200,195 @@ const toCardOfDeck = function(cardID, deckID) {
 
 const boostrapRoutes = function(store) {
 
-    return new Promise(function(resolve) {
 
-        const toRootDeck = function() {
-            const rootDeckID = store.decks.root();
-            toDeck(rootDeckID);
-        };
+    const toRootDeck = function() {
+        const rootDeckID = store.decks.root();
+        toDeck(rootDeckID);
+    };
 
-        const ensureValidDeckID = function(context, next) {
+    const ensureValidDeckID = function(context, next) {
 
-            const deckID = filterInteger(context.params.deck_id, NOT_ID);
+        const deckID = filterInteger(context.params.deck_id, NOT_ID);
 
-            if(deckID === NOT_ID) {
-                toRootDeck();
+        if(deckID === NOT_ID) {
+            toRootDeck();
+            return;
+        }
+
+        context.deck_id = deckID;
+
+        next();
+    };
+
+    const ensureDeckIDExists = function(context, next) {
+
+        const deckID = context.deck_id;
+
+        // ensure not root deck, since root should already be loaded.
+        if(deckID == store.decks.root()) {
+            next();
+            return;
+        }
+
+        store.decks.exists(deckID)
+        .then(function(result) {
+
+            return new Promise(function(__resolve, reject) {
+
+                if(!result.response) {
+                    toRootDeck(context);
+                    return reject(Error('redirecting'));
+                }
+
+                __resolve(store.decks.get(deckID));
+            });
+        })
+        .then(function() {
+            next();
+            return null;
+        }, function() {
+            return null;
+        });
+
+    };
+
+    const redirectToDeckByID = function(context) {
+        toDeck(context.deck_id);
+    };
+
+    const ensureValidCardID = function(otherwise) {
+
+        return function(context, next) {
+
+            const cardID = filterInteger(context.params.card_id, NOT_ID);
+
+            if(cardID === NOT_ID) {
+                otherwise.call(void 0, context);
                 return;
             }
 
-            context.deck_id = deckID;
+            context.card_id = cardID;
 
             next();
         };
+    };
 
-        const ensureDeckIDExists = function(context, next) {
+    const ensureCardIDByDeckIDExists = function(context, next) {
 
-            const deckID = context.deck_id;
+        const cardID = context.card_id;
+        const deckID = context.deck_id;
 
-            // ensure not root deck, since root should already be loaded.
-            if(deckID == store.decks.root()) {
-                next();
-                return;
-            }
+        store.cards.loadByDeck(cardID, deckID)
+            .then(
+            // fulfillment
+            function() {
 
-            store.decks.exists(deckID)
-            .then(function(result) {
-
-                return new Promise(function(__resolve, reject) {
-
-                    if(!result.response) {
-                        toRootDeck(context);
-                        return reject(Error('redirecting'));
-                    }
-
-                    __resolve(store.decks.get(deckID));
-                });
-            })
-            .then(function() {
                 next();
                 return null;
-            }, function() {
+            },
+            // rejection
+            function() {
+
+                // card doesn't exist within given deck
+
+                toDeck(deckID);
                 return null;
             });
 
-        };
+    };
 
-        const redirectToDeckByID = function(context) {
-            toDeck(context.deck_id);
-        };
+    const parseQueries = function(context, next) {
 
-        const ensureValidCardID = function(otherwise) {
+        context.queries = qs.parse(context.querystring);
 
-            return function(context, next) {
+        return next();
+    };
 
-                const cardID = filterInteger(context.params.card_id, NOT_ID);
+    const reloadAppState = co.wrap(function *(context, next) {
 
-                if(cardID === NOT_ID) {
-                    otherwise.call(void 0, context);
-                    return;
-                }
-
-                context.card_id = cardID;
-
-                next();
-            };
-        };
-
-        const ensureCardIDByDeckIDExists = function(context, next) {
-
-            const cardID = context.card_id;
-            const deckID = context.deck_id;
-
-            store.cards.loadByDeck(cardID, deckID)
-                .then(
-                // fulfillment
-                function() {
-
-                    next();
-                    return null;
-                },
-                // rejection
-                function() {
-
-                    // card doesn't exist within given deck
-
-                    toDeck(deckID);
-                    return null;
-                });
-
-        };
-
-        const parseQueries = function(context, next) {
-
-            context.queries = qs.parse(context.querystring);
-
-            return next();
-        };
-
-        const reloadAppState = co.wrap(function *(context, next) {
-
-            if(store.loading()) {
-                next();
-                return;
-            }
-
-            store.loading(true);
-
-            yield loadAppState(store);
-
+        if(store.loading()) {
             next();
-        });
+            return;
+        }
 
-        const postRouteLoad = function() {
-            store.loading(false);
-        };
+        store.loading(true);
 
-        page('/', reloadAppState, toRootDeck);
+        yield loadAppState(store);
 
-        page('/settings', reloadAppState, function(context, next) {
+        next();
+    });
 
-            store.resetStage();
-            store.routes.route(ROUTE.SETTINGS);
-            store.commit();
+    const postRouteLoad = function() {
+        store.loading(false);
+    };
 
-            next();
+    page('/', reloadAppState, toRootDeck);
 
-        }, postRouteLoad);
+    page('/settings', reloadAppState, function(context, next) {
 
-        page('/deck', reloadAppState, toRootDeck);
+        store.resetStage();
+        store.routes.route(ROUTE.SETTINGS);
+        store.commit();
 
-        page('/deck/:deck_id', reloadAppState, function(context) {
-            const deckID = context.params.deck_id;
-            toDeck(deckID);
-        });
+        next();
 
-        page('/deck/:deck_id/view', reloadAppState, function(context) {
-            const deckID = context.params.deck_id;
-            toDeck(deckID);
-        });
+    }, postRouteLoad);
 
-        page('/deck/:deck_id/new/deck', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+    page('/deck', reloadAppState, toRootDeck);
 
-            const deckID = context.deck_id;
+    page('/deck/:deck_id', reloadAppState, function(context) {
+        const deckID = context.params.deck_id;
+        toDeck(deckID);
+    });
 
-            store.resetStage();
-            store.decks.currentID(deckID);
-            store.routes.route(ROUTE.LIBRARY.VIEW.ADD_DECK);
-            store.commit();
+    page('/deck/:deck_id/view', reloadAppState, function(context) {
+        const deckID = context.params.deck_id;
+        toDeck(deckID);
+    });
 
-            next();
+    page('/deck/:deck_id/new/deck', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
 
-        }, postRouteLoad);
+        const deckID = context.deck_id;
 
-        page('/deck/:deck_id/view/decks', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.LIBRARY.VIEW.ADD_DECK);
+        store.commit();
 
-            const deckID = context.deck_id;
+        next();
 
-            store.resetStage();
-            store.decks.currentID(deckID);
-            store.routes.route(ROUTE.LIBRARY.VIEW.DECKS);
-            store.commit();
+    }, postRouteLoad);
 
-            next();
+    page('/deck/:deck_id/view/decks', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
 
-        }, postRouteLoad);
+        const deckID = context.deck_id;
 
-        page('/deck/:deck_id/view/cards',
-            reloadAppState,
-            ensureValidDeckID,
-            ensureDeckIDExists,
-            parseQueries,
-            function(context, next) {
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.LIBRARY.VIEW.DECKS);
+        store.commit();
 
-                const {queries} = context;
+        next();
 
-                const deckID = context.deck_id;
+    }, postRouteLoad);
 
-                store.resetStage();
-                store.decks.currentID(deckID);
-                store.routes.route(ROUTE.LIBRARY.VIEW.CARDS);
-
-                // pagination queries
-
-                let pageNum = 1;
-                if(_.has(queries, 'page')) {
-
-                    pageNum = filterInteger(queries.page, NOT_SET);
-
-                    if(pageNum === NOT_SET) {
-                        pageNum = 1;
-                    }
-                }
-                store.cards.page(pageNum);
-
-                if(_.has(queries, 'order_by')) {
-
-                    let pageOrder = NOT_SET;
-
-                    switch(String(queries.order_by).toLowerCase()) {
-
-                    case 'descending':
-                    case 'desc':
-                        pageOrder = cardPagination.order.DESC;
-                        break;
-
-                    case 'ascending':
-                    case 'asc':
-                        pageOrder = cardPagination.order.ASC;
-                        break;
-
-                    default:
-                        pageOrder = cardPagination.order.DESC;
-                    }
-
-                    store.cards.order(pageOrder);
-                }
-
-                if(_.has(queries, 'sort_by')) {
-
-                    let pageSort = NOT_SET;
-
-                    switch(String(queries.sort_by).toLowerCase()) {
-
-                    case 'reviewed_at':
-                        pageSort = cardPagination.sort.REVIEWED_AT;
-                        break;
-
-                    case 'times_reviewed':
-                        pageSort = cardPagination.sort.TIMES_REVIEWED;
-                        break;
-
-                    case 'title':
-                        pageSort = cardPagination.sort.TITLE;
-                        break;
-
-                    case 'created_at':
-                        pageSort = cardPagination.sort.CREATED_AT;
-                        break;
-
-                    case 'updated_at':
-                        pageSort = cardPagination.sort.UPDATED_AT;
-                        break;
-
-                    default:
-                        pageSort = cardPagination.sort.UPDATED_AT;
-                    }
-
-                    store.cards.sort(pageSort);
-                }
-
-                // ensure pageNum is within valid bounds
-
-                store.cards.totalCards(deckID)
-                    .then(
-                    // fulfillment
-                    function(totalCards) {
-
-                        if(totalCards <= 0) {
-                            store.commit();
-                            next();
-                            return null;
-                        }
-
-                        const numOfPages = Math.ceil(totalCards / perPage);
-                        const pageSort = store.cards.sort();
-                        const pageOrder = store.cards.order();
-
-                        if(pageNum > numOfPages || pageNum <= 0) {
-                            store.routes.toLibraryCards(deckID, pageSort, pageOrder, 1);
-                            return null;
-                        }
-
-                        store.commit();
-
-                        next();
-                        return null;
-                    });
-
-            }, postRouteLoad);
-
-        page('/deck/:deck_id/new/deck', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
-
-            const deckID = context.deck_id;
-
-            store.resetStage();
-            store.decks.currentID(deckID);
-            store.routes.route(ROUTE.LIBRARY.VIEW.ADD_DECK);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/deck/:deck_id/new/card', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
-
-            const deckID = context.deck_id;
-
-            store.resetStage();
-            store.decks.currentID(deckID);
-            store.routes.route(ROUTE.LIBRARY.VIEW.ADD_CARD);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/deck/:deck_id/view/description', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
-
-            const deckID = context.deck_id;
-
-            store.resetStage();
-            store.decks.currentID(deckID);
-            store.routes.route(ROUTE.LIBRARY.VIEW.DESCRIPTION);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/deck/:deck_id/view/meta', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
-
-            const deckID = context.deck_id;
-
-            store.resetStage();
-            store.decks.currentID(deckID);
-            store.routes.route(ROUTE.LIBRARY.VIEW.META);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/deck/:deck_id/review', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context) {
-
-            const deckID = context.deck_id;
-
-            page.redirect(`/deck/${deckID}/review/view/front`);
-
-        });
-
-        page('/deck/:deck_id/review/view/front', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
-
-            const deckID = context.deck_id;
-
-            store.resetStage();
-            store.decks.currentID(deckID);
-            store.routes.route(ROUTE.REVIEW.VIEW.FRONT);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/deck/:deck_id/review/view/back', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
-
-            // check if back side of card can be shown
-
-            const deckID = context.deck_id;
-
-            store.resetStage();
-            store.decks.currentID(deckID);
-            store.routes.route(ROUTE.REVIEW.VIEW.BACK);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/deck/:deck_id/review/view/description', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
-
-            const deckID = context.deck_id;
-
-            store.resetStage();
-            store.decks.currentID(deckID);
-            store.routes.route(ROUTE.REVIEW.VIEW.DESCRIPTION);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/deck/:deck_id/review/view/stashes', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
-
-            const deckID = context.deck_id;
-
-            store.resetStage();
-            store.decks.currentID(deckID);
-            store.routes.route(ROUTE.REVIEW.VIEW.STASHES);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/deck/:deck_id/review/view/meta', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
-
-            const deckID = context.deck_id;
-
-            store.resetStage();
-            store.decks.currentID(deckID);
-            store.routes.route(ROUTE.REVIEW.VIEW.META);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/card', reloadAppState, toRootDeck);
-
-        page('/card/:card_id', reloadAppState, ensureValidCardID(redirectToDeckByID), function(context) {
-            const cardID = context.params.card_id;
-
-            store.cards.get(cardID)
-                .then(function(card) {
-
-                    // card not found
-                    if(!card) {
-                        toRootDeck();
-                        return null;
-                    }
-
-
-                    toCardOfDeck(card.get('id'), card.get('deck'));
-                    return null;
-                });
-
-        });
-
-        page('/card/:card_id/view', reloadAppState, ensureValidCardID(redirectToDeckByID), function(context) {
-            const cardID = context.params.card_id;
-
-            store.cards.get(cardID)
-                .then(function(card) {
-
-                    // card not found
-                    if(!card) {
-                        toRootDeck();
-                        return null;
-                    }
-
-
-                    toCardOfDeck(card.get('id'), card.get('deck'));
-                    return null;
-                });
-        });
-
-        page('/card/:card_id/view/front',
-                reloadAppState,
-                ensureValidCardID(redirectToDeckByID),
-                function(context) {
-
-                    const cardID = context.params.card_id;
-
-                    store.cards.get(cardID)
-                        .then(function(card) {
-
-                            if(!card) {
-                                toRootDeck();
-                                return null;
-                            }
-
-                            page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/front`);
-                            return null;
-                        });
-                });
-
-        page('/card/:card_id/view/back',
-                reloadAppState,
-                ensureValidCardID(redirectToDeckByID),
-                function(context) {
-
-                    const cardID = context.params.card_id;
-
-                    store.cards.get(cardID)
-                        .then(function(card) {
-
-                            if(!card) {
-                                toRootDeck();
-                                return null;
-                            }
-
-                            page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/back`);
-                            return null;
-                        });
-                });
-
-        page('/card/:card_id/view/description',
-                reloadAppState,
-                ensureValidCardID(redirectToDeckByID),
-                function(context) {
-
-                    const cardID = context.params.card_id;
-
-                    store.cards.get(cardID)
-                        .then(function(card) {
-
-                            if(!card) {
-                                toRootDeck();
-                                return null;
-                            }
-
-                            page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/description`);
-                            return null;
-                        });
-                });
-
-        page('/card/:card_id/view/meta',
-                reloadAppState,
-                ensureValidCardID(redirectToDeckByID),
-                function(context) {
-
-                    const cardID = context.params.card_id;
-
-                    store.cards.get(cardID)
-                        .then(function(card) {
-
-                            if(!card) {
-                                toRootDeck();
-                                return null;
-                            }
-
-                            page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/meta`);
-                            return null;
-                        });
-                });
-
-        page('/card/:card_id/view/stashes',
-                reloadAppState,
-                ensureValidCardID(redirectToDeckByID),
-                function(context) {
-
-                    const cardID = context.params.card_id;
-
-                    store.cards.get(cardID)
-                        .then(function(card) {
-
-                            if(!card) {
-                                toRootDeck();
-                                return null;
-                            }
-
-                            page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/stashes`);
-                            return null;
-                        });
-                });
-
-        page('/deck/:deck_id/card/:card_id',
-                reloadAppState,
-                function(context) {
-
-                    const deckID = context.params.deck_id;
-                    const cardID = context.params.card_id;
-                    page.redirect(`/deck/${deckID}/card/${cardID}/view/front`);
-
-                });
-
-        page('/deck/:deck_id/card/:card_id/view',
-                reloadAppState,
-                function(context) {
-
-                    const deckID = context.params.deck_id;
-                    const cardID = context.params.card_id;
-                    page.redirect(`/deck/${deckID}/card/${cardID}/view/front`);
-
-                });
-
-        page('/deck/:deck_id/card/:card_id/view/front',
-                reloadAppState,
-                ensureValidDeckID,
-                ensureValidCardID(redirectToDeckByID),
-                ensureDeckIDExists,
-                ensureCardIDByDeckIDExists,
-                function(context, next) {
-
-                    const deckID = context.deck_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.decks.currentID(deckID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.CARD.VIEW.FRONT);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/deck/:deck_id/card/:card_id/view/back',
-                reloadAppState,
-                ensureValidDeckID,
-                ensureValidCardID(redirectToDeckByID),
-                ensureDeckIDExists,
-                ensureCardIDByDeckIDExists,
-                function(context, next) {
-
-                    const deckID = context.deck_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.decks.currentID(deckID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.CARD.VIEW.BACK);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/deck/:deck_id/card/:card_id/view/description',
-                reloadAppState,
-                ensureValidDeckID,
-                ensureValidCardID(redirectToDeckByID),
-                ensureDeckIDExists,
-                ensureCardIDByDeckIDExists,
-                function(context, next) {
-
-                    const deckID = context.deck_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.decks.currentID(deckID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.CARD.VIEW.DESCRIPTION);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/deck/:deck_id/card/:card_id/view/meta',
-                reloadAppState,
-                ensureValidDeckID,
-                ensureValidCardID(redirectToDeckByID),
-                ensureDeckIDExists,
-                ensureCardIDByDeckIDExists,
-                function(context, next) {
-
-                    const deckID = context.deck_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.decks.currentID(deckID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.CARD.VIEW.META);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/deck/:deck_id/card/:card_id/view/stashes',
-                reloadAppState,
-                ensureValidDeckID,
-                ensureValidCardID(redirectToDeckByID),
-                ensureDeckIDExists,
-                ensureCardIDByDeckIDExists,
-                function(context, next) {
-
-                    const deckID = context.deck_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.decks.currentID(deckID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.CARD.VIEW.STASHES);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/deck/:deck_id/card/:card_id/review',
-                reloadAppState,
-                function(context) {
-
-                    const deckID = context.params.deck_id;
-                    const cardID = context.params.card_id;
-
-                    page.redirect(`/deck/${deckID}/card/${cardID}/review/front`);
-
-                });
-
-        page('/deck/:deck_id/card/:card_id/review/front',
-                reloadAppState,
-                ensureValidDeckID,
-                ensureValidCardID(redirectToDeckByID),
-                ensureDeckIDExists,
-                ensureCardIDByDeckIDExists,
-                function(context, next) {
-
-                    const deckID = context.deck_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.decks.currentID(deckID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.CARD.REVIEW.VIEW.FRONT);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/deck/:deck_id/card/:card_id/review/back',
-                reloadAppState,
-                ensureValidDeckID,
-                ensureValidCardID(redirectToDeckByID),
-                ensureDeckIDExists,
-                ensureCardIDByDeckIDExists,
-                function(context, next) {
-
-                    const deckID = context.deck_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.decks.currentID(deckID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.CARD.REVIEW.VIEW.BACK);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/deck/:deck_id/card/:card_id/review/description',
-                reloadAppState,
-                ensureValidDeckID,
-                ensureValidCardID(redirectToDeckByID),
-                ensureDeckIDExists,
-                ensureCardIDByDeckIDExists,
-                function(context, next) {
-
-                    const deckID = context.deck_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.decks.currentID(deckID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.CARD.REVIEW.VIEW.DESCRIPTION);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/deck/:deck_id/card/:card_id/review/stashes',
-                reloadAppState,
-                ensureValidDeckID,
-                ensureValidCardID(redirectToDeckByID),
-                ensureDeckIDExists,
-                ensureCardIDByDeckIDExists,
-                function(context, next) {
-
-                    const deckID = context.deck_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.decks.currentID(deckID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.CARD.REVIEW.VIEW.STASHES);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/deck/:deck_id/card/:card_id/review/meta',
-                reloadAppState,
-                ensureValidDeckID,
-                ensureValidCardID(redirectToDeckByID),
-                ensureDeckIDExists,
-                ensureCardIDByDeckIDExists,
-                function(context, next) {
-
-                    const deckID = context.deck_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.decks.currentID(deckID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.CARD.REVIEW.VIEW.META);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/stashes', reloadAppState, parseQueries, function(context, next) {
+    page('/deck/:deck_id/view/cards',
+        reloadAppState,
+        ensureValidDeckID,
+        ensureDeckIDExists,
+        parseQueries,
+        function(context, next) {
 
             const {queries} = context;
 
+            const deckID = context.deck_id;
+
             store.resetStage();
-            store.routes.route(ROUTE.STASHES.VIEW.LIST);
+            store.decks.currentID(deckID);
+            store.routes.route(ROUTE.LIBRARY.VIEW.CARDS);
 
             // pagination queries
+
             let pageNum = 1;
             if(_.has(queries, 'page')) {
 
@@ -1001,7 +398,7 @@ const boostrapRoutes = function(store) {
                     pageNum = 1;
                 }
             }
-            store.stashes.page(pageNum);
+            store.cards.page(pageNum);
 
             if(_.has(queries, 'order_by')) {
 
@@ -1011,19 +408,19 @@ const boostrapRoutes = function(store) {
 
                 case 'descending':
                 case 'desc':
-                    pageOrder = stashPagination.order.DESC;
+                    pageOrder = cardPagination.order.DESC;
                     break;
 
                 case 'ascending':
                 case 'asc':
-                    pageOrder = stashPagination.order.ASC;
+                    pageOrder = cardPagination.order.ASC;
                     break;
 
                 default:
-                    pageOrder = stashPagination.order.DESC;
+                    pageOrder = cardPagination.order.DESC;
                 }
 
-                store.stashes.order(pageOrder);
+                store.cards.order(pageOrder);
             }
 
             if(_.has(queries, 'sort_by')) {
@@ -1032,44 +429,52 @@ const boostrapRoutes = function(store) {
 
                 switch(String(queries.sort_by).toLowerCase()) {
 
-                case 'name':
-                    pageSort = stashPagination.sort.NAME;
+                case 'reviewed_at':
+                    pageSort = cardPagination.sort.REVIEWED_AT;
+                    break;
+
+                case 'times_reviewed':
+                    pageSort = cardPagination.sort.TIMES_REVIEWED;
+                    break;
+
+                case 'title':
+                    pageSort = cardPagination.sort.TITLE;
                     break;
 
                 case 'created_at':
-                    pageSort = stashPagination.sort.CREATED_AT;
+                    pageSort = cardPagination.sort.CREATED_AT;
                     break;
 
                 case 'updated_at':
-                    pageSort = stashPagination.sort.UPDATED_AT;
+                    pageSort = cardPagination.sort.UPDATED_AT;
                     break;
 
                 default:
-                    pageSort = stashPagination.sort.UPDATED_AT;
+                    pageSort = cardPagination.sort.UPDATED_AT;
                 }
 
-                store.stashes.sort(pageSort);
+                store.cards.sort(pageSort);
             }
 
             // ensure pageNum is within valid bounds
 
-            store.stashes.totalStashes()
+            store.cards.totalCards(deckID)
                 .then(
                 // fulfillment
-                function(totalStashes) {
+                function(totalCards) {
 
-                    if(totalStashes <= 0) {
+                    if(totalCards <= 0) {
                         store.commit();
                         next();
                         return null;
                     }
 
-                    const numOfPages = Math.ceil(totalStashes / perPage);
-                    const pageSort = store.stashes.sort();
-                    const pageOrder = store.stashes.order();
+                    const numOfPages = Math.ceil(totalCards / perPage);
+                    const pageSort = store.cards.sort();
+                    const pageOrder = store.cards.order();
 
                     if(pageNum > numOfPages || pageNum <= 0) {
-                        store.routes.toStashes(pageSort, pageOrder, 1);
+                        store.routes.toLibraryCards(deckID, pageSort, pageOrder, 1);
                         return null;
                     }
 
@@ -1081,475 +486,1067 @@ const boostrapRoutes = function(store) {
 
         }, postRouteLoad);
 
-        page('/stashes/new', reloadAppState, function(context, next) {
+    page('/deck/:deck_id/new/deck', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
 
-            store.resetStage();
-            store.routes.route(ROUTE.STASHES.VIEW.ADD);
-            store.commit();
+        const deckID = context.deck_id;
 
-            next();
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.LIBRARY.VIEW.ADD_DECK);
+        store.commit();
 
-        }, postRouteLoad);
+        next();
 
-        const toStash = function(stashID) {
-            page.redirect(`/stash/${stashID}/cards`);
-        };
+    }, postRouteLoad);
 
-        const redirectToStashByID = function(context) {
-            toStash(context.stash_id);
-        };
+    page('/deck/:deck_id/new/card', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.LIBRARY.VIEW.ADD_CARD);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/view/description', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.LIBRARY.VIEW.DESCRIPTION);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/view/meta', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.LIBRARY.VIEW.META);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/review', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context) {
+
+        const deckID = context.deck_id;
+
+        page.redirect(`/deck/${deckID}/review/view/front`);
+
+    });
+
+    page('/deck/:deck_id/review/view/front', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.REVIEW.VIEW.FRONT);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/review/view/back', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        // check if back side of card can be shown
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.REVIEW.VIEW.BACK);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/review/view/description', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.REVIEW.VIEW.DESCRIPTION);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/review/view/stashes', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.REVIEW.VIEW.STASHES);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/deck/:deck_id/review/view/meta', reloadAppState, ensureValidDeckID, ensureDeckIDExists, function(context, next) {
+
+        const deckID = context.deck_id;
+
+        store.resetStage();
+        store.decks.currentID(deckID);
+        store.routes.route(ROUTE.REVIEW.VIEW.META);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/card', reloadAppState, toRootDeck);
+
+    page('/card/:card_id', reloadAppState, ensureValidCardID(redirectToDeckByID), function(context) {
+        const cardID = context.params.card_id;
+
+        store.cards.get(cardID)
+            .then(function(card) {
+
+                // card not found
+                if(!card) {
+                    toRootDeck();
+                    return null;
+                }
 
 
-        const toStashCard = function(stashID, cardID) {
-            page.redirect(`/stash/${stashID}/card/${cardID}/view/front`);
-        };
-
-        const toStashList = function() {
-            page.redirect(`/stashes`);
-        };
-
-        const ensureValidStashID = function(context, next) {
-
-            const stashID = filterInteger(context.params.stash_id, NOT_ID);
-
-            if(stashID === NOT_ID) {
-                toStashList();
-                return;
-            }
-
-            context.stash_id = stashID;
-
-            next();
-        };
-
-        const ensureStashIDExists = function(context, next) {
-
-            const stashID = context.stash_id;
-
-            store.stashes.exists(stashID)
-            .then(function(result) {
-
-                return new Promise(function(__resolve, reject) {
-
-                    if(!result.response) {
-                        toStashList();
-                        return reject(Error('redirecting'));
-                    }
-
-                    __resolve(store.stashes.get(stashID));
-                });
-            })
-            .then(function() {
-                next();
-                return null;
-            }, function() {
+                toCardOfDeck(card.get('id'), card.get('deck'));
                 return null;
             });
 
-        };
+    });
 
-        const ensureCardIDByStashIDExists = function(context, next) {
+    page('/card/:card_id/view', reloadAppState, ensureValidCardID(redirectToDeckByID), function(context) {
+        const cardID = context.params.card_id;
 
-            const cardID = context.card_id;
-            const stashID = context.stash_id;
+        store.cards.get(cardID)
+            .then(function(card) {
 
-            store.cards.loadByStash(cardID, stashID)
-                .then(
-                // fulfillment
-                function() {
-
-                    next();
+                // card not found
+                if(!card) {
+                    toRootDeck();
                     return null;
-                },
-                // rejection
-                function() {
+                }
 
-                    // card doesn't exist within given deck
 
-                    toStash(stashID);
-                    return null;
-                });
+                toCardOfDeck(card.get('id'), card.get('deck'));
+                return null;
+            });
+    });
 
-        };
+    page('/card/:card_id/view/front',
+            reloadAppState,
+            ensureValidCardID(redirectToDeckByID),
+            function(context) {
 
-        page('/stash/:stash_id',
+                const cardID = context.params.card_id;
+
+                store.cards.get(cardID)
+                    .then(function(card) {
+
+                        if(!card) {
+                            toRootDeck();
+                            return null;
+                        }
+
+                        page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/front`);
+                        return null;
+                    });
+            });
+
+    page('/card/:card_id/view/back',
+            reloadAppState,
+            ensureValidCardID(redirectToDeckByID),
+            function(context) {
+
+                const cardID = context.params.card_id;
+
+                store.cards.get(cardID)
+                    .then(function(card) {
+
+                        if(!card) {
+                            toRootDeck();
+                            return null;
+                        }
+
+                        page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/back`);
+                        return null;
+                    });
+            });
+
+    page('/card/:card_id/view/description',
+            reloadAppState,
+            ensureValidCardID(redirectToDeckByID),
+            function(context) {
+
+                const cardID = context.params.card_id;
+
+                store.cards.get(cardID)
+                    .then(function(card) {
+
+                        if(!card) {
+                            toRootDeck();
+                            return null;
+                        }
+
+                        page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/description`);
+                        return null;
+                    });
+            });
+
+    page('/card/:card_id/view/meta',
+            reloadAppState,
+            ensureValidCardID(redirectToDeckByID),
+            function(context) {
+
+                const cardID = context.params.card_id;
+
+                store.cards.get(cardID)
+                    .then(function(card) {
+
+                        if(!card) {
+                            toRootDeck();
+                            return null;
+                        }
+
+                        page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/meta`);
+                        return null;
+                    });
+            });
+
+    page('/card/:card_id/view/stashes',
+            reloadAppState,
+            ensureValidCardID(redirectToDeckByID),
+            function(context) {
+
+                const cardID = context.params.card_id;
+
+                store.cards.get(cardID)
+                    .then(function(card) {
+
+                        if(!card) {
+                            toRootDeck();
+                            return null;
+                        }
+
+                        page.redirect(`/deck/${card.get('deck')}/card/${card.get('id')}/view/stashes`);
+                        return null;
+                    });
+            });
+
+    page('/deck/:deck_id/card/:card_id',
             reloadAppState,
             function(context) {
 
-                const stashID = context.params.stash_id;
-                toStash(stashID);
+                const deckID = context.params.deck_id;
+                const cardID = context.params.card_id;
+                page.redirect(`/deck/${deckID}/card/${cardID}/view/front`);
 
             });
 
-        page('/stash/:stash_id/cards',
+    page('/deck/:deck_id/card/:card_id/view',
             reloadAppState,
-            ensureValidStashID,
-            ensureStashIDExists,
-            parseQueries,
+            function(context) {
+
+                const deckID = context.params.deck_id;
+                const cardID = context.params.card_id;
+                page.redirect(`/deck/${deckID}/card/${cardID}/view/front`);
+
+            });
+
+    page('/deck/:deck_id/card/:card_id/view/front',
+            reloadAppState,
+            ensureValidDeckID,
+            ensureValidCardID(redirectToDeckByID),
+            ensureDeckIDExists,
+            ensureCardIDByDeckIDExists,
             function(context, next) {
 
-                const {queries} = context;
-
-                const stashID = context.stash_id;
+                const deckID = context.deck_id;
+                const cardID = context.card_id;
 
                 store.resetStage();
-                store.stashes.currentID(stashID);
-                store.routes.route(ROUTE.STASHES.PROFILE.CARDS);
+                store.decks.currentID(deckID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.CARD.VIEW.FRONT);
+                store.commit();
 
-                // pagination queries
+                next();
+            }, postRouteLoad);
 
-                let pageNum = 1;
-                if(_.has(queries, 'page')) {
+    page('/deck/:deck_id/card/:card_id/view/back',
+            reloadAppState,
+            ensureValidDeckID,
+            ensureValidCardID(redirectToDeckByID),
+            ensureDeckIDExists,
+            ensureCardIDByDeckIDExists,
+            function(context, next) {
 
-                    pageNum = filterInteger(queries.page, NOT_SET);
+                const deckID = context.deck_id;
+                const cardID = context.card_id;
 
-                    if(pageNum === NOT_SET) {
-                        pageNum = 1;
-                    }
+                store.resetStage();
+                store.decks.currentID(deckID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.CARD.VIEW.BACK);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/deck/:deck_id/card/:card_id/view/description',
+            reloadAppState,
+            ensureValidDeckID,
+            ensureValidCardID(redirectToDeckByID),
+            ensureDeckIDExists,
+            ensureCardIDByDeckIDExists,
+            function(context, next) {
+
+                const deckID = context.deck_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.decks.currentID(deckID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.CARD.VIEW.DESCRIPTION);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/deck/:deck_id/card/:card_id/view/meta',
+            reloadAppState,
+            ensureValidDeckID,
+            ensureValidCardID(redirectToDeckByID),
+            ensureDeckIDExists,
+            ensureCardIDByDeckIDExists,
+            function(context, next) {
+
+                const deckID = context.deck_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.decks.currentID(deckID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.CARD.VIEW.META);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/deck/:deck_id/card/:card_id/view/stashes',
+            reloadAppState,
+            ensureValidDeckID,
+            ensureValidCardID(redirectToDeckByID),
+            ensureDeckIDExists,
+            ensureCardIDByDeckIDExists,
+            function(context, next) {
+
+                const deckID = context.deck_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.decks.currentID(deckID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.CARD.VIEW.STASHES);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/deck/:deck_id/card/:card_id/review',
+            reloadAppState,
+            function(context) {
+
+                const deckID = context.params.deck_id;
+                const cardID = context.params.card_id;
+
+                page.redirect(`/deck/${deckID}/card/${cardID}/review/front`);
+
+            });
+
+    page('/deck/:deck_id/card/:card_id/review/front',
+            reloadAppState,
+            ensureValidDeckID,
+            ensureValidCardID(redirectToDeckByID),
+            ensureDeckIDExists,
+            ensureCardIDByDeckIDExists,
+            function(context, next) {
+
+                const deckID = context.deck_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.decks.currentID(deckID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.CARD.REVIEW.VIEW.FRONT);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/deck/:deck_id/card/:card_id/review/back',
+            reloadAppState,
+            ensureValidDeckID,
+            ensureValidCardID(redirectToDeckByID),
+            ensureDeckIDExists,
+            ensureCardIDByDeckIDExists,
+            function(context, next) {
+
+                const deckID = context.deck_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.decks.currentID(deckID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.CARD.REVIEW.VIEW.BACK);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/deck/:deck_id/card/:card_id/review/description',
+            reloadAppState,
+            ensureValidDeckID,
+            ensureValidCardID(redirectToDeckByID),
+            ensureDeckIDExists,
+            ensureCardIDByDeckIDExists,
+            function(context, next) {
+
+                const deckID = context.deck_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.decks.currentID(deckID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.CARD.REVIEW.VIEW.DESCRIPTION);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/deck/:deck_id/card/:card_id/review/stashes',
+            reloadAppState,
+            ensureValidDeckID,
+            ensureValidCardID(redirectToDeckByID),
+            ensureDeckIDExists,
+            ensureCardIDByDeckIDExists,
+            function(context, next) {
+
+                const deckID = context.deck_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.decks.currentID(deckID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.CARD.REVIEW.VIEW.STASHES);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/deck/:deck_id/card/:card_id/review/meta',
+            reloadAppState,
+            ensureValidDeckID,
+            ensureValidCardID(redirectToDeckByID),
+            ensureDeckIDExists,
+            ensureCardIDByDeckIDExists,
+            function(context, next) {
+
+                const deckID = context.deck_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.decks.currentID(deckID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.CARD.REVIEW.VIEW.META);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/stashes', reloadAppState, parseQueries, function(context, next) {
+
+        const {queries} = context;
+
+        store.resetStage();
+        store.routes.route(ROUTE.STASHES.VIEW.LIST);
+
+        // pagination queries
+        let pageNum = 1;
+        if(_.has(queries, 'page')) {
+
+            pageNum = filterInteger(queries.page, NOT_SET);
+
+            if(pageNum === NOT_SET) {
+                pageNum = 1;
+            }
+        }
+        store.stashes.page(pageNum);
+
+        if(_.has(queries, 'order_by')) {
+
+            let pageOrder = NOT_SET;
+
+            switch(String(queries.order_by).toLowerCase()) {
+
+            case 'descending':
+            case 'desc':
+                pageOrder = stashPagination.order.DESC;
+                break;
+
+            case 'ascending':
+            case 'asc':
+                pageOrder = stashPagination.order.ASC;
+                break;
+
+            default:
+                pageOrder = stashPagination.order.DESC;
+            }
+
+            store.stashes.order(pageOrder);
+        }
+
+        if(_.has(queries, 'sort_by')) {
+
+            let pageSort = NOT_SET;
+
+            switch(String(queries.sort_by).toLowerCase()) {
+
+            case 'name':
+                pageSort = stashPagination.sort.NAME;
+                break;
+
+            case 'created_at':
+                pageSort = stashPagination.sort.CREATED_AT;
+                break;
+
+            case 'updated_at':
+                pageSort = stashPagination.sort.UPDATED_AT;
+                break;
+
+            default:
+                pageSort = stashPagination.sort.UPDATED_AT;
+            }
+
+            store.stashes.sort(pageSort);
+        }
+
+        // ensure pageNum is within valid bounds
+
+        store.stashes.totalStashes()
+            .then(
+            // fulfillment
+            function(totalStashes) {
+
+                if(totalStashes <= 0) {
+                    store.commit();
+                    next();
+                    return null;
                 }
-                store.cards.pageOfStash(pageNum);
 
-                if(_.has(queries, 'order_by')) {
+                const numOfPages = Math.ceil(totalStashes / perPage);
+                const pageSort = store.stashes.sort();
+                const pageOrder = store.stashes.order();
 
-                    let pageOrder = NOT_SET;
-
-                    switch(String(queries.order_by).toLowerCase()) {
-
-                    case 'descending':
-                    case 'desc':
-                        pageOrder = cardPagination.order.DESC;
-                        break;
-
-                    case 'ascending':
-                    case 'asc':
-                        pageOrder = cardPagination.order.ASC;
-                        break;
-
-                    default:
-                        pageOrder = cardPagination.order.DESC;
-                    }
-
-                    store.cards.orderOfStash(pageOrder);
+                if(pageNum > numOfPages || pageNum <= 0) {
+                    store.routes.toStashes(pageSort, pageOrder, 1);
+                    return null;
                 }
 
-                if(_.has(queries, 'sort_by')) {
+                store.commit();
 
-                    let pageSort = NOT_SET;
+                next();
+                return null;
+            });
 
-                    switch(String(queries.sort_by).toLowerCase()) {
+    }, postRouteLoad);
 
-                    case 'reviewed_at':
-                        pageSort = cardPagination.sort.REVIEWED_AT;
-                        break;
+    page('/stashes/new', reloadAppState, function(context, next) {
 
-                    case 'times_reviewed':
-                        pageSort = cardPagination.sort.TIMES_REVIEWED;
-                        break;
+        store.resetStage();
+        store.routes.route(ROUTE.STASHES.VIEW.ADD);
+        store.commit();
 
-                    case 'title':
-                        pageSort = cardPagination.sort.TITLE;
-                        break;
+        next();
 
-                    case 'created_at':
-                        pageSort = cardPagination.sort.CREATED_AT;
-                        break;
+    }, postRouteLoad);
 
-                    case 'updated_at':
-                        pageSort = cardPagination.sort.UPDATED_AT;
-                        break;
+    const toStash = function(stashID) {
+        page.redirect(`/stash/${stashID}/cards`);
+    };
 
-                    default:
-                        pageSort = cardPagination.sort.UPDATED_AT;
-                    }
+    const redirectToStashByID = function(context) {
+        toStash(context.stash_id);
+    };
 
-                    store.cards.sortOfStash(pageSort);
+
+    const toStashCard = function(stashID, cardID) {
+        page.redirect(`/stash/${stashID}/card/${cardID}/view/front`);
+    };
+
+    const toStashList = function() {
+        page.redirect(`/stashes`);
+    };
+
+    const ensureValidStashID = function(context, next) {
+
+        const stashID = filterInteger(context.params.stash_id, NOT_ID);
+
+        if(stashID === NOT_ID) {
+            toStashList();
+            return;
+        }
+
+        context.stash_id = stashID;
+
+        next();
+    };
+
+    const ensureStashIDExists = function(context, next) {
+
+        const stashID = context.stash_id;
+
+        store.stashes.exists(stashID)
+        .then(function(result) {
+
+            return new Promise(function(__resolve, reject) {
+
+                if(!result.response) {
+                    toStashList();
+                    return reject(Error('redirecting'));
                 }
 
-                // ensure pageNum is within valid bounds
+                __resolve(store.stashes.get(stashID));
+            });
+        })
+        .then(function() {
+            next();
+            return null;
+        }, function() {
+            return null;
+        });
 
-                store.cards.totalCardsByStash(stashID)
-                    .then(
-                    // fulfillment
-                    function(totalCards) {
+    };
 
-                        if(totalCards <= 0) {
-                            store.commit();
-                            next();
-                            return null;
-                        }
+    const ensureCardIDByStashIDExists = function(context, next) {
 
-                        const numOfPages = Math.ceil(totalCards / perPage);
-                        const pageSort = store.cards.sort();
-                        const pageOrder = store.cards.order();
+        const cardID = context.card_id;
+        const stashID = context.stash_id;
 
-                        if(pageNum > numOfPages || pageNum <= 0) {
-                            store.routes.toStashCards(stashID, pageSort, pageOrder, 1);
-                            return null;
-                        }
+        store.cards.loadByStash(cardID, stashID)
+            .then(
+            // fulfillment
+            function() {
 
+                next();
+                return null;
+            },
+            // rejection
+            function() {
+
+                // card doesn't exist within given deck
+
+                toStash(stashID);
+                return null;
+            });
+
+    };
+
+    page('/stash/:stash_id',
+        reloadAppState,
+        function(context) {
+
+            const stashID = context.params.stash_id;
+            toStash(stashID);
+
+        });
+
+    page('/stash/:stash_id/cards',
+        reloadAppState,
+        ensureValidStashID,
+        ensureStashIDExists,
+        parseQueries,
+        function(context, next) {
+
+            const {queries} = context;
+
+            const stashID = context.stash_id;
+
+            store.resetStage();
+            store.stashes.currentID(stashID);
+            store.routes.route(ROUTE.STASHES.PROFILE.CARDS);
+
+            // pagination queries
+
+            let pageNum = 1;
+            if(_.has(queries, 'page')) {
+
+                pageNum = filterInteger(queries.page, NOT_SET);
+
+                if(pageNum === NOT_SET) {
+                    pageNum = 1;
+                }
+            }
+            store.cards.pageOfStash(pageNum);
+
+            if(_.has(queries, 'order_by')) {
+
+                let pageOrder = NOT_SET;
+
+                switch(String(queries.order_by).toLowerCase()) {
+
+                case 'descending':
+                case 'desc':
+                    pageOrder = cardPagination.order.DESC;
+                    break;
+
+                case 'ascending':
+                case 'asc':
+                    pageOrder = cardPagination.order.ASC;
+                    break;
+
+                default:
+                    pageOrder = cardPagination.order.DESC;
+                }
+
+                store.cards.orderOfStash(pageOrder);
+            }
+
+            if(_.has(queries, 'sort_by')) {
+
+                let pageSort = NOT_SET;
+
+                switch(String(queries.sort_by).toLowerCase()) {
+
+                case 'reviewed_at':
+                    pageSort = cardPagination.sort.REVIEWED_AT;
+                    break;
+
+                case 'times_reviewed':
+                    pageSort = cardPagination.sort.TIMES_REVIEWED;
+                    break;
+
+                case 'title':
+                    pageSort = cardPagination.sort.TITLE;
+                    break;
+
+                case 'created_at':
+                    pageSort = cardPagination.sort.CREATED_AT;
+                    break;
+
+                case 'updated_at':
+                    pageSort = cardPagination.sort.UPDATED_AT;
+                    break;
+
+                default:
+                    pageSort = cardPagination.sort.UPDATED_AT;
+                }
+
+                store.cards.sortOfStash(pageSort);
+            }
+
+            // ensure pageNum is within valid bounds
+
+            store.cards.totalCardsByStash(stashID)
+                .then(
+                // fulfillment
+                function(totalCards) {
+
+                    if(totalCards <= 0) {
                         store.commit();
-
                         next();
                         return null;
-                    });
+                    }
+
+                    const numOfPages = Math.ceil(totalCards / perPage);
+                    const pageSort = store.cards.sort();
+                    const pageOrder = store.cards.order();
+
+                    if(pageNum > numOfPages || pageNum <= 0) {
+                        store.routes.toStashCards(stashID, pageSort, pageOrder, 1);
+                        return null;
+                    }
+
+                    store.commit();
+
+                    next();
+                    return null;
+                });
 
 
-            }, postRouteLoad);
+        }, postRouteLoad);
 
-        page('/stash/:stash_id/description',
-            reloadAppState,
-            ensureValidStashID,
-            ensureStashIDExists,
+    page('/stash/:stash_id/description',
+        reloadAppState,
+        ensureValidStashID,
+        ensureStashIDExists,
+        function(context, next) {
+
+            const stashID = context.stash_id;
+
+            store.resetStage();
+            store.stashes.currentID(stashID);
+            store.routes.route(ROUTE.STASHES.PROFILE.DESCRIPTION);
+            store.commit();
+
+            next();
+
+        }, postRouteLoad);
+
+    page('/stash/:stash_id/meta',
+        reloadAppState,
+        ensureValidStashID,
+        ensureStashIDExists,
+        function(context, next) {
+
+            const stashID = context.stash_id;
+
+            store.resetStage();
+            store.stashes.currentID(stashID);
+            store.routes.route(ROUTE.STASHES.PROFILE.META);
+            store.commit();
+
+            next();
+
+        }, postRouteLoad);
+
+    page('/stash/:stash_id/card',
+        reloadAppState, function(context) {
+
+            const stashID = context.params.stash_id;
+            toStash(stashID);
+
+        });
+
+    page('/stash/:stash_id/card/:card_id',
+        reloadAppState, function(context) {
+
+            const stashID = context.params.stash_id;
+            const cardID = context.params.card_id;
+            toStashCard(stashID, cardID);
+
+        });
+
+    page('/stash/:stash_id/card/:card_id/view',
+        reloadAppState, function(context) {
+
+            const stashID = context.params.stash_id;
+            const cardID = context.params.card_id;
+            toStashCard(stashID, cardID);
+
+        });
+
+    page('/stash/:stash_id/card/:card_id/view/front',
+        reloadAppState,
+        ensureValidStashID,
+        ensureValidCardID(redirectToStashByID),
+        ensureStashIDExists,
+        ensureCardIDByStashIDExists,
             function(context, next) {
 
                 const stashID = context.stash_id;
+                const cardID = context.card_id;
 
                 store.resetStage();
                 store.stashes.currentID(stashID);
-                store.routes.route(ROUTE.STASHES.PROFILE.DESCRIPTION);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.STASHES.CARD.VIEW.FRONT);
                 store.commit();
 
                 next();
-
             }, postRouteLoad);
 
-        page('/stash/:stash_id/meta',
-            reloadAppState,
-            ensureValidStashID,
-            ensureStashIDExists,
+    page('/stash/:stash_id/card/:card_id/view/back',
+        reloadAppState,
+        ensureValidStashID,
+        ensureValidCardID(redirectToStashByID),
+        ensureStashIDExists,
+        ensureCardIDByStashIDExists,
             function(context, next) {
 
                 const stashID = context.stash_id;
+                const cardID = context.card_id;
 
                 store.resetStage();
                 store.stashes.currentID(stashID);
-                store.routes.route(ROUTE.STASHES.PROFILE.META);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.STASHES.CARD.VIEW.BACK);
                 store.commit();
 
                 next();
-
             }, postRouteLoad);
 
-        page('/stash/:stash_id/card',
-            reloadAppState, function(context) {
+    page('/stash/:stash_id/card/:card_id/view/description',
+        reloadAppState,
+        ensureValidStashID,
+        ensureValidCardID(redirectToStashByID),
+        ensureStashIDExists,
+        ensureCardIDByStashIDExists,
+            function(context, next) {
 
-                const stashID = context.params.stash_id;
-                toStash(stashID);
+                const stashID = context.stash_id;
+                const cardID = context.card_id;
 
-            });
+                store.resetStage();
+                store.stashes.currentID(stashID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.STASHES.CARD.VIEW.DESCRIPTION);
+                store.commit();
 
-        page('/stash/:stash_id/card/:card_id',
-            reloadAppState, function(context) {
-
-                const stashID = context.params.stash_id;
-                const cardID = context.params.card_id;
-                toStashCard(stashID, cardID);
-
-            });
-
-        page('/stash/:stash_id/card/:card_id/view',
-            reloadAppState, function(context) {
-
-                const stashID = context.params.stash_id;
-                const cardID = context.params.card_id;
-                toStashCard(stashID, cardID);
-
-            });
-
-        page('/stash/:stash_id/card/:card_id/view/front',
-            reloadAppState,
-            ensureValidStashID,
-            ensureValidCardID(redirectToStashByID),
-            ensureStashIDExists,
-            ensureCardIDByStashIDExists,
-                function(context, next) {
-
-                    const stashID = context.stash_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.stashes.currentID(stashID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.STASHES.CARD.VIEW.FRONT);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/stash/:stash_id/card/:card_id/view/back',
-            reloadAppState,
-            ensureValidStashID,
-            ensureValidCardID(redirectToStashByID),
-            ensureStashIDExists,
-            ensureCardIDByStashIDExists,
-                function(context, next) {
-
-                    const stashID = context.stash_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.stashes.currentID(stashID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.STASHES.CARD.VIEW.BACK);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/stash/:stash_id/card/:card_id/view/description',
-            reloadAppState,
-            ensureValidStashID,
-            ensureValidCardID(redirectToStashByID),
-            ensureStashIDExists,
-            ensureCardIDByStashIDExists,
-                function(context, next) {
-
-                    const stashID = context.stash_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.stashes.currentID(stashID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.STASHES.CARD.VIEW.DESCRIPTION);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/stash/:stash_id/card/:card_id/view/stashes',
-            reloadAppState,
-            ensureValidStashID,
-            ensureValidCardID(redirectToStashByID),
-            ensureStashIDExists,
-            ensureCardIDByStashIDExists,
-                function(context, next) {
-
-                    const stashID = context.stash_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.stashes.currentID(stashID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.STASHES.CARD.VIEW.STASHES);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/stash/:stash_id/card/:card_id/view/meta',
-            reloadAppState,
-            ensureValidStashID,
-            ensureValidCardID(redirectToStashByID),
-            ensureStashIDExists,
-            ensureCardIDByStashIDExists,
-                function(context, next) {
-
-                    const stashID = context.stash_id;
-                    const cardID = context.card_id;
-
-                    store.resetStage();
-                    store.stashes.currentID(stashID);
-                    store.cards.currentID(cardID);
-                    store.routes.route(ROUTE.STASHES.CARD.VIEW.META);
-                    store.commit();
-
-                    next();
-                }, postRouteLoad);
-
-        page('/stash/:stash_id/review', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context) {
-
-            const stashID = context.stash_id;
-
-            page.redirect(`/stash/${stashID}/review/view/front`);
-
-        });
-
-        page('/stash/:stash_id/review/view/front', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
-
-            const stashID = context.stash_id;
-
-            store.resetStage();
-            store.stashes.currentID(stashID);
-            store.routes.route(ROUTE.STASHES.REVIEW.VIEW.FRONT);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/stash/:stash_id/review/view/back', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
-
-            const stashID = context.stash_id;
-
-            store.resetStage();
-            store.stashes.currentID(stashID);
-            store.routes.route(ROUTE.STASHES.REVIEW.VIEW.BACK);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/stash/:stash_id/review/view/description', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
-
-            const stashID = context.stash_id;
-
-            store.resetStage();
-            store.stashes.currentID(stashID);
-            store.routes.route(ROUTE.STASHES.REVIEW.VIEW.DESCRIPTION);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        page('/stash/:stash_id/review/view/meta', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
-
-            const stashID = context.stash_id;
-
-            store.resetStage();
-            store.stashes.currentID(stashID);
-            store.routes.route(ROUTE.STASHES.REVIEW.VIEW.META);
-            store.commit();
-
-            next();
-
-        }, postRouteLoad);
-
-        // route not found; redirect to the root deck
-        page('*', function(context, next) {
-            console.error('not found', context);
-            next();
-        }, reloadAppState, toRootDeck);
-
-        page.exit(function(context, next) {
-
-            // if a confirm callback is set, confirm to the user if they want to perform a
-            // route change. (e.g. discard changes)
-            store.routes.shouldChangeRoute(context, function() {
                 next();
-            }, function() {
+            }, postRouteLoad);
 
-                // TODO: this is partial fix. history seems to be still flaky
+    page('/stash/:stash_id/card/:card_id/view/stashes',
+        reloadAppState,
+        ensureValidStashID,
+        ensureValidCardID(redirectToStashByID),
+        ensureStashIDExists,
+        ensureCardIDByStashIDExists,
+            function(context, next) {
 
-                store.routes.removeConfirm();
+                const stashID = context.stash_id;
+                const cardID = context.card_id;
 
-                page.redirect(context.canonicalPath);
-            });
+                store.resetStage();
+                store.stashes.currentID(stashID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.STASHES.CARD.VIEW.STASHES);
+                store.commit();
 
-        });
+                next();
+            }, postRouteLoad);
 
-        // TODO: remove
-        // page.base('/#');
+    page('/stash/:stash_id/card/:card_id/view/meta',
+        reloadAppState,
+        ensureValidStashID,
+        ensureValidCardID(redirectToStashByID),
+        ensureStashIDExists,
+        ensureCardIDByStashIDExists,
+            function(context, next) {
 
-        page.start({
-            // hashbang: true,
-            click: false
-        });
+                const stashID = context.stash_id;
+                const cardID = context.card_id;
 
-        return resolve(null);
+                store.resetStage();
+                store.stashes.currentID(stashID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.STASHES.CARD.VIEW.META);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/stash/:stash_id/review', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context) {
+
+        const stashID = context.stash_id;
+
+        page.redirect(`/stash/${stashID}/review/view/front`);
+
     });
 
+    page('/stash/:stash_id/review/view/front', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
+
+        const stashID = context.stash_id;
+
+        store.resetStage();
+        store.stashes.currentID(stashID);
+        store.routes.route(ROUTE.STASHES.REVIEW.VIEW.FRONT);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/stash/:stash_id/review/view/back', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
+
+        const stashID = context.stash_id;
+
+        store.resetStage();
+        store.stashes.currentID(stashID);
+        store.routes.route(ROUTE.STASHES.REVIEW.VIEW.BACK);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/stash/:stash_id/review/view/description', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
+
+        const stashID = context.stash_id;
+
+        store.resetStage();
+        store.stashes.currentID(stashID);
+        store.routes.route(ROUTE.STASHES.REVIEW.VIEW.DESCRIPTION);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    page('/stash/:stash_id/review/view/meta', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context, next) {
+
+        const stashID = context.stash_id;
+
+        store.resetStage();
+        store.stashes.currentID(stashID);
+        store.routes.route(ROUTE.STASHES.REVIEW.VIEW.META);
+        store.commit();
+
+        next();
+
+    }, postRouteLoad);
+
+    // route not found; redirect to the root deck
+    page('*', function(context, next) {
+        console.error('not found', context);
+        next();
+    }, reloadAppState, toRootDeck);
+
+    page.exit(function(context, next) {
+
+        // if a confirm callback is set, confirm to the user if they want to perform a
+        // route change. (e.g. discard changes)
+        store.routes.shouldChangeRoute(context, function() {
+            next();
+        }, function() {
+
+            // TODO: this is partial fix. history seems to be still flaky
+
+            store.routes.removeConfirm();
+
+            page.redirect(context.canonicalPath);
+        });
+
+    });
+
+    // TODO: remove
+    // page.base('/#');
+
+    page.start({
+        // hashbang: true,
+        click: false
+    });
+
+    return Promise.resolve(1);
 };
 
 function Routes(store) {
