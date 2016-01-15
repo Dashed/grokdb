@@ -2,7 +2,42 @@ const React = require('react');
 const Immutable = require('immutable');
 const moment = require('moment');
 
+const courier = require('courier');
+
+const DumbBreadcrumb = require('components/deck/breadcrumb');
+const BreadcrumbWaiting = require('components/deck/waitingbreadcrumb');
 const CardMetaMove = require('./move');
+
+const CurrentDeckBreadcrumb = courier({
+
+    component: DumbBreadcrumb,
+    waitingComponent: BreadcrumbWaiting,
+
+    onlyWaitingOnMount: true,
+
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
+    propTypes: {
+        deckID: React.PropTypes.number.isRequired,
+    },
+
+    assignNewProps: function(props, context) {
+
+        let {deckID} = props;
+
+        return context.store.decks.path(deckID)
+            .then(function(path) {
+                return {
+                    path: path,
+                    toDeck: (newdeckID) => {
+                        context.store.routes.toDeck(newdeckID, 1);
+                    }
+                };
+            });
+    }
+});
 
 const CardMeta = React.createClass({
 
@@ -126,6 +161,9 @@ const CardMeta = React.createClass({
                         <div className="card-header">
                             <strong>{'General'}</strong>
                         </div>
+                        <CurrentDeckBreadcrumb
+                            deckID={card.get('deck')}
+                        />
                         <div className="card-block">
                             <p className="card-text">
                                 {`Updated ${updatedAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${updatedAtDatetime.fromNow()})`}
@@ -261,9 +299,9 @@ const CardMeta = React.createClass({
         return (
             <div className="row">
                 <div className="col-sm-12">
+                    {this.getGeneral()}
                     {this.getReviewed()}
                     {this.getPerformance()}
-                    {this.getGeneral()}
                     {this.getMoveSection()}
                     {this.getDeleteSection()}
                 </div>
