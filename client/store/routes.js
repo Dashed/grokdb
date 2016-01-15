@@ -304,7 +304,7 @@ const boostrapRoutes = function(store) {
         return next();
     };
 
-    const reloadAppState = co.wrap(function *(context, next) {
+    const reloadAppState = function(context, next) {
 
         if(store.loading()) {
             next();
@@ -313,10 +313,13 @@ const boostrapRoutes = function(store) {
 
         store.loading(true);
 
-        yield loadAppState(store);
+        loadAppState(store)
+            .then(function() {
+                next();
+                return null;
+            });
 
-        next();
-    });
+    };
 
     const postRouteLoad = function() {
         store.loading(false);
