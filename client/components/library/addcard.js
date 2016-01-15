@@ -233,7 +233,7 @@ const AddCard = React.createClass({
                             type="button"
                             className="btn btn-sm btn-danger"
                             onClick={this.backToCardsList}
-                        >{'Back to cards list'}</button>
+                        >{'Back to Cards List'}</button>
                     </div>
                 </div>
                 <div className="row">

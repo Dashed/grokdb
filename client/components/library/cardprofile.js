@@ -138,7 +138,7 @@ const CardProfile = React.createClass({
                         isEditing={this.state.isEditing}
                         disableSave={this.state.disableSave}
 
-                        backButtonLabel="Back to cards list"
+                        backButtonLabel="Back to Cards List"
                         onClickBackButton={this.onClickBackButton}
 
                         onSwitchCurrentTab={this.onSwitchCurrentTab}
