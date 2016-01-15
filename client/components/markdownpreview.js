@@ -8,12 +8,14 @@ const ReactDOM = require('react-dom');
 const _ = require('lodash');
 
 const markdown = require('markdown-it')()
+    // custom plugin to mark mathjax markup to not be escaped by markdown-it
+    // and related plugins
+    .use(require('utils/mathjaxinline'))
     // load with plugins (officially supported by markdown-it)
-    .use(require('markdown-it-abbr'));
-    // .use(require('markdown-it-footnote'));
-    // this was breaking mathjax
-    // .use(require('markdown-it-sub'))
-    // .use(require('markdown-it-sup'));
+    .use(require('markdown-it-abbr'))
+    .use(require('markdown-it-footnote'))
+    .use(require('markdown-it-sub'))
+    .use(require('markdown-it-sup'));
 
 
 const MarkdownPreview = React.createClass({

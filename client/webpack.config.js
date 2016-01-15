@@ -52,11 +52,9 @@ module.exports = {
             'little-loader',
             'markdown-it',
             'markdown-it-abbr',
-            // 'markdown-it-footnote',
-
-            // these break mathjax
-            // 'markdown-it-sub',
-            // 'markdown-it-sup'
+            'markdown-it-footnote',
+            'markdown-it-sub',
+            'markdown-it-sup'
         ]
     },
     output: {
