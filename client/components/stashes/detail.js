@@ -71,7 +71,7 @@ const StashDetail = React.createClass({
                             type="button"
                             className="btn btn-sm btn-danger"
                             onClick={this.backToStashesList}
-                        >{'Back to list of stashes'}</button>
+                        >{'Back to List of Stashes'}</button>
                     </div>
                 </div>
                 <div className="row">
