@@ -1,5 +1,4 @@
 const React = require('react');
-const invariant = require('invariant');
 const _ = require('lodash');
 
 const NAME_STYLE = {
@@ -38,7 +37,13 @@ const Breadcrumb = React.createClass({
 
         const {path} = this.props;
 
-        invariant(path.length >= 1, 'Expected path to be non-empty');
+        if(path.length <= 0) {
+            return (
+                <li key="bar">
+                    {' '}
+                </li>
+            );
+        }
 
         const end = path.length - 1;
 
@@ -87,6 +92,9 @@ const Breadcrumb = React.createClass({
         return (
             <ol className="breadcrumb m-y-0" style={NAME_STYLE}>
                 {this.getReviewing()}
+                <li key="foo">
+                    {' '}
+                </li>
                 {this.generateCrumb()}
             </ol>
         );
