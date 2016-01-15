@@ -15,7 +15,21 @@ const DeckListItem = React.createClass({
         deckID: React.PropTypes.number.isRequired,
         deck: React.PropTypes.instanceOf(Immutable.Map).isRequired,
 
-        onClick: React.PropTypes.func.isRequired
+        onClick: React.PropTypes.func.isRequired,
+
+        // cosmetic flags
+        showSideButton: React.PropTypes.bool.isRequired,
+        onClickSideButton: React.PropTypes.func.isRequired,
+        sideButtonLabel: React.PropTypes.string.isRequired
+    },
+
+    getDefaultProps() {
+
+        return {
+            showSideButton: false,
+            onClickSideButton: () => void 0,
+            sideButtonLabel: ''
+        };
     },
 
     onClick(event) {
@@ -23,6 +37,30 @@ const DeckListItem = React.createClass({
         event.stopPropagation();
 
         this.props.onClick.call(void 0, this.props.deck);
+    },
+
+    onClickSideButton(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.props.onClickSideButton.call(void 0);
+    },
+
+    getButton() {
+
+        if(!this.props.showSideButton) {
+            return null;
+        }
+
+        return (
+            <button
+                type="button"
+                onClick={this.onClickSideButton}
+                className="btn btn-sm pull-right btn-danger">
+                { this.props.sideButtonLabel }
+            </button>
+        );
+
     },
 
     render() {
@@ -50,6 +88,7 @@ const DeckListItem = React.createClass({
 
         return (
             <li className="list-group-item">
+                {this.getButton()}
                 <h6 className="list-group-item-heading m-y-0" style={NAME_STYLE}>
                     <a href="#" onClick={this.onClick} >
                         {deck.get('name')}

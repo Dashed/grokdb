@@ -43,6 +43,8 @@ const DumbCardDetail = React.createClass({
 
         onDelete: React.PropTypes.func.isRequired,
 
+        afterMove: React.PropTypes.func.isRequired,
+
         // cosmetic flags
         showReviewButton: React.PropTypes.bool.isRequired,
         isReviewing: React.PropTypes.bool.isRequired,
@@ -54,6 +56,7 @@ const DumbCardDetail = React.createClass({
     getDefaultProps() {
 
         return {
+            afterMove: NOOP,
             onReview: NOOP,
             showReviewButton: false,
             isReviewing: false,
@@ -347,6 +350,7 @@ const DumbCardDetail = React.createClass({
                     <div className="row">
                         <div className="col-sm-12">
                             <CardMeta
+                                afterMove={this.props.afterMove}
                                 card={this.props.currentCard}
                                 onDelete={this.props.onDelete}
                             />

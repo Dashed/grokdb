@@ -2,6 +2,8 @@ const React = require('react');
 const Immutable = require('immutable');
 const moment = require('moment');
 
+const CardMetaMove = require('./move');
+
 const CardMeta = React.createClass({
 
     contextTypes: {
@@ -10,7 +12,14 @@ const CardMeta = React.createClass({
 
     propTypes: {
         card: React.PropTypes.instanceOf(Immutable.Map).isRequired,
-        onDelete: React.PropTypes.func.isRequired
+        onDelete: React.PropTypes.func.isRequired,
+        afterMove: React.PropTypes.func.isRequired
+    },
+
+    getDefaultProps() {
+        return {
+            afterMove: () => void 0
+        };
     },
 
     getInitialState() {
@@ -233,6 +242,21 @@ const CardMeta = React.createClass({
         );
     },
 
+    getMoveSection() {
+
+        return (
+            <div className="row">
+                <div className="col-sm-12">
+                    <CardMetaMove
+                        afterMove={this.props.afterMove}
+                        card={this.props.card}
+                    />
+                </div>
+            </div>
+        );
+
+    },
+
     render() {
         return (
             <div className="row">
@@ -240,6 +264,7 @@ const CardMeta = React.createClass({
                     {this.getReviewed()}
                     {this.getPerformance()}
                     {this.getGeneral()}
+                    {this.getMoveSection()}
                     {this.getDeleteSection()}
                 </div>
             </div>

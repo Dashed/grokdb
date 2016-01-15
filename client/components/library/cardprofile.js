@@ -118,6 +118,11 @@ const CardProfile = React.createClass({
         this.context.store.routes.toLibraryCards(deckID);
     },
 
+    afterMove(deckID) {
+        const {currentCard} = this.props;
+        this.context.store.routes.toCardMeta(currentCard.get('id'), deckID);
+    },
+
     render() {
 
         return (
@@ -144,6 +149,8 @@ const CardProfile = React.createClass({
 
                         onReview={this.onReview}
                         onDelete={this.onDelete}
+
+                        afterMove={this.afterMove}
                     />
                 </div>
             </div>
