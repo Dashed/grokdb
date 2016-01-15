@@ -152,12 +152,10 @@ const DeckMeta = React.createClass({
                             <p className="card-text">
                                 {'Once you delete a deck, there is no going back. Please be certain.'}
                             </p>
-                            <p className="card-text">
-                                <ul>
-                                    <li>{'Any cards within this deck will also be deleted'}</li>
-                                    <li>{'Any cards within this deck will be removed from stashes'}</li>
-                                </ul>
-                            </p>
+                            <ul className="card-text">
+                                <li>{'Any cards within this deck will also be deleted.'}</li>
+                                <li>{'Any cards within this deck will be removed from stashes.'}</li>
+                            </ul>
                             {this.getDeleteButton()}
                         </div>
                     </div>
