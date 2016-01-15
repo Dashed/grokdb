@@ -173,7 +173,7 @@ const LibraryCards = React.createClass({
                         <a href="#"
                             className="btn btn-sm btn-primary-outline"
                             onClick={this.toReview}
-                        >{'Review this deck'}</a>
+                        >{'Review this Deck'}</a>
 
                         <div className="pull-right">
                             <CardsSortDropDown />
