@@ -46,6 +46,10 @@ module.exports = courier({
         store: React.PropTypes.object.isRequired
     },
 
+    propTypes: {
+        deckID: React.PropTypes.number.isRequired
+    },
+
     shouldRewatch(props) {
 
         const oldDeckID = this.currentProps.deckID;
