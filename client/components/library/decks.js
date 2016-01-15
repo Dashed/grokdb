@@ -1,5 +1,6 @@
 const React = require('react');
 const Immutable = require('immutable');
+const shallowEqual = require('shallowequal');
 
 const courier = require('courier');
 
@@ -90,10 +91,14 @@ module.exports = courier({
 
     component: LibraryDecks,
 
-    // onlyWaitingOnMount: true,
+    onlyWaitingOnMount: true,
 
     watch(props, manual, context) {
         return context.store.decks.watchCurrent();
+    },
+
+    shouldComponentUpdate(nextProps) {
+        return !shallowEqual(nextProps.childrenID, this.props.childrenID);
     },
 
     assignNewProps: function(props, context) {
