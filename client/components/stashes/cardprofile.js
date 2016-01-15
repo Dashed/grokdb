@@ -105,6 +105,12 @@ const CardProfile = React.createClass({
 
     },
 
+    onDeleteCard() {
+
+        const stashID = this.props.currentStashID;
+        this.context.store.routes.toStashCards(stashID);
+    },
+
     render() {
 
         return (
@@ -131,6 +137,8 @@ const CardProfile = React.createClass({
                             onCardSave={this.onCardSave}
                             editCard={this.editCard}
                             onCancelEdit={this.onCancelEdit}
+
+                            onDelete={this.onDeleteCard}
                         />
                     </div>
                 </div>

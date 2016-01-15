@@ -9,7 +9,14 @@ const CardMeta = React.createClass({
     },
 
     propTypes: {
-        card: React.PropTypes.instanceOf(Immutable.Map).isRequired
+        card: React.PropTypes.instanceOf(Immutable.Map).isRequired,
+        onDelete: React.PropTypes.func.isRequired
+    },
+
+    getInitialState() {
+        return {
+            verifyDelete: false
+        };
     },
 
     getReviewed() {
@@ -125,6 +132,107 @@ const CardMeta = React.createClass({
 
     },
 
+    deleteVerify(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.setState({
+            verifyDelete: true
+        });
+    },
+
+    cancelDelete(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.setState({
+            verifyDelete: false
+        });
+    },
+
+    confirmDelete(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const cardID = this.props.card.get('id');
+
+        this.context.store.cards.remove(cardID)
+        .then(() => {
+
+            this.props.onDelete.call(void 0, this.props.card);
+
+            return null;
+        });
+    },
+
+    getDeleteButton() {
+
+        if(this.state.verifyDelete) {
+            return (
+                <div key="delete_button">
+                    <p className="card-text">
+                        <strong>{'Are you absolutely sure?'}</strong>
+                    </p>
+                    <a
+                        href="#"
+                        className="btn btn-secondary btn-sm"
+                        onClick={this.confirmDelete}
+                    >
+                        {'Yes, delete'}
+                    </a>
+                    {' '}
+                    <a
+                        href="#"
+                        className="btn btn-secondary btn-sm"
+                        onClick={this.cancelDelete}
+                    >
+                        {'No, cancel'}
+                    </a>
+                </div>
+            );
+        }
+
+        return (
+            <div key="delete_button">
+                <a
+                    href="#"
+                    className="btn btn-danger btn-sm"
+                    onClick={this.deleteVerify}
+                >
+                    {'Delete this Card'}
+                </a>
+            </div>
+        );
+
+    },
+
+    getDeleteSection() {
+
+        const {card} = this.props;
+
+        return (
+            <div className="row">
+                <div className="col-sm-12">
+                    <div className="card">
+                        <div className="card-header">
+                            <strong>{'Delete Card'}</strong>
+                        </div>
+                        <div className="card-block">
+                            <p className="card-text">
+                                {'Once you delete a card, there is no going back. Please be certain.'}
+                            </p>
+                            <ul className="card-text">
+                                <li>{`Will be deleted from the deck it currently resides in (deck #${card.get('deck')}).`}</li>
+                                <li>{'Will be deleted from any and all stashes that references it.'}</li>
+                            </ul>
+                            {this.getDeleteButton()}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    },
+
     render() {
         return (
             <div className="row">
@@ -132,6 +240,7 @@ const CardMeta = React.createClass({
                     {this.getReviewed()}
                     {this.getPerformance()}
                     {this.getGeneral()}
+                    {this.getDeleteSection()}
                 </div>
             </div>
         );

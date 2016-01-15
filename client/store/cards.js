@@ -519,6 +519,38 @@ Cards.prototype.create = function(deckID, createCard) {
 };
 
 // async
+Cards.prototype.remove = function(cardID) {
+
+    cardID = Number(cardID);
+
+    return new Promise((resolve, reject) => {
+
+        superhot
+            .del(`/api/cards/${cardID}`)
+            .end((err, response) => {
+
+                switch(response.status) {
+
+                case 200:
+
+                    return resolve(true);
+
+                default:
+
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    return resolve(Error(err));
+                }
+
+            });
+
+    });
+};
+
+
+// async
 Cards.prototype.currentCardsID = function() {
 
     const currentID = this._store.decks.currentID();
