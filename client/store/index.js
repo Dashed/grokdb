@@ -44,6 +44,7 @@ const SCHEMA = {
         sort: cardPagination.sort.UPDATED_AT,
         order: cardPagination.order.DESC,
         page: 1,
+        search: '',
 
         stashes: {
 
@@ -71,6 +72,7 @@ const SCHEMA = {
             sort: cardPagination.sort.UPDATED_AT,
             order: cardPagination.order.DESC,
             page: 1,
+            search: ''
         }
     },
 

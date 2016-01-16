@@ -40,6 +40,7 @@ module.exports = courier({
     watch(props, manual, context) {
         return [
             context.store.decks.watchCurrentID(),
+            context.store.cards.watchSearch(),
             context.store.cards.watchPage()
         ];
     },

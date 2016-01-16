@@ -459,6 +459,14 @@ const boostrapRoutes = function(store) {
                 store.cards.sort(pageSort);
             }
 
+            let searchQuery = '';
+            if(_.has(queries, 'search')) {
+
+                searchQuery = String(queries.search).trim();
+            }
+
+            store.cards.search(searchQuery);
+
             // ensure pageNum is within valid bounds
 
             store.cards.totalCards(deckID)
@@ -1668,7 +1676,7 @@ Routes.prototype.toDeck = function(deckID, pageNum = NOT_SET) {
     });
 };
 
-Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID = NOT_SET, pageSort = NOT_SET, pageOrder = NOT_SET, pageNum = NOT_SET) {
+Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID = NOT_SET, pageSort = NOT_SET, pageOrder = NOT_SET, pageNum = NOT_SET, search = NOT_SET) {
 
     this.shouldChangeRoute(() => {
 
@@ -1681,6 +1689,8 @@ Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID
 
         if(pageNum === NOT_SET) {
             pageNum = this._store.cards.page();
+        } else {
+            invariant(filterInteger(pageNum, NOT_SET) !== NOT_SET, `Invalid pageNum. Given ${String(pageNum)}`);
         }
 
         if(pageOrder === NOT_SET) {
@@ -1729,6 +1739,18 @@ Routes.prototype.toLibraryCards = Routes.prototype.toLibrary = function(toDeckID
 
         default:
             pageSort = 'updated_at';
+        }
+
+        if(search === NOT_SET) {
+            search = this._store.cards.search();
+        }
+
+        if(_.isString(search)) {
+            search = String(search).trim();
+            if(search.length > 0) {
+                page(`/deck/${toDeckID}/view/cards?order_by=${pageOrder}&sort_by=${pageSort}&page=${pageNum}&search=${search}`);
+                return;
+            }
         }
 
         page(`/deck/${toDeckID}/view/cards?order_by=${pageOrder}&sort_by=${pageSort}&page=${pageNum}`);

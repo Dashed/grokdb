@@ -61,49 +61,64 @@ const cardLoader = new DataLoader(function(keys) {
     });
 });
 
-const cardsCountLoader = new DataLoader(function(keys) {
+const cardsCountLoaderFactory = function(store) {
+    return new DataLoader(function(keys) {
 
-    if(keys.length <= 0) {
-        return Promise.resolve([]);
-    }
+        if(keys.length <= 0) {
+            return Promise.resolve([]);
+        }
 
-    const promiseArray = _.reduce(keys, (accumulator, deckID) => {
+        const promiseArray = _.reduce(keys, (accumulator, deckID) => {
 
-        const prom = new Promise((resolve, reject) => {
+            const prom = new Promise((resolve, reject) => {
 
-            superhot
-                .get(`/api/decks/${deckID}/cards/count`)
-                .end((err, response) => {
+                let requestQuery = {
+                };
 
-                    switch(response.status) {
+                let searchQuery = store.cards.search();
 
-                    case 200:
+                if(_.isString(searchQuery)) {
+                    searchQuery = searchQuery.trim();
+                    if(searchQuery.length > 0) {
+                        requestQuery.search = searchQuery;
+                    }
+                }
 
-                        const numOfCards = response.body.num_of_cards >= 0 ? response.body.num_of_cards : 0;
+                superhot
+                    .get(`/api/decks/${deckID}/cards/count`)
+                    .query(requestQuery)
+                    .end((err, response) => {
 
-                        return resolve(numOfCards);
-                        break;
+                        switch(response.status) {
 
-                    default:
+                        case 200:
 
-                        if (err) {
-                            return reject(err);
+                            const numOfCards = response.body.num_of_cards >= 0 ? response.body.num_of_cards : 0;
+
+                            return resolve(numOfCards);
+                            break;
+
+                        default:
+
+                            if (err) {
+                                return reject(err);
+                            }
+
+                            return reject(Error(`Unexpected response.status. Given: ${response.status}`));
                         }
 
-                        return reject(Error(`Unexpected response.status. Given: ${response.status}`));
-                    }
+                    });
 
-                });
+            });
 
-        });
+            accumulator.push(prom);
 
-        accumulator.push(prom);
+            return accumulator;
+        }, []);
 
-        return accumulator;
-    }, []);
-
-    return Promise.all(promiseArray);
-});
+        return Promise.all(promiseArray);
+    });
+};
 
 const cardsCountByStashLoader = new DataLoader(function(keys) {
 
@@ -154,6 +169,8 @@ function Cards(store) {
     this._store = store;
     this._lookup = minitrue({}); // Map<card_id<int>, Card>
 
+    this.cardsCountLoader = cardsCountLoaderFactory(store);
+
 }
 
 Cards.prototype.constructor = Cards;
@@ -162,7 +179,7 @@ Cards.prototype.constructor = Cards;
 // sync
 Cards.prototype.clearCache = function() {
     cardLoader.clearAll();
-    cardsCountLoader.clearAll();
+    this.cardsCountLoader.clearAll();
     cardsCountByStashLoader.clearAll();
     this._lookup.update(function() {
         return Immutable.Map();
@@ -172,7 +189,7 @@ Cards.prototype.clearCache = function() {
 // get total number of cards within given deck
 // async
 Cards.prototype.totalCards = function(deckID) {
-    return cardsCountLoader.load(deckID);
+    return this.cardsCountLoader.load(deckID);
 };
 
 // get total number of cards within given deck
@@ -608,20 +625,25 @@ Cards.prototype.currentCardsID = function() {
 
         })();
 
+        let requestQuery = {
+            'per_page': perPage,
+            'page': pageNum,
+            'sort_by': pageSort,
+            'order_by': pageOrder
+        };
+
+        let searchQuery = this._store.cards.search();
+
+        if(_.isString(searchQuery)) {
+            searchQuery = searchQuery.trim();
+            if(searchQuery.length > 0) {
+                requestQuery.search = searchQuery;
+            }
+        }
+
         superhot
             .get(`/api/decks/${currentID}/cards`)
-            .query({
-                'per_page': perPage
-            })
-            .query({
-                'page': pageNum
-            })
-            .query({
-                'sort_by': pageSort
-            })
-            .query({
-                'order_by': pageOrder
-            })
+            .query(requestQuery)
             .end((err, response) => {
 
                 switch(response.status) {
@@ -908,9 +930,42 @@ Cards.prototype.page = function(page = NOT_SET) {
 };
 
 // sync
-Cards.prototype.changeSort = function(sort, order) {
+Cards.prototype.watchSearch = function() {
+    return this._store.state().cursor(['card', 'search']);
+};
+
+// sync
+Cards.prototype.search = function(query = NOT_SET) {
+
+    let stage = this._store.stage();
+
+    let value = stage.getIn(['card', 'search']);
+
+    if(query !== NOT_SET) {
+
+        query = String(query);
+
+        stage = stage.updateIn(['card', 'search'], function() {
+            return query;
+        });
+
+        this._store.stage(stage);
+
+        value = query;
+    }
+
+    return String(value);
+};
+
+// sync
+Cards.prototype.changeSort = function(sort, order, search = NOT_SET) {
 
     const currentDeckID = this._store.decks.currentID();
+
+    if(search !== NOT_SET) {
+        this._store.routes.toLibraryCards(currentDeckID, sort, order, 1, search);
+        return;
+    }
 
     this._store.routes.toLibraryCards(currentDeckID, sort, order);
 };

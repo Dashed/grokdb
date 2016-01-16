@@ -109,6 +109,7 @@ const CardsList = courier({
         return [
             context.store.cards.watchPage(),
             context.store.decks.watchCurrentID(),
+            context.store.cards.watchSearch(),
             context.store.cards.watchOrder(),
             context.store.cards.watchSort()
         ];
@@ -133,6 +134,116 @@ const CardsList = courier({
             });
     }
 
+});
+
+const SearchBar = React.createClass({
+
+    contextTypes: {
+        store: React.PropTypes.object.isRequired
+    },
+
+    getInitialState() {
+
+        return {
+            search: void 0
+        };
+    },
+
+    getSearchQuery() {
+
+        if(_.isString(this.state.search)) {
+            return this.state.search;
+        }
+
+        let query = this.context.store.cards.search();
+
+        if(!_.isString(query)) {
+            query = '';
+        }
+
+        return query.trim();
+    },
+
+    onSearchChange(event) {
+        event.persist();
+
+        this.setState({
+            search: event.target.value
+        });
+
+        this.delayedSearch(event);
+    },
+
+    componentWillMount: function () {
+        this.delayedSearch = _.debounce((event) => {
+
+            const query = String(event.target.value).trim();
+
+            this.context.store.cards.changeSort(void 0, void 0, query);
+
+        }, 400);
+    },
+
+    onClear(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if(_.isString(this.state.search) && this.state.search.length <= 0) {
+            return;
+        }
+
+        this.setState({
+            search: ''
+        });
+
+        this.context.store.cards.changeSort(void 0, void 0, '');
+
+    },
+
+    getClearButton() {
+
+        if(this.getSearchQuery().length <= 0) {
+            return (
+                <span key="clear-btn-disabled" className="input-group-btn">
+                    <button
+                        className="btn btn-sm btn-secondary"
+                        type="button"
+                        onClick={this.onClear}
+                        disabled
+                    >{'Clear'}</button>
+                </span>
+            );
+        }
+
+        return (
+            <span key="clear-btn" className="input-group-btn">
+                <button
+                    className="btn btn-sm btn-secondary"
+                    type="button"
+                    onClick={this.onClear}
+                >{'Clear'}</button>
+            </span>
+        );
+
+    },
+
+    render() {
+
+        return (
+            <div className="searchbox m-x">
+                <div className="input-group input-group-sm">
+                    <input
+                        className="form-control form-control-sm"
+                        type="text"
+                        placeholder="Search Cards"
+                        value={this.getSearchQuery()}
+                        onChange={this.onSearchChange}
+                    />
+                    {this.getClearButton()}
+                </div>
+            </div>
+        );
+    }
 });
 
 const LibraryCards = React.createClass({
@@ -165,7 +276,7 @@ const LibraryCards = React.createClass({
         return (
             <div>
                 <div className="row m-b">
-                    <div className="col-sm-12">
+                    <div className="col-sm-12" id="cards-list-nav">
                         <a href="#"
                             className="btn btn-sm btn-success m-r"
                             onClick={this.toNewCard}
@@ -175,9 +286,10 @@ const LibraryCards = React.createClass({
                             onClick={this.toReview}
                         >{'Review this Deck'}</a>
 
-                        <div className="pull-right">
-                            <CardsSortDropDown />
-                        </div>
+                        <SearchBar />
+
+                        <CardsSortDropDown />
+
                     </div>
                 </div>
                 <div className="row m-b">
