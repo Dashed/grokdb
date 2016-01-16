@@ -1,3 +1,6 @@
+#![feature(convert)]
+// https://github.com/rust-lang/rust/issues/27729
+
 // crates
 extern crate regex;
 extern crate chrono;

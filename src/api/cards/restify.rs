@@ -710,11 +710,29 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         _ => SortOrder::Descending
                     };
 
+                    let search: Option<String> = match hashmap.contains_key("search") {
+                        true => {
+                            let maybe_search: &Vec<String> = hashmap.get("search").unwrap();
+
+                            if maybe_search.len() <= 0 {
+                                None
+                            } else {
+
+                                let ref search: String = maybe_search[0];
+
+                                let search: String = search.trim().to_string();
+                                Some(search)
+                            }
+                        },
+                        _ => None
+                    };
+
                     CardsPageRequest {
                         page: page,
                         per_page: per_page,
                         sort_by: sort_by,
-                        order: order
+                        order: order,
+                        search: search
                     }
                 },
 
@@ -723,7 +741,8 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         page: 1,
                         per_page: 25,
                         sort_by: SortBy::UpdatedAt,
-                        order: SortOrder::Descending
+                        order: SortOrder::Descending,
+                        search: None
                     }
                 },
 
@@ -1187,11 +1206,29 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         _ => SortOrder::Descending
                     };
 
+                    let search: Option<String> = match hashmap.contains_key("search") {
+                        true => {
+                            let maybe_search: &Vec<String> = hashmap.get("search").unwrap();
+
+                            if maybe_search.len() <= 0 {
+                                None
+                            } else {
+
+                                let ref search: String = maybe_search[0];
+
+                                let search: String = search.trim().to_string();
+                                Some(search)
+                            }
+                        },
+                        _ => None
+                    };
+
                     CardsPageRequest {
                         page: page,
                         per_page: per_page,
                         sort_by: sort_by,
-                        order: order
+                        order: order,
+                        search: search
                     }
                 },
 
@@ -1200,7 +1237,8 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                         page: 1,
                         per_page: 25,
                         sort_by: SortBy::UpdatedAt,
-                        order: SortOrder::Descending
+                        order: SortOrder::Descending,
+                        search: None
                     }
                 },
 

@@ -1,4 +1,4 @@
-pub const SETUP: [&'static str; 22] = [
+pub const SETUP: [&'static str; 26] = [
 
     // configs
 
@@ -67,7 +67,13 @@ pub const SETUP: [&'static str; 22] = [
 
     // review
     CACHED_DECK_REVIEW,
-    CACHED_STASH_REVIEW
+    CACHED_STASH_REVIEW,
+
+    // FTS3/4 full-text searching sqlite module
+    CARD_SEARCH_INDEX,
+    CARD_SEARCH_FIRST_INDEX_TRIGGER,
+    CARD_SEARCH_DELETE_INDEX_TRIGGER,
+    CARD_SEARCH_UPDATE_INDEX_TRIGGER
 ];
 
 /**
@@ -367,4 +373,45 @@ CREATE TABLE IF NOT EXISTS CachedStashReview (
     FOREIGN KEY (stash) REFERENCES Stashes(stash_id) ON DELETE CASCADE,
     FOREIGN KEY (card) REFERENCES Cards(card_id) ON DELETE CASCADE
 );
+";
+
+const CARD_SEARCH_INDEX: &'static str = "
+CREATE VIRTUAL TABLE IF NOT EXISTS
+    CardsFTS
+USING fts4(
+    title TEXT,
+    description TEXT,
+    front TEXT,
+    back TEXT
+);
+";
+
+const CARD_SEARCH_FIRST_INDEX_TRIGGER: &'static str = "
+CREATE TRIGGER IF NOT EXISTS CARD_SEARCH_FIRST_INDEX_TRIGGER
+AFTER INSERT
+ON Cards
+BEGIN
+    INSERT OR REPLACE INTO CardsFTS(docid, title, description, front, back)
+    VALUES (NEW.card_id, NEW.title, NEW.description, NEW.front, NEW.back);
+END;
+";
+
+const CARD_SEARCH_DELETE_INDEX_TRIGGER: &'static str = "
+CREATE TRIGGER IF NOT EXISTS CARD_SEARCH_DELETE_INDEX_TRIGGER
+AFTER DELETE
+ON Cards
+BEGIN
+    DELETE FROM CardsFTS WHERE docid=OLD.card_id;
+END;
+";
+
+const CARD_SEARCH_UPDATE_INDEX_TRIGGER: &'static str = "
+CREATE TRIGGER IF NOT EXISTS CARD_SEARCH_UPDATE_INDEX_TRIGGER
+AFTER UPDATE OF
+title, description, front, back, deck
+ON Cards
+BEGIN
+    INSERT OR REPLACE INTO CardsFTS(docid, title, description, front, back)
+    VALUES (NEW.card_id, NEW.title, NEW.description, NEW.front, NEW.back);
+END;
 ";

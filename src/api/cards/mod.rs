@@ -34,7 +34,8 @@ pub struct CardsPageRequest {
     page: i64,
     per_page: i64,
     sort_by: SortBy,
-    order: SortOrder
+    order: SortOrder,
+    search: Option<String>
 }
 
 impl CardsPageRequest {
@@ -300,11 +301,24 @@ impl CardsAPI {
 
         let ref query = get_by_deck_query(page_query);
 
-        let params: &[(&str, &ToSql)] = &[
+        let offset = page_query.get_offset();
+        let per_page = page_query.per_page;
+        let mut search_query: &str = "";
+
+
+        let mut params: Vec<(&str, &ToSql)> = vec![
             (":deck_id", &deck_id),
-            (":offset", &(page_query.get_offset())),
-            (":per_page", &(page_query.per_page))
+            (":offset", &offset),
+            (":per_page", &per_page)
         ];
+
+        if page_query.search.is_some() {
+            search_query = page_query.search.as_ref().unwrap();
+            params.push((":search_query", &search_query));
+        }
+        let search_query = search_query;
+
+        let params: &[(&str, &ToSql)] = params.as_slice();
 
         let maybe_stmt = db_conn.prepare(query);
 
@@ -715,6 +729,23 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
         SortOrder::Ascending => "ASC"
     };
 
+    let search_inner_join: &str = match page_query.search {
+        None => "",
+        Some(_) => {
+            "
+            INNER JOIN CardsFTS
+            ON CardsFTS.docid = c.card_id
+            "
+        }
+    };
+
+    let search_where_cond: &str = match page_query.search {
+        None => "",
+        Some(_) => {
+            "AND CardsFTS MATCH :search_query"
+        }
+    };
+
     let query = match page_query.sort_by {
 
         SortBy::CreatedAt => {
@@ -726,6 +757,8 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
                 INNER JOIN Cards AS c
                 ON c.deck = dc.descendent
 
+                {search_inner_join}
+
                 WHERE
                 c.oid NOT IN (
                     SELECT
@@ -735,13 +768,26 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
                     INNER JOIN Cards AS c
                     ON c.deck = dc.descendent
 
-                    WHERE dc.ancestor = :deck_id
+                    {search_inner_join}
+
+                    WHERE
+                    dc.ancestor = :deck_id
+
+                    {search_where_cond}
+
                     ORDER BY c.created_at {sort_order} LIMIT :offset
                 )
+
                 AND
                 dc.ancestor = :deck_id
+
+                {search_where_cond}
+
                 ORDER BY c.created_at {sort_order} LIMIT :per_page;
-            ", sort_order = sort_order)
+            ",
+            sort_order = sort_order,
+            search_inner_join = search_inner_join,
+            search_where_cond = search_where_cond)
         },
 
         SortBy::UpdatedAt => {
@@ -753,6 +799,8 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
                 INNER JOIN Cards AS c
                 ON c.deck = dc.descendent
 
+                {search_inner_join}
+
                 WHERE
                 c.oid NOT IN (
                     SELECT
@@ -762,13 +810,25 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
                     INNER JOIN Cards AS c
                     ON c.deck = dc.descendent
 
-                    WHERE dc.ancestor = :deck_id
+                    {search_inner_join}
+
+                    WHERE
+                    dc.ancestor = :deck_id
+
+                    {search_where_cond}
+
                     ORDER BY c.updated_at {sort_order} LIMIT :offset
                 )
                 AND
                 dc.ancestor = :deck_id
+
+                {search_where_cond}
+
                 ORDER BY c.updated_at {sort_order} LIMIT :per_page;
-            ", sort_order = sort_order)
+            ",
+            sort_order = sort_order,
+            search_inner_join = search_inner_join,
+            search_where_cond = search_where_cond)
         },
 
         SortBy::Title => {
@@ -780,6 +840,8 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
                 INNER JOIN Cards AS c
                 ON c.deck = dc.descendent
 
+                {search_inner_join}
+
                 WHERE
                 c.oid NOT IN (
                     SELECT
@@ -789,79 +851,149 @@ fn get_by_deck_query(page_query: &CardsPageRequest) -> String {
                     INNER JOIN Cards AS c
                     ON c.deck = dc.descendent
 
-                    WHERE dc.ancestor = :deck_id
+                    {search_inner_join}
+
+                    WHERE
+                    dc.ancestor = :deck_id
+
+                    {search_where_cond}
+
                     ORDER BY c.title {sort_order} LIMIT :offset
                 )
                 AND
                 dc.ancestor = :deck_id
+
+                {search_where_cond}
+
                 ORDER BY c.title {sort_order} LIMIT :per_page;
-            ", sort_order = sort_order)
+            ",
+            sort_order = sort_order,
+            search_inner_join = search_inner_join,
+            search_where_cond = search_where_cond)
         },
 
         SortBy::ReviewedDate => {
 
             format!("
-SELECT *
-FROM   (SELECT *
-        FROM   (SELECT c.card_id,
-                       c.title,
-                       c.description,
-                       c.front,
-                       c.back,
-                       c.deck,
-                       c.created_at,
-                       c.updated_at
-                FROM   decksclosure AS dc
-                       INNER JOIN cards AS c
-                               ON c.deck = dc.descendent
-                       INNER JOIN cardsscore AS cs
-                               ON cs.card = c.card_id
-                WHERE  dc.ancestor = :deck_id
-                       AND cs.times_reviewed > 0
-                ORDER  BY cs.reviewed_at {sort_order})
-        UNION ALL
-        SELECT *
-        FROM   (SELECT c.card_id,
-                       c.title,
-                       c.description,
-                       c.front,
-                       c.back,
-                       c.deck,
-                       c.created_at,
-                       c.updated_at
-                FROM   decksclosure AS dc
-                       INNER JOIN cards AS c
-                               ON c.deck = dc.descendent
-                       INNER JOIN cardsscore AS cs
-                               ON cs.card = c.card_id
-                WHERE  dc.ancestor = :deck_id
-                       AND cs.times_reviewed = 0
-                ORDER  BY cs.reviewed_at {sort_order})) AS res
-WHERE  res.card_id NOT IN (SELECT *
-                           FROM   (SELECT c.oid
-                                   FROM   decksclosure AS dc
-                                          INNER JOIN cards AS c
-                                                  ON c.deck = dc.descendent
-                                          INNER JOIN cardsscore AS cs
-                                                  ON cs.card = c.card_id
-                                   WHERE  dc.ancestor = :deck_id
-                                          AND cs.times_reviewed > 0
-                                   ORDER  BY cs.reviewed_at {sort_order})
-                           UNION ALL
-                           SELECT *
-                           FROM   (SELECT c.oid
-                                   FROM   decksclosure AS dc
-                                          INNER JOIN cards AS c
-                                                  ON c.deck = dc.descendent
-                                          INNER JOIN cardsscore AS cs
-                                                  ON cs.card = c.card_id
-                                   WHERE  dc.ancestor = :deck_id
-                                          AND cs.times_reviewed = 0
-                                   ORDER  BY cs.reviewed_at {sort_order})
-                           LIMIT
-                           :offset)
-LIMIT  :per_page;
-            ", sort_order = sort_order)
+                SELECT *
+                FROM
+                    (
+                        SELECT * FROM
+                            (
+                                SELECT
+                                    c.card_id,
+                                    c.title,
+                                    c.description,
+                                    c.front,
+                                    c.back,
+                                    c.deck,
+                                    c.created_at,
+                                    c.updated_at
+
+                                FROM decksclosure AS dc
+
+                                INNER JOIN cards AS c
+                                    ON c.deck = dc.descendent
+                                INNER JOIN cardsscore AS cs
+                                    ON cs.card = c.card_id
+
+                                {search_inner_join}
+
+                                WHERE
+                                    dc.ancestor = :deck_id
+                                AND
+                                    cs.times_reviewed > 0
+
+                                {search_where_cond}
+
+                                ORDER  BY cs.reviewed_at {sort_order}
+                            )
+                        UNION ALL
+                        SELECT * FROM
+                            (
+                                SELECT
+                                    c.card_id,
+                                    c.title,
+                                    c.description,
+                                    c.front,
+                                    c.back,
+                                    c.deck,
+                                    c.created_at,
+                                    c.updated_at
+
+                                FROM decksclosure AS dc
+
+                                INNER JOIN cards AS c
+                                    ON c.deck = dc.descendent
+                                INNER JOIN cardsscore AS cs
+                                    ON cs.card = c.card_id
+
+                                {search_inner_join}
+
+                                WHERE
+                                    dc.ancestor = :deck_id
+                                AND
+                                    cs.times_reviewed = 0
+
+                                {search_where_cond}
+
+                                ORDER  BY cs.reviewed_at {sort_order}
+                            )
+                    ) AS res
+
+                    WHERE res.card_id NOT IN (
+                        SELECT * FROM
+                            (
+                                SELECT
+                                    c.oid
+                                FROM decksclosure AS dc
+
+                                INNER JOIN cards AS c
+                                    ON c.deck = dc.descendent
+                                INNER JOIN cardsscore AS cs
+                                    ON cs.card = c.card_id
+
+                                {search_inner_join}
+
+                                WHERE
+                                    dc.ancestor = :deck_id
+                                AND
+                                    cs.times_reviewed > 0
+
+                                {search_where_cond}
+
+                                ORDER  BY cs.reviewed_at {sort_order}
+                            )
+                            UNION ALL
+                        SELECT * FROM
+                            (
+                                SELECT
+                                    c.oid
+                                FROM decksclosure AS dc
+
+                                INNER JOIN cards AS c
+                                    ON c.deck = dc.descendent
+                                INNER JOIN cardsscore AS cs
+                                    ON cs.card = c.card_id
+
+                                {search_inner_join}
+
+                                WHERE
+                                    dc.ancestor = :deck_id
+                                AND
+                                    cs.times_reviewed = 0
+
+                                {search_where_cond}
+
+                                ORDER  BY cs.reviewed_at {sort_order}
+                            )
+                        LIMIT :offset
+                    )
+                    LIMIT  :per_page;
+            ",
+            sort_order = sort_order,
+            search_inner_join = search_inner_join,
+            search_where_cond = search_where_cond)
 
         },
 
@@ -877,6 +1009,8 @@ LIMIT  :per_page;
                 INNER JOIN CardsScore AS cs
                 ON cs.card = c.card_id
 
+                {search_inner_join}
+
                 WHERE
                 c.oid NOT IN (
                     SELECT
@@ -889,13 +1023,25 @@ LIMIT  :per_page;
                     INNER JOIN CardsScore AS cs
                     ON cs.card = c.card_id
 
-                    WHERE dc.ancestor = :deck_id
+                    {search_inner_join}
+
+                    WHERE
+                    dc.ancestor = :deck_id
+
+                    {search_where_cond}
+
                     ORDER BY cs.times_reviewed {sort_order} LIMIT :offset
                 )
                 AND
                 dc.ancestor = :deck_id
+
+                {search_where_cond}
+
                 ORDER BY cs.times_reviewed {sort_order} LIMIT :per_page;
-            ", sort_order = sort_order)
+            ",
+            sort_order = sort_order,
+            search_inner_join = search_inner_join,
+            search_where_cond = search_where_cond)
         },
     };
 
@@ -909,6 +1055,23 @@ fn get_by_stash_query(page_query: &CardsPageRequest) -> String {
         SortOrder::Ascending => "ASC"
     };
 
+    let search_inner_join: &str = match page_query.search {
+        None => "",
+        Some(_) => {
+            "
+            INNER JOIN CardsFTS
+            ON CardsFTS.docid = c.card_id
+            "
+        }
+    };
+
+    let search_where_cond: &str = match page_query.search {
+        None => "",
+        Some(_) => {
+            "AND CardsFTS MATCH :search_query"
+        }
+    };
+
     let query = match page_query.sort_by {
 
         SortBy::CreatedAt => {
@@ -920,6 +1083,8 @@ fn get_by_stash_query(page_query: &CardsPageRequest) -> String {
                 INNER JOIN Cards AS c
                 ON c.card_id = sc.card
 
+                {search_inner_join}
+
                 WHERE
                 c.oid NOT IN (
                     SELECT
@@ -929,13 +1094,25 @@ fn get_by_stash_query(page_query: &CardsPageRequest) -> String {
                     INNER JOIN Cards AS c
                     ON c.card_id = sc.card
 
-                    WHERE sc.stash = :stash_id
+                    {search_inner_join}
+
+                    WHERE
+                    sc.stash = :stash_id
+
+                    {search_where_cond}
+
                     ORDER BY c.created_at {sort_order} LIMIT :offset
                 )
                 AND
                 sc.stash = :stash_id
+
+                {search_where_cond}
+
                 ORDER BY c.created_at {sort_order} LIMIT :per_page;
-            ", sort_order = sort_order)
+            ",
+            sort_order = sort_order,
+            search_inner_join = search_inner_join,
+            search_where_cond = search_where_cond)
         },
 
         SortBy::UpdatedAt => {
@@ -947,6 +1124,8 @@ fn get_by_stash_query(page_query: &CardsPageRequest) -> String {
                 INNER JOIN Cards AS c
                 ON c.card_id = sc.card
 
+                {search_inner_join}
+
                 WHERE
                 c.oid NOT IN (
                     SELECT
@@ -956,13 +1135,25 @@ fn get_by_stash_query(page_query: &CardsPageRequest) -> String {
                     INNER JOIN Cards AS c
                     ON c.card_id = sc.card
 
-                    WHERE sc.stash = :stash_id
+                    {search_inner_join}
+
+                    WHERE
+                    sc.stash = :stash_id
+
+                    {search_where_cond}
+
                     ORDER BY c.updated_at {sort_order} LIMIT :offset
                 )
                 AND
                 sc.stash = :stash_id
+
+                {search_where_cond}
+
                 ORDER BY c.updated_at {sort_order} LIMIT :per_page;
-            ", sort_order = sort_order)
+            ",
+            sort_order = sort_order,
+            search_inner_join = search_inner_join,
+            search_where_cond = search_where_cond)
         },
 
         SortBy::Title => {
@@ -974,6 +1165,8 @@ fn get_by_stash_query(page_query: &CardsPageRequest) -> String {
                 INNER JOIN Cards AS c
                 ON c.card_id = sc.card
 
+                {search_inner_join}
+
                 WHERE
                 c.oid NOT IN (
                     SELECT
@@ -983,78 +1176,147 @@ fn get_by_stash_query(page_query: &CardsPageRequest) -> String {
                     INNER JOIN Cards AS c
                     ON c.card_id = sc.card
 
-                    WHERE sc.stash = :stash_id
+                    {search_inner_join}
+
+                    WHERE
+                    sc.stash = :stash_id
+
+                    {search_where_cond}
+
                     ORDER BY c.title {sort_order} LIMIT :offset
                 )
                 AND
                 sc.stash = :stash_id
+
+                {search_where_cond}
+
                 ORDER BY c.title {sort_order} LIMIT :per_page;
-            ", sort_order = sort_order)
+            ",
+            sort_order = sort_order,
+            search_inner_join = search_inner_join,
+            search_where_cond = search_where_cond)
         },
 
         SortBy::ReviewedDate => {
             format!("
-SELECT *
-FROM   (SELECT *
-        FROM   (SELECT c.card_id,
-                       c.title,
-                       c.description,
-                       c.front,
-                       c.back,
-                       c.deck,
-                       c.created_at,
-                       c.updated_at
-                FROM   StashCards AS sc
-                       INNER JOIN cards AS c
-                               ON c.card_id = sc.card
-                       INNER JOIN cardsscore AS cs
-                               ON cs.card = c.card_id
-                WHERE  sc.stash = :stash_id
-                       AND cs.times_reviewed > 0
-                ORDER  BY cs.reviewed_at {sort_order})
-        UNION ALL
-        SELECT *
-        FROM   (SELECT c.card_id,
-                       c.title,
-                       c.description,
-                       c.front,
-                       c.back,
-                       c.deck,
-                       c.created_at,
-                       c.updated_at
-                FROM   StashCards AS sc
-                       INNER JOIN cards AS c
-                               ON c.card_id = sc.card
-                       INNER JOIN cardsscore AS cs
-                               ON cs.card = c.card_id
-                WHERE  sc.stash = :stash_id
-                       AND cs.times_reviewed = 0
-                ORDER  BY cs.reviewed_at {sort_order})) AS res
-WHERE  res.card_id NOT IN (SELECT *
-                           FROM   (SELECT c.oid
-                                   FROM   StashCards AS sc
-                                          INNER JOIN cards AS c
-                                                  ON c.card_id = sc.card
-                                          INNER JOIN cardsscore AS cs
-                                                  ON cs.card = c.card_id
-                                   WHERE  sc.stash = :stash_id
-                                          AND cs.times_reviewed > 0
-                                   ORDER  BY cs.reviewed_at {sort_order})
-                           UNION ALL
-                           SELECT *
-                           FROM   (SELECT c.oid
-                                   FROM   StashCards AS sc
-                                          INNER JOIN cards AS c
-                                                  ON c.card_id = sc.card
-                                          INNER JOIN cardsscore AS cs
-                                                  ON cs.card = c.card_id
-                                   WHERE  sc.stash = :stash_id
-                                          AND cs.times_reviewed = 0
-                                   ORDER  BY cs.reviewed_at {sort_order})
-                           LIMIT
-                           :offset)
-LIMIT  :per_page;
-            ", sort_order = sort_order)
+                SELECT * FROM
+                    (
+                        SELECT * FROM
+                            (
+                                SELECT
+                                    c.card_id,
+                                    c.title,
+                                    c.description,
+                                    c.front,
+                                    c.back,
+                                    c.deck,
+                                    c.created_at,
+                                    c.updated_at
+
+                                FROM   StashCards AS sc
+
+                                INNER JOIN cards AS c
+                                    ON c.card_id = sc.card
+                                INNER JOIN cardsscore AS cs
+                                    ON cs.card = c.card_id
+
+                                    {search_inner_join}
+
+                                WHERE
+                                    sc.stash = :stash_id
+                                AND
+                                    cs.times_reviewed > 0
+
+                                    {search_where_cond}
+
+                                ORDER  BY cs.reviewed_at {sort_order}
+                            )
+                            UNION ALL
+                        SELECT * FROM
+                            (
+                                SELECT
+                                    c.card_id,
+                                    c.title,
+                                    c.description,
+                                    c.front,
+                                    c.back,
+                                    c.deck,
+                                    c.created_at,
+                                    c.updated_at
+
+                                FROM   StashCards AS sc
+
+                                INNER JOIN cards AS c
+                                    ON c.card_id = sc.card
+                                INNER JOIN cardsscore AS cs
+                                    ON cs.card = c.card_id
+
+                                    {search_inner_join}
+
+                                WHERE
+                                    sc.stash = :stash_id
+                                AND
+                                    cs.times_reviewed = 0
+
+                                    {search_where_cond}
+
+                                ORDER  BY cs.reviewed_at {sort_order}
+                            )
+                        ) AS res
+
+                        WHERE  res.card_id NOT IN (
+                            SELECT * FROM
+                                (
+                                    SELECT
+                                        c.oid
+                                    FROM   StashCards AS sc
+
+                                    INNER JOIN cards AS c
+                                        ON c.card_id = sc.card
+                                    INNER JOIN cardsscore AS cs
+                                        ON cs.card = c.card_id
+
+                                        {search_inner_join}
+
+                                    WHERE
+                                        sc.stash = :stash_id
+                                    AND
+                                        cs.times_reviewed > 0
+
+                                        {search_where_cond}
+
+                                    ORDER  BY cs.reviewed_at {sort_order}
+                                )
+                                UNION ALL
+                            SELECT * FROM
+                                (
+                                    SELECT
+                                        c.oid
+                                    FROM   StashCards AS sc
+
+                                    INNER JOIN cards AS c
+                                        ON c.card_id = sc.card
+                                    INNER JOIN cardsscore AS cs
+                                        ON cs.card = c.card_id
+
+                                        {search_inner_join}
+
+                                    WHERE
+                                        sc.stash = :stash_id
+                                    AND
+                                        cs.times_reviewed = 0
+
+                                        {search_where_cond}
+
+                                    ORDER  BY cs.reviewed_at {sort_order}
+                                )
+                            LIMIT :offset
+                        )
+                        LIMIT  :per_page;
+            ",
+            sort_order = sort_order,
+            search_inner_join = search_inner_join,
+            search_where_cond = search_where_cond)
         },
 
         SortBy::TimesReviewed => {
@@ -1069,6 +1331,8 @@ LIMIT  :per_page;
                 INNER JOIN CardsScore AS cs
                 ON cs.card = c.card_id
 
+                {search_inner_join}
+
                 WHERE
                 c.oid NOT IN (
                     SELECT
@@ -1081,13 +1345,25 @@ LIMIT  :per_page;
                     INNER JOIN CardsScore AS cs
                     ON cs.card = c.card_id
 
-                    WHERE sc.stash = :stash_id
+                    {search_inner_join}
+
+                    WHERE
+                    sc.stash = :stash_id
+
+                    {search_where_cond}
+
                     ORDER BY cs.times_reviewed {sort_order} LIMIT :offset
                 )
                 AND
                 sc.stash = :stash_id
+
+                {search_where_cond}
+
                 ORDER BY cs.times_reviewed {sort_order} LIMIT :per_page;
-            ", sort_order = sort_order)
+            ",
+            sort_order = sort_order,
+            search_inner_join = search_inner_join,
+            search_where_cond = search_where_cond)
         },
     };
 
