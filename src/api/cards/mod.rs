@@ -254,10 +254,27 @@ impl CardsAPI {
         };
     }
 
-    pub fn count_by_deck(&self, deck_id: i64) -> Result<i64, QueryError> {
+    pub fn count_by_deck(&self, deck_id: i64, maybe_search_query: Option<String>) -> Result<i64, QueryError> {
 
         let db_conn_guard = self.db.lock().unwrap();
         let ref db_conn = *db_conn_guard;
+
+        let search_inner_join: &str = match maybe_search_query {
+            None => "",
+            Some(_) => {
+                "
+                INNER JOIN CardsFTS
+                ON CardsFTS.docid = c.card_id
+                "
+            }
+        };
+
+        let search_where_cond: &str = match maybe_search_query {
+            None => "",
+            Some(_) => {
+                "AND CardsFTS MATCH :search_query"
+            }
+        };
 
         let ref query = format!("
             SELECT
@@ -267,12 +284,30 @@ impl CardsAPI {
             INNER JOIN Cards AS c
             ON c.deck = dc.descendent
 
-            WHERE dc.ancestor = :deck_id;
-        ");
+            {search_inner_join}
 
-        let params: &[(&str, &ToSql)] = &[
+            WHERE
+            dc.ancestor = :deck_id
+            {search_where_cond}
+            ;
+        ",
+        search_inner_join = search_inner_join,
+        search_where_cond = search_where_cond);
+
+        let mut search_query: &str = "";
+
+        let mut params: Vec<(&str, &ToSql)> = vec![
             (":deck_id", &deck_id)
         ];
+
+        if maybe_search_query.is_some() {
+            search_query = maybe_search_query.as_ref().unwrap();
+            params.push((":search_query", &search_query));
+        }
+        let search_query = search_query;
+
+        let params: &[(&str, &ToSql)] = params.as_slice();
+
 
         let maybe_count = db_conn.query_row_named(query, params, |row| -> i64 {
             return row.get(0);

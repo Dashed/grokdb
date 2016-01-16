@@ -790,7 +790,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 _ => {/* noop; continue */}
             }
 
-            match grokdb.cards.count_by_deck(deck_id) {
+            match grokdb.cards.count_by_deck(deck_id, None) {
 
                 Err(why) => {
                     // why: QueryError
@@ -902,6 +902,53 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
         move |req: &mut Request| -> IronResult<Response> {
             let ref grokdb = grokdb.deref();
 
+
+            // fetch any search query
+            let search_query: Option<String> = match req.get_ref::<UrlEncodedQuery>() {
+
+                Ok(ref hashmap) => {
+
+                    let hashmap: &QueryMap = hashmap;
+
+                    let search: Option<String> = match hashmap.contains_key("search") {
+                        true => {
+                            let maybe_search: &Vec<String> = hashmap.get("search").unwrap();
+
+                            if maybe_search.len() <= 0 {
+                                None
+                            } else {
+
+                                let ref search: String = maybe_search[0];
+
+                                let search: String = search.trim().to_string();
+                                Some(search)
+                            }
+                        },
+                        _ => None
+                    };
+
+                    search
+                },
+
+                Err(UrlDecodingError::EmptyQuery) => {
+                    None
+                },
+
+                Err(why) => {
+
+                    let ref reason = format!("{:?}", why);
+                    let res_code = status::BadRequest;
+
+                    let err_response = ErrorResponse {
+                        status: res_code,
+                        developerMessage: reason,
+                        userMessage: why.description(),
+                    }.to_json();
+
+                    return Ok(Response::with((res_code, err_response)));
+                }
+            };
+
             // fetch and parse requested deck id
 
             let deck_id: &str = req.extensions.get::<Router>().unwrap().find("deck_id").unwrap();
@@ -931,7 +978,7 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 _ => {/* noop; continue */}
             }
 
-            let count = match grokdb.cards.count_by_deck(deck_id) {
+            let count = match grokdb.cards.count_by_deck(deck_id, search_query) {
                 Err(why) => {
                     // why: QueryError
 

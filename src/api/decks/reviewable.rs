@@ -115,7 +115,7 @@ impl ReviewableSelection for ReviewableDeck {
 
     fn number_of_cards(&self) -> Result<i64, QueryError> {
 
-        match self.grokdb.deref().cards.count_by_deck(self.deck_id) {
+        match self.grokdb.deref().cards.count_by_deck(self.deck_id, None) {
             Err(err) => {
                 return Err(err);
             },
