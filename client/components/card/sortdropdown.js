@@ -10,12 +10,12 @@ const listOrder = [
     ['Least Recently Reviewed', [cardPagination.sort.REVIEWED_AT, cardPagination.order.ASC]],
     ['Most Frequently Reviewed', [cardPagination.sort.TIMES_REVIEWED, cardPagination.order.DESC]],
     ['Least Frequently Reviewed', [cardPagination.sort.TIMES_REVIEWED, cardPagination.order.ASC]],
+    ['Recently Updated', [cardPagination.sort.UPDATED_AT, cardPagination.order.DESC]],
+    ['Least Recently Updated', [cardPagination.sort.UPDATED_AT, cardPagination.order.ASC]],
     ['Card Title Descending', [cardPagination.sort.TITLE, cardPagination.order.DESC]],
     ['Card Title Ascending', [cardPagination.sort.TITLE, cardPagination.order.ASC]],
     ['Recently Created', [cardPagination.sort.CREATED_AT, cardPagination.order.DESC]],
-    ['Least Recently Created', [cardPagination.sort.CREATED_AT, cardPagination.order.ASC]],
-    ['Recently Updated', [cardPagination.sort.UPDATED_AT, cardPagination.order.DESC]],
-    ['Least Recently Updated', [cardPagination.sort.UPDATED_AT, cardPagination.order.ASC]]
+    ['Least Recently Created', [cardPagination.sort.CREATED_AT, cardPagination.order.ASC]]
 ];
 
 const listOrderInverse = _.reduce(listOrder, (accumulator, [label, path]) => {
