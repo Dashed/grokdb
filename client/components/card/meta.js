@@ -87,7 +87,11 @@ const CardMeta = React.createClass({
 
         const timesSeen = card.getIn(['review_stat', 'times_seen']);
 
-        const chosenForReview = timesSeen > 0 ? `Chosen for review ${timesSeen} ${timesSeen > 1 ? 'times' : 'time'}.` : `Hasn't been chosen for review yet.`;
+        const chosenForReview = timesSeen > 0 ? `Chosen for review ${timesSeen} ${timesSeen > 1 ? 'times' : 'time'}.` :
+            `Hasn't been chosen for review yet.`;
+
+        const lastChosenForReview = timesSeen > 0 ? `Last chosen for review ${lastChosenDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${lastChosenDatetime.fromNow()})` :
+            `Created on ${lastChosenDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${lastChosenDatetime.fromNow()})`;
 
         return (
             <div className="row">
@@ -104,7 +108,7 @@ const CardMeta = React.createClass({
                                 {`${extraSummary}`}
                             </p>
                             <p className="card-text">
-                                {`Last chosen for review ${lastChosenDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${lastChosenDatetime.fromNow()})`}
+                                {lastChosenForReview}
                             </p>
                             <p className="card-text">
                                 {chosenForReview}
@@ -167,10 +171,10 @@ const CardMeta = React.createClass({
                         />
                         <div className="card-block">
                             <p className="card-text">
-                                {`Updated ${updatedAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${updatedAtDatetime.fromNow()})`}
+                                {`Updated on ${updatedAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${updatedAtDatetime.fromNow()})`}
                             </p>
                             <p className="card-text">
-                                {`Created ${createdAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${createdAtDatetime.fromNow()})`}
+                                {`Created on ${createdAtDatetime.format('dddd, MMMM Do YYYY, h:mm:ss a')} (${createdAtDatetime.fromNow()})`}
                             </p>
                         </div>
                     </div>
