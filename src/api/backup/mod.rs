@@ -132,6 +132,24 @@ pub fn restify(router: &mut Router, grokdb: GrokDB) {
                 }
             };
 
+            let mut backup_request = backup_request;
+
+            // if no dest_path is given, fallback to any default backup_base_dest
+
+            match grokdb.backup_base_dest {
+                None => {/* continue */},
+                Some(ref backup_base_dest) => {
+
+                    if backup_request.dest_path.is_none() {
+                        backup_request.dest_path = Some(format!("{}", backup_base_dest));
+                    }
+                }
+            }
+
+            let backup_request = backup_request;
+
+            // back up database
+
             let db_conn_guard = grokdb.decks.db.lock().unwrap();
             let ref db_conn = *db_conn_guard;
 

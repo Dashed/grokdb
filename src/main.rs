@@ -126,6 +126,23 @@ fn main() {
             })
         )
         .arg(
+            Arg::with_name("backup")
+            .short("b")
+            .long("backup")
+            .help("Set the path to the backup directory. By default, it will be the current directory.")
+            .takes_value(true)
+            .multiple(false)
+            .required(false)
+            .validator(|asset_path| {
+                let asset_path = asset_path.trim();
+                if asset_path.len() <= 0 {
+                    return Err(String::from("invalid directory static dir path"));
+                } else {
+                    return Ok(());
+                }
+            })
+        )
+        .arg(
             Arg::with_name("database_name")
             .help("Database name to store your flashcards")
             .required(true)
@@ -176,6 +193,15 @@ fn main() {
             std::process::exit(1);
         }
     };
+
+    let mut grokdb = grokdb;
+
+    if let Some(ref backup_path) = cmd_matches.value_of("backup") {
+        let backup_path = backup_path.trim();
+        grokdb.backup_base_dest = Some(format!("{}", backup_path));
+    }
+
+    let grokdb = grokdb;
 
     /* set up iron router */
 

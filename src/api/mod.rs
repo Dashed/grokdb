@@ -82,11 +82,13 @@ pub struct __ErrorResponse  {
 #[derive(Debug, Clone)]
 pub struct GrokDB {
     pub base_db_name: String,
+    pub backup_base_dest: Option<String>,
+
     pub decks: DecksAPI,
     pub cards: CardsAPI,
     pub stashes: StashesAPI,
     pub review: ReviewAPI,
-    pub configs: ConfigsAPI
+    pub configs: ConfigsAPI,
 }
 
 pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
@@ -109,6 +111,7 @@ pub fn new(database_name: String) -> Result<GrokDB, BootstrapError> {
 
     let api = GrokDB {
         base_db_name: base_db_name,
+        backup_base_dest: None,
 
         decks: DecksAPI {
             db: db.clone()
