@@ -165,19 +165,18 @@ const SearchBar = React.createClass({
     },
 
     onSearchChange(event) {
-        event.persist();
 
         this.setState({
             search: event.target.value
         });
 
-        this.delayedSearch(event);
+        this.delayedSearch(event.target.value);
     },
 
     componentWillMount: function () {
-        this.delayedSearch = _.debounce((event) => {
+        this.delayedSearch = _.debounce((query) => {
 
-            const query = String(event.target.value).trim();
+            query = String(query).trim();
 
             this.context.store.cards.changeSort(void 0, void 0, query);
 
