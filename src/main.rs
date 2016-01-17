@@ -75,8 +75,7 @@ fn main() {
             .long("port")
             .help("Port number to serve")
             .takes_value(true)
-            // TODO: refactor to remove this; i.e. automatically find a free port
-            .required(true)
+            .required(false)
             .validator(|port| {
                 let port = port.trim();
                 if port.len() <= 0 {
@@ -157,17 +156,6 @@ fn main() {
                 }
             })
         ).get_matches();
-
-    // TODO: if port number is not given, find an available one
-    // fetch port number to serve to
-    let port = cmd_matches.value_of("port")
-                            .unwrap()
-                            .trim();
-
-    let port: u16 = match port.parse::<u16>() {
-        Ok(port) => port,
-        _ => unreachable!()
-    };
 
     // fetch database name
 
@@ -267,11 +255,27 @@ fn main() {
         }
     }
 
+    // fetch port number to serve at
+    let port: u16 = match cmd_matches.value_of("port") {
+        // Binding with a port number of 0 will request that the OS assigns
+        // a port to this listener.
+        None => 0u16,
+        Some(ref port_str) => {
+
+            let port_str = port_str.trim();
+
+            match port_str.parse::<u16>() {
+                Ok(port) => port,
+                _ => unreachable!() // should already be validated to be u16
+            }
+        }
+    };
+
     /* start the server */
 
     match Iron::new(log_chain).http(("localhost", port)) {
         Err(why) => panic!("{:?}", why),
-        Ok(_) => println!("Listening on port {}", port),
+        Ok(listening) => println!("Listening on port {}", listening.socket.port()),
     }
 
 }
