@@ -75,7 +75,7 @@ fn main() {
             .long("port")
             .help("Port number to serve")
             .takes_value(true)
-            // TODO: refactor to remove this
+            // TODO: refactor to remove this; i.e. automatically find a free port
             .required(true)
             .validator(|port| {
                 let port = port.trim();
@@ -99,6 +99,7 @@ fn main() {
             .help("Sets directory path to serve web app from")
             .takes_value(true)
             .multiple(false)
+            .required(false)
             .validator(|app_path| {
                 let app_path = app_path.trim();
                 if app_path.len() <= 0 {
@@ -176,7 +177,9 @@ fn main() {
                                                 .to_string();
 
     if !database_name.to_lowercase().ends_with(".db") {
-        database_name = format!("{}.db", database_name)
+        database_name = format!("{}.db", database_name);
+
+        println!("Using database: {}", database_name);
     }
 
     let database_name = database_name;
@@ -199,50 +202,70 @@ fn main() {
     if let Some(ref backup_path) = cmd_matches.value_of("backup") {
         let backup_path = backup_path.trim();
         grokdb.backup_base_dest = Some(format!("{}", backup_path));
+
+        println!("Default back up path at: {}", backup_path);
     }
 
     let grokdb = grokdb;
 
+    /* iron middleware */
+    let mut router = Router::new();
+    let mut mount = Mount::new();
+
     /* set up iron router */
+
+    api::restify(&mut router, grokdb);
 
     /* REST API */
 
-    let mut router = Router::new();
-    api::restify(&mut router, grokdb);
+    mount.mount("/api", router);
 
     /* static files */
 
-    let mut mount = Mount::new();
+    let mut maybe_app_path: Option<&str> = None;
 
-    let app_path: &str = cmd_matches.value_of("app_path")
-                                .unwrap()
-                                .trim();
+    // set app path
+    if let Some(ref app_path) = cmd_matches.value_of("app_path") {
+        let app_path = app_path.trim();
+        mount.mount("/", Static::new(Path::new(app_path)));
 
-    mount
-        .mount("/api", router)
-        .mount("/", Static::new(Path::new(app_path)));
+        println!("Serving app at / from: {}", app_path);
 
+        maybe_app_path = Some(app_path);
+    }
+    let maybe_app_path = maybe_app_path;
+
+    // TODO: set multiple assets directory to /assets in the order they're defined via clap-rs
+    // set assets directory
     if let Some(ref asset_path) = cmd_matches.value_of("dir") {
         let asset_path = asset_path.trim();
         mount.mount("/assets", Static::new(Path::new(asset_path)));
+
+        println!("Serving assets at /assets from: {}", asset_path);
     }
 
-    /* iron logging */
-
     let mut log_chain = Chain::new(mount);
+
+    /* iron logging */
 
     let (logger_before, logger_after) = Logger::new(None);
 
     log_chain.link_before(logger_before);
     log_chain.link_after(logger_after);
 
+    // redirect to app on non-existent routes
 
-    let custom_404 = Custom404 {
-        staticfile: Static::new(app_path)
-    };
+    match maybe_app_path {
+        None => {/* continue */},
+        Some(app_path) => {
 
-    log_chain.link_after(custom_404);
+            let custom_404 = Custom404 {
+                staticfile: Static::new(app_path)
+            };
 
+            log_chain.link_after(custom_404);
+        }
+    }
 
     /* start the server */
 
