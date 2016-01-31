@@ -8,6 +8,10 @@ const NAME_STYLE = {
     'overflow': 'hidden'
 };
 
+// http://stackoverflow.com/questions/10182336/text-cropping-when-using-overflow-hidden
+const LINK_STYLE = {
+    'lineHeight': 1.3
+};
 
 const DeckListItem = React.createClass({
 
@@ -90,7 +94,7 @@ const DeckListItem = React.createClass({
             <li className="list-group-item">
                 {this.getButton()}
                 <h6 className="list-group-item-heading m-y-0" style={NAME_STYLE}>
-                    <a href="#" onClick={this.onClick} >
+                    <a href="#" onClick={this.onClick} style={LINK_STYLE} >
                         {deck.get('name')}
                     </a>
                 </h6>

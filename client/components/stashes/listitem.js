@@ -5,7 +5,13 @@ const courier = require('courier');
 
 const NAME_STYLE = {
     'overflowWrap': 'break-word',
-    'wordWrap': 'break-word'
+    'wordWrap': 'break-word',
+    'overflow': 'hidden'
+};
+
+// http://stackoverflow.com/questions/10182336/text-cropping-when-using-overflow-hidden
+const LINK_STYLE = {
+    'lineHeight': 1.3
 };
 
 const StashListItem = React.createClass({
@@ -33,7 +39,7 @@ const StashListItem = React.createClass({
         return (
             <li className="list-group-item">
                 <h6 className="list-group-item-heading m-y-0" style={NAME_STYLE}>
-                    <a href="#" onClick={this.onClick} >
+                    <a href="#" onClick={this.onClick} style={LINK_STYLE} >
                         {stash.get('name')}
                     </a>
                 </h6>
