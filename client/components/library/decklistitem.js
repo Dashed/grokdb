@@ -17,8 +17,11 @@ const DeckListItem = React.createClass({
         deck: React.PropTypes.instanceOf(Immutable.Map).isRequired
     },
 
-    onClick() {
+    onClickToDeck() {
+        this.context.store.routes.toLibraryDecks(this.props.deckID);
+    },
 
+    onClickToDeckCards() {
         this.context.store.routes.toDeck(this.props.deckID, 1);
     },
 
@@ -30,7 +33,8 @@ const DeckListItem = React.createClass({
             <DumbDeckListItem
                 deck={deck}
                 deckID={deckID}
-                onClick={this.onClick}
+                onClickToDeck={this.onClickToDeck}
+                onClickToDeckCards={this.onClickToDeckCards}
             />
         );
     }

@@ -19,7 +19,8 @@ const DeckListItem = React.createClass({
         deckID: React.PropTypes.number.isRequired,
         deck: React.PropTypes.instanceOf(Immutable.Map).isRequired,
 
-        onClick: React.PropTypes.func.isRequired,
+        onClickToDeck: React.PropTypes.func.isRequired,
+        onClickToDeckCards: React.PropTypes.func.isRequired,
 
         // cosmetic flags
         showSideButton: React.PropTypes.bool.isRequired,
@@ -36,11 +37,18 @@ const DeckListItem = React.createClass({
         };
     },
 
-    onClick(event) {
+    onClickToDeck(event) {
         event.preventDefault();
         event.stopPropagation();
 
-        this.props.onClick.call(void 0, this.props.deck);
+        this.props.onClickToDeck.call(void 0, this.props.deck);
+    },
+
+    onClickToDeckCards(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.props.onClickToDeckCards.call(void 0, this.props.deck);
     },
 
     onClickSideButton(event) {
@@ -94,13 +102,17 @@ const DeckListItem = React.createClass({
             <li className="list-group-item">
                 {this.getButton()}
                 <h6 className="list-group-item-heading m-y-0" style={NAME_STYLE}>
-                    <a href="#" onClick={this.onClick} style={LINK_STYLE} >
+                    <a href="#" onClick={this.onClickToDeck} style={LINK_STYLE} >
                         {deck.get('name')}
                     </a>
                 </h6>
                 <p className="list-group-item-text m-y-0">
                     <small className="text-muted">
                         {`Deck #${deck.get('id')} ${lastReviewed} ${numDecks}`}
+                    </small>
+                    {' '}
+                    <small className="text-muted">
+                        <a href="#" onClick={this.onClickToDeckCards}>{'View Cards'}</a>
                     </small>
                 </p>
             </li>

@@ -93,6 +93,10 @@ const DeckListItem = React.createClass({
         this.props.onSwitch.call(void 0, this.props.deckID);
     },
 
+    onClickToDeckCards() {
+        this.context.store.routes.toDeck(this.props.deckID, 1);
+    },
+
     onClickSideButton() {
 
         // const currentDeckID = this.context.store.decks.currentID();
@@ -145,7 +149,8 @@ const DeckListItem = React.createClass({
                 onClickSideButton={this.onClickSideButton}
                 deck={deck}
                 deckID={deckID}
-                onClick={this.onClick}
+                onClickToDeck={this.onClick}
+                onClickToDeckCards={this.onClickToDeckCards}
             />
         );
     }
