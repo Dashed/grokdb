@@ -63,21 +63,21 @@ const Subnav = React.createClass({
                 <li className="nav-item">
                     <a
                         className={classnames('nav-link', {
-                            'active': route == ROUTES.LIBRARY.VIEW.CARDS || route == ROUTES.LIBRARY.VIEW.ADD_CARD
-                        })}
-                        onClick={this.switchView(ROUTES.LIBRARY.VIEW.CARDS)}
-                        href="#">
-                        {'Cards'}
-                    </a>
-                </li>
-                <li className="nav-item">
-                    <a
-                        className={classnames('nav-link', {
                             'active': route == ROUTES.LIBRARY.VIEW.DECKS || route == ROUTES.LIBRARY.VIEW.ADD_DECK
                         })}
                         onClick={this.switchView(ROUTES.LIBRARY.VIEW.DECKS)}
                         href="#">
                         {'Decks'}
+                    </a>
+                </li>
+                <li className="nav-item">
+                    <a
+                        className={classnames('nav-link', {
+                            'active': route == ROUTES.LIBRARY.VIEW.CARDS || route == ROUTES.LIBRARY.VIEW.ADD_CARD
+                        })}
+                        onClick={this.switchView(ROUTES.LIBRARY.VIEW.CARDS)}
+                        href="#">
+                        {'Cards'}
                     </a>
                 </li>
                 <li className="nav-item">
