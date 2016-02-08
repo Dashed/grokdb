@@ -33,7 +33,7 @@ const DumbCardsList = React.createClass({
 
         const items = _.map(cardIDs, (cardID, index) => {
 
-            const key = '' + cardID + index;
+            const key = `${cardID}-${index}`;
 
             return (
                 <CardListItem key={key} cardID={cardID} />
