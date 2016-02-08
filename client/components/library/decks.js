@@ -1,6 +1,5 @@
 const React = require('react');
 const Immutable = require('immutable');
-const shallowEqual = require('shallowequal');
 
 const courier = require('courier');
 
@@ -98,7 +97,7 @@ module.exports = courier({
     },
 
     shouldComponentUpdate(nextProps) {
-        return !shallowEqual(nextProps.childrenID, this.props.childrenID);
+        return !Immutable.is(nextProps.childrenID, this.props.childrenID);
     },
 
     assignNewProps: function(props, context) {
