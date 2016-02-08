@@ -1663,16 +1663,32 @@ Routes.prototype.toDeck = function(deckID, pageNum = NOT_SET) {
 
     invariant(_.isNumber(filterInteger(deckID)) && deckID > 0, `Malformed deckID. Given ${deckID}`);
 
+    let querystring = {};
+
     if(pageNum !== NOT_SET) {
         invariant(_.isNumber(filterInteger(pageNum)) && pageNum > 0, `Malformed pageNum. Given ${pageNum}`);
 
-        pageNum = `?page=${pageNum}`;
-    } else {
-        pageNum = '';
+        querystring.page = pageNum;
+    }
+
+    let search = this._store.cards.search();
+
+    if(_.isString(search)) {
+
+        search = search.trim();
+
+        if(search.length > 0) {
+            querystring.search = search;
+        }
+    }
+
+    querystring = qs.stringify(querystring).trim();
+    if(querystring.length > 0) {
+        querystring = `?${querystring}`;
     }
 
     this.shouldChangeRoute(() => {
-        page(`/deck/${deckID}/view/cards${pageNum}`);
+        page(`/deck/${deckID}/view/cards${querystring}`);
     });
 };
 
