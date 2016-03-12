@@ -1,4 +1,8 @@
+/*global MathJax: true */
+/*eslint new-cap: [2, {"capIsNewExceptions": ["MathJax.Hub.Queue", "Remove"]}]*/
+
 const React = require('react');
+const ReactDOM = require('react-dom');
 const Immutable = require('immutable');
 const moment = require('moment');
 const _ = require('lodash');
@@ -148,6 +152,35 @@ const CardListItem = React.createClass({
 
     },
 
+    componentDidUpdate() {
+
+        if(!MathJax) {
+            return;
+        }
+
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub, ReactDOM.findDOMNode(this.refs.output)]);
+    },
+
+    componentDidMount() {
+
+        if(!MathJax) {
+            return;
+        }
+
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub, ReactDOM.findDOMNode(this.refs.output)]);
+    },
+
+    componentWillUnmount() {
+
+        if(!MathJax) {
+            return;
+        }
+
+        _.each(MathJax.Hub.getAllJax(ReactDOM.findDOMNode(this.refs.output)), function(jax) {
+            jax.Remove();
+        });
+    },
+
     render() {
 
         const {card} = this.props;
@@ -171,7 +204,7 @@ const CardListItem = React.createClass({
             <li className="list-group-item">
                 {this.getButton()}
                 <h6 className="list-group-item-heading m-y-0" style={NAME_STYLE}>
-                    <a href="#" onClick={this.onClick} style={LINK_STYLE} >
+                    <a href="#" onClick={this.onClick} style={LINK_STYLE} ref="card_title" >
                         {card.get('title')}
                     </a>
                 </h6>
