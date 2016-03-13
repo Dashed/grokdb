@@ -7,7 +7,10 @@ const React = require('react');
 const ReactDOM = require('react-dom');
 const _ = require('lodash');
 
-const markdown = require('markdown-it')()
+const markdown = require('markdown-it')({
+    html: true,
+    linkify: true
+})
     // custom plugin to mark mathjax markup to not be escaped by markdown-it
     // and related plugins
     .use(require('utils/mathjaxinline'))

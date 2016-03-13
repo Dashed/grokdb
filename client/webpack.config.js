@@ -87,6 +87,7 @@ module.exports = {
                     plugins: ['transform-runtime']
                 }
             },
+
             {
                 test: /\.jsx?$/,
                 loader: "eslint-loader",
