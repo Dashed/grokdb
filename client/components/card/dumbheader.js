@@ -1,4 +1,9 @@
+/*global MathJax: true */
+/*eslint new-cap: [2, {"capIsNewExceptions": ["MathJax.Hub.Queue", "Remove"]}]*/
+
 const React = require('react');
+const ReactDOM = require('react-dom');
+const _ = require('lodash');
 
 const NAME_STYLE = {
     'overflowWrap': 'break-word',
@@ -19,6 +24,35 @@ const DumbCardHeader = React.createClass({
         return {
             isReviewing: false
         };
+    },
+
+    componentDidUpdate() {
+
+        if(!MathJax) {
+            return;
+        }
+
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub, ReactDOM.findDOMNode(this.refs.output)]);
+    },
+
+    componentDidMount() {
+
+        if(!MathJax) {
+            return;
+        }
+
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub, ReactDOM.findDOMNode(this.refs.output)]);
+    },
+
+    componentWillUnmount() {
+
+        if(!MathJax) {
+            return;
+        }
+
+        _.each(MathJax.Hub.getAllJax(ReactDOM.findDOMNode(this.refs.output)), function(jax) {
+            jax.Remove();
+        });
     },
 
     getLead() {
@@ -44,7 +78,7 @@ const DumbCardHeader = React.createClass({
                         {this.getLead()}
                     </span>
                     {' '}
-                    <span>{cardTitle}</span>
+                    <span ref="card_title">{cardTitle}</span>
                 </h4>
             </div>
         );
