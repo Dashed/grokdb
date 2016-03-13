@@ -71,9 +71,9 @@ const loadStore = bootstrapStore
         });
     });
 
-Promise.all([loadMathJax, loadStore])
+Promise.all([loadStore, loadMathJax])
     .then(function(results) {
-        return Promise.resolve(results[1]);
+        return Promise.resolve(results[0]);
     })
     .then(function(store) {
 
