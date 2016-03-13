@@ -183,6 +183,16 @@ const ROUTE = {
                 DESCRIPTION: Symbol(),
                 STASHES: Symbol(),
                 META: Symbol()
+            },
+
+            REVIEW: {
+                VIEW: {
+                    FRONT: Symbol(),
+                    BACK: Symbol(),
+                    DESCRIPTION: Symbol(),
+                    META: Symbol()
+                    // note: Stashes is not supported
+                }
             }
         }
     },
@@ -1466,6 +1476,86 @@ const boostrapRoutes = function(store) {
                 next();
             }, postRouteLoad);
 
+    page('/stash/:stash_id/card/:card_id/review/front',
+        reloadAppState,
+        ensureValidStashID,
+        ensureValidCardID(redirectToStashByID),
+        ensureStashIDExists,
+        ensureCardIDByStashIDExists,
+            function(context, next) {
+
+                const stashID = context.stash_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.stashes.currentID(stashID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.STASHES.CARD.REVIEW.VIEW.FRONT);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/stash/:stash_id/card/:card_id/review/back',
+        reloadAppState,
+        ensureValidStashID,
+        ensureValidCardID(redirectToStashByID),
+        ensureStashIDExists,
+        ensureCardIDByStashIDExists,
+            function(context, next) {
+
+                const stashID = context.stash_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.stashes.currentID(stashID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.STASHES.CARD.REVIEW.VIEW.BACK);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/stash/:stash_id/card/:card_id/review/description',
+        reloadAppState,
+        ensureValidStashID,
+        ensureValidCardID(redirectToStashByID),
+        ensureStashIDExists,
+        ensureCardIDByStashIDExists,
+            function(context, next) {
+
+                const stashID = context.stash_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.stashes.currentID(stashID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.STASHES.CARD.REVIEW.VIEW.DESCRIPTION);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
+    page('/stash/:stash_id/card/:card_id/review/meta',
+        reloadAppState,
+        ensureValidStashID,
+        ensureValidCardID(redirectToStashByID),
+        ensureStashIDExists,
+        ensureCardIDByStashIDExists,
+            function(context, next) {
+
+                const stashID = context.stash_id;
+                const cardID = context.card_id;
+
+                store.resetStage();
+                store.stashes.currentID(stashID);
+                store.cards.currentID(cardID);
+                store.routes.route(ROUTE.STASHES.CARD.REVIEW.VIEW.META);
+                store.commit();
+
+                next();
+            }, postRouteLoad);
+
     page('/stash/:stash_id/review', reloadAppState, ensureValidStashID, ensureStashIDExists, function(context) {
 
         const stashID = context.stash_id;
@@ -2293,6 +2383,52 @@ Routes.prototype.toStashReviewCardMeta = function(stashID) {
 
     this.shouldChangeRoute(() => {
         page(`/stash/${stashID}/review/view/meta`);
+    });
+};
+
+Routes.prototype.toCardReviewInStash = function(cardID, stashID) {
+
+    this.toCardReviewInStashFront(cardID, stashID);
+
+};
+
+Routes.prototype.toCardReviewInStashFront = function(cardID, stashID) {
+
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+    invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/card/${cardID}/review/front`);
+    });
+};
+
+Routes.prototype.toCardReviewInStashBack = function(cardID, stashID) {
+
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+    invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/card/${cardID}/review/back`);
+    });
+};
+
+Routes.prototype.toCardReviewInStashDescription = function(cardID, stashID) {
+
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+    invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/card/${cardID}/review/description`);
+    });
+};
+
+Routes.prototype.toCardReviewInStashMeta = function(cardID, stashID) {
+
+    invariant(_.isNumber(filterInteger(cardID)) && cardID > 0, `Malformed cardID. Given ${cardID}`);
+    invariant(_.isNumber(filterInteger(stashID)) && stashID > 0, `Malformed stashID. Given ${stashID}`);
+
+    this.shouldChangeRoute(() => {
+        page(`/stash/${stashID}/card/${cardID}/review/meta`);
     });
 };
 

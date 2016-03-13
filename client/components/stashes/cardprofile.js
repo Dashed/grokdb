@@ -105,6 +105,14 @@ const CardProfile = React.createClass({
 
     },
 
+    onReview() {
+
+        const stashID = this.props.currentStashID;
+        const cardID = this.props.currentCard.get('id');
+
+        this.context.store.routes.toCardReviewInStash(cardID, stashID);
+    },
+
     onDeleteCard() {
 
         const stashID = this.props.currentStashID;
@@ -123,6 +131,9 @@ const CardProfile = React.createClass({
                 <div className="row">
                     <div className="col-sm-12">
                         <CardDetail
+
+                            showReviewButton
+
                             currentTab={this.props.currentTab}
                             currentCard={this.props.currentCard}
 
@@ -138,6 +149,7 @@ const CardProfile = React.createClass({
                             editCard={this.editCard}
                             onCancelEdit={this.onCancelEdit}
 
+                            onReview={this.onReview}
                             onDelete={this.onDeleteCard}
                         />
                     </div>

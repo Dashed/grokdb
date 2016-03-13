@@ -11,6 +11,7 @@ const StashesList = require('./list');
 const StashDetail = require('./detail');
 const StashesPagination = require('./pagination');
 const CardProfile = require('./cardprofile');
+const CardReview = require('./cardreview');
 const StashReview = require('./review');
 const StashesSortDropDown = require('./stashessortdropdown');
 
@@ -96,6 +97,16 @@ const Stashes = React.createClass({
         case ROUTES.STASHES.CARD.VIEW.META:
             return (
                 <CardProfile />
+            );
+            break;
+
+        case ROUTES.STASHES.CARD.REVIEW.VIEW.FRONT:
+        case ROUTES.STASHES.CARD.REVIEW.VIEW.BACK:
+        case ROUTES.STASHES.CARD.REVIEW.VIEW.DESCRIPTION:
+        case ROUTES.STASHES.CARD.REVIEW.VIEW.META:
+
+            return (
+                <CardReview />
             );
             break;
 

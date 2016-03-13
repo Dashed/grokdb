@@ -137,6 +137,11 @@ const App = courier({
         case ROUTES.STASHES.REVIEW.VIEW.DESCRIPTION:
         case ROUTES.STASHES.REVIEW.VIEW.META:
 
+        case ROUTES.STASHES.CARD.REVIEW.VIEW.FRONT:
+        case ROUTES.STASHES.CARD.REVIEW.VIEW.BACK:
+        case ROUTES.STASHES.CARD.REVIEW.VIEW.DESCRIPTION:
+        case ROUTES.STASHES.CARD.REVIEW.VIEW.META:
+
             handler = Stashes;
             view = 'stashes';
             break;
