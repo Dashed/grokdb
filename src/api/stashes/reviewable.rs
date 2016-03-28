@@ -433,7 +433,7 @@ impl ReviewableSelection for ReviewableStash {
             AND
                 (strftime('%s','now') - cs.seen_at) >= :age_of_consent
             AND
-                rank_score(cs.success, cs.fail, strftime('%s','now') - cs.seen_at, cs.times_reviewed) >= :min_score;
+                raw_score(cs.success, cs.fail) >= :min_score;
         ");
 
         let age_in_seconds: i64 = age_in_hours * 3600;
@@ -486,7 +486,7 @@ impl ReviewableSelection for ReviewableStash {
             AND
                 (strftime('%s','now') - cs.seen_at) >= :age_of_consent
             AND
-                rank_score(cs.success, cs.fail, strftime('%s','now') - cs.seen_at, cs.times_reviewed) >= :min_score
+                raw_score(cs.success, cs.fail) >= :min_score
             ORDER BY
                 rank_score(cs.success, cs.fail, strftime('%s','now') - cs.seen_at, cs.times_reviewed) DESC
             LIMIT 1
@@ -562,7 +562,7 @@ impl ReviewableSelection for ReviewableStash {
             )
             AS sub
             WHERE
-                rank_score(sub.success, sub.fail, strftime('%s','now') - sub.seen_at, sub.times_reviewed) >= :min_score
+                raw_score(sub.success, sub.fail) >= :min_score
             {sort_by_score}
             ;
         ", sort_by_score = {
@@ -628,7 +628,7 @@ impl ReviewableSelection for ReviewableStash {
             )
             AS sub
             WHERE
-                rank_score(sub.success, sub.fail, strftime('%s','now') - sub.seen_at, sub.times_reviewed) >= :min_score
+                raw_score(sub.success, sub.fail) >= :min_score
             {sort_by_score}
             LIMIT 1 OFFSET :index;
         ", sort_by_score = {
